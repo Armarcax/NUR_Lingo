@@ -112,8 +112,8 @@ export const UNITS: Unit[] = [
   {
     id: "unit_greetings",
     title: "Greetings & Basics",
-    titleArmenian: "Ողջույններ",
-    description: "Ծանոթացիր, ողջույն տուր, ներկայացիր",
+    titleArmenian: "Ողջույններ և Հիմունքներ",
+    description: "Ծանոթացիր, ողջունիր և ներկայացիր",
     cefr: "A1",
     lessons: ["lesson_1", "lesson_1b"],
     iconEmoji: "👋",
@@ -124,7 +124,7 @@ export const UNITS: Unit[] = [
     id: "unit_home",
     title: "Home & Movement",
     titleArmenian: "Տուն և Շարժում",
-    description: "Նկարագրիր քո տունը, խոսիր գնալ-գալ մասին",
+    description: "Նկարագրիր տունդ, խոսիր գնալ-գալու մասին",
     cefr: "A1",
     lessons: ["lesson_2", "lesson_2b"],
     iconEmoji: "🏠",
@@ -134,8 +134,8 @@ export const UNITS: Unit[] = [
   {
     id: "unit_food",
     title: "Food & Drink",
-    titleArmenian: "Ուտելիք",
-    description: "Հայկական խոհանոց, ուտել-խմել բառապաշar",
+    titleArmenian: "Ուտելիք և Ըմպելիք",
+    description: "Հայկական խոհանոց, ուտել-խմելու բառապաշար",
     cefr: "A1",
     lessons: ["lesson_3", "lesson_3b"],
     iconEmoji: "🍽️",
@@ -156,7 +156,7 @@ export const UNITS: Unit[] = [
   {
     id: "unit_education",
     title: "Education",
-    titleArmenian: "Կrթություն",
+    titleArmenian: "Կրթություն",
     description: "Դպրոց, գիրք, ուսուցիչ, ուսանող",
     cefr: "A2",
     lessons: ["lesson_5", "lesson_5b"],
@@ -177,7 +177,7 @@ export function generateTranslationExercise(
     id: `ex_${patternId}_tr`,
     type: "translation_en_to_hy",
     prompt: `Translate to Armenian: "${pattern.english_template}"`,
-    promptArmenian: `Թarγmanir hayeren: "${pattern.english_template}"`,
+    promptArmenian: `Թարգմանիր հայերեն՝ "${pattern.english_template}"`,
     targetAnswer: pattern.armenian_variants[0],
     acceptableAnswers: pattern.armenian_variants,
     hint: pattern.grammar_note,
@@ -201,7 +201,7 @@ export function generateMCExercise(
     id: `ex_${entry.id}_mc`,
     type: "multiple_choice",
     prompt: `What does "${entry.word}" mean?`,
-    promptArmenian: `Ի՞նչ է նշanakum "${entry.word}"`,
+    promptArmenian: `Ի՞նչ է նշանակում "${entry.word}"-ը`,
     targetAnswer: correct,
     acceptableAnswers: entry.english,
     options,
@@ -223,7 +223,7 @@ export function generateWordOrderExercise(
     id: `ex_${patternId}_wo`,
     type: "word_order",
     prompt: `Arrange: "${pattern.english_template}"`,
-    promptArmenian: `Dasavorir barem: "${pattern.english_template}"`,
+    promptArmenian: `Դասավորիր բառերը՝ "${pattern.english_template}"`,
     targetAnswer: canonical,
     acceptableAnswers: pattern.armenian_variants,
     words,
@@ -240,21 +240,21 @@ export function generateWordOrderExercise(
 export const LESSONS: Lesson[] = [
   {
     id: "lesson_1", unitId: "unit_greetings",
-    title: "Hello Armenia", titleArmenian: "Բarex Hayastan",
-    description: "First words — greetings and introducing yourself",
+    title: "Hello Armenia", titleArmenian: "Բարև Հայաստան",
+    description: "Առաջին բառերը՝ ողջույններ և ծանոթություն",
     cefr: "A1", difficulty: 1, prerequisiteLessons: [],
     hayqTotal: 90, estimatedMinutes: 8,
-    grammarFocus: ["լինel present tense", "personal pronouns"],
-    vocabularyFocus: ["barex", "lav", "es", "du"],
+    grammarFocus: ["«լինել» բայի ներկա ժամանակը", "անձնական դերանուններ"],
+    vocabularyFocus: ["բարև", "լավ", "ես", "դու"],
     exercises: [
       generateMCExercise(
-        LEXICON.find(e => e.word === "բarex")
+        LEXICON.find(e => e.word === "բարև")
           ?? LEXICON.find(e => e.id === "greet_001")!,
         "lesson_1","unit_greetings",
         LEXICON.filter(e => e.grammar_type === "adjective").slice(0,3)
       ),
       generateMCExercise(
-        LEXICON.find(e => e.word === "լav")
+        LEXICON.find(e => e.word === "լավ")
           ?? LEXICON.find(e => e.id === "adj_003")!,
         "lesson_1","unit_greetings",
         LEXICON.filter(e => e.grammar_type === "adjective").slice(1,4)
@@ -265,12 +265,12 @@ export const LESSONS: Lesson[] = [
   },
   {
     id: "lesson_2", unitId: "unit_home",
-    title: "Going Home", titleArmenian: "Tun gnal",
-    description: "Talk about home and movement",
+    title: "Going Home", titleArmenian: "Տուն գնալ",
+    description: "Խոսիր տան և շարժման մասին",
     cefr: "A1", difficulty: 1, prerequisiteLessons: ["lesson_1"],
     hayqTotal: 110, estimatedMinutes: 10,
-    grammarFocus: ["present continuous", "free word order"],
-    vocabularyFocus: ["tun", "gnal", "aprel", "Erevan"],
+    grammarFocus: ["ներկա շարունակական", "ազատ բառապաշար"],
+    vocabularyFocus: ["տուն", "գնալ", "ապրել", "Երևան"],
     exercises: [
       generateTranslationExercise("sp_001","lesson_2","unit_home"),
       generateTranslationExercise("sp_005","lesson_2","unit_home"),
@@ -280,17 +280,17 @@ export const LESSONS: Lesson[] = [
   },
   {
     id: "lesson_3", unitId: "unit_food",
-    title: "Eating & Drinking", titleArmenian: "Utel u Xmel",
-    description: "Food vocabulary and meal conversations",
+    title: "Eating & Drinking", titleArmenian: "Ուտել ու Խմել",
+    description: "Ուտելիքի բառապաշար և զրույցներ սեղանի շուրջ",
     cefr: "A1", difficulty: 1, prerequisiteLessons: ["lesson_1"],
     hayqTotal: 100, estimatedMinutes: 9,
-    grammarFocus: ["object placement", "direct objects"],
-    vocabularyFocus: ["utel", "xmel", "hac", "jur"],
+    grammarFocus: ["ուղիղ խնդիր", "բայի խոնարհում"],
+    vocabularyFocus: ["ուտել", "խմել", "հաց", "ջուր"],
     exercises: [
       generateTranslationExercise("sp_002","lesson_3","unit_food"),
       generateWordOrderExercise("sp_002","lesson_3","unit_food"),
       generateMCExercise(
-        LEXICON.find(e => e.id === "noun_002")!,
+        LEXICON.find(e => e.id === "food_002")!,
         "lesson_3","unit_food",
         LEXICON.filter(e => e.embedding_group === "food_drink").slice(1,4)
       ),
@@ -298,19 +298,19 @@ export const LESSONS: Lesson[] = [
   },
   {
     id: "lesson_4", unitId: "unit_family",
-    title: "My Family", titleArmenian: "Im yntaniqu",
-    description: "Family members — natural Armenian possessives",
+    title: "My Family", titleArmenian: "Իմ ընտանիքը",
+    description: "Ընտանիքի անդամներ և ստացական հոլով",
     cefr: "A1", difficulty: 1, prerequisiteLessons: ["lesson_2"],
     hayqTotal: 120, estimatedMinutes: 11,
-    grammarFocus: ["possessive suffix -s", "gendered professions"],
-    vocabularyFocus: ["mayrs", "hayrs", "bjshkuhi", "usu\u0581i\u0579"],
+    grammarFocus: ["ստացական հոդեր", "մասնագիտություններ"],
+    vocabularyFocus: ["մայրս", "հայրս", "բժշկուհի", "ուսուցիչ"],
     exercises: [
       generateTranslationExercise("sp_006","lesson_4","unit_family"),
       generateTranslationExercise("sp_007","lesson_4","unit_family"),
       generateTranslationExercise("sp_004","lesson_4","unit_family"),
       generateWordOrderExercise("sp_006","lesson_4","unit_family"),
       generateMCExercise(
-        LEXICON.find(e => e.id === "noun_007b")!,
+        LEXICON.find(e => e.id === "prof_002")!,
         "lesson_4","unit_family",
         LEXICON.filter(e => e.embedding_group === "work_profession"
           || e.embedding_group === "education_learning").slice(0,3)
@@ -319,17 +319,17 @@ export const LESSONS: Lesson[] = [
   },
   {
     id: "lesson_5", unitId: "unit_education",
-    title: "School & Books", titleArmenian: "Dproq u Girq",
-    description: "Education vocabulary",
+    title: "School & Books", titleArmenian: "Դպրոց ու Գիրք",
+    description: "Կրթական բառապաշար",
     cefr: "A2", difficulty: 2, prerequisiteLessons: ["lesson_4"],
     hayqTotal: 130, estimatedMinutes: 12,
-    grammarFocus: ["present continuous reading/writing", "locative case -um"],
-    vocabularyFocus: ["dproq", "girq", "kardaltel", "grel"],
+    grammarFocus: ["ներկա շարունակական (կարդալ/գրել)", "ներգոյական հոլով"],
+    vocabularyFocus: ["դպրոց", "գիրք", "կարդալ", "գրել"],
     exercises: [
       generateTranslationExercise("sp_008","lesson_5","unit_education"),
       generateWordOrderExercise("sp_008","lesson_5","unit_education"),
       generateMCExercise(
-        LEXICON.find(e => e.id === "noun_008")!,
+        LEXICON.find(e => e.id === "edu_002")!,
         "lesson_5","unit_education",
         LEXICON.filter(e => e.embedding_group === "education_learning").slice(0,3)
       ),
@@ -351,3 +351,7 @@ export const getUnitById    = (id: string) => UNITS.find(u => u.id === id);
 export const getLessonsForUnit = (uid: string) => LESSONS.filter(l => l.unitId === uid);
 export const scoreToGrade = (s: number) =>
   s >= 0.98 ? "perfect" : s >= 0.85 ? "excellent" : s >= 0.75 ? "good" : s >= 0.5 ? "partial" : "incorrect";
+
+export function xpToLevel(xp: number): number {
+  return Math.floor(xp / 60) + 1;
+}

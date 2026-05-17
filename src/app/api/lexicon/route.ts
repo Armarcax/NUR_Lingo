@@ -28,8 +28,17 @@ export async function GET(req: NextRequest) {
   const lemma   = searchParams.get("lemma");       // Lemmatize Armenian word
   const tokens  = searchParams.get("tokens");      // Tokenize Armenian text
   const cat     = searchParams.get("category");    // By semantic category
+  const type    = searchParams.get("type");        // type=patterns
   const page    = parseInt(searchParams.get("page") ?? "1", 10);
   const limit   = Math.min(parseInt(searchParams.get("limit") ?? "20", 10), 100);
+
+  // ── Patterns (type=patterns) ───────────────────────────────────────────
+  if (type === "patterns") {
+    return NextResponse.json({
+      total: SENTENCE_PATTERNS.length,
+      patterns: SENTENCE_PATTERNS,
+    });
+  }
 
   // ── Lemmatize ──────────────────────────────────────────────────────────
   if (lemma) {
@@ -112,12 +121,5 @@ export async function GET(req: NextRequest) {
     limit,
     totalPages: Math.ceil(LEXICON.length / limit),
     results: slice,
-  });
-}
-
-export async function GET_PATTERNS(req: NextRequest) {
-  return NextResponse.json({
-    total: SENTENCE_PATTERNS.length,
-    patterns: SENTENCE_PATTERNS,
   });
 }

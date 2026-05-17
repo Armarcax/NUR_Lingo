@@ -314,8 +314,8 @@ export function areMorphologicallyEquivalent(
   const set1 = new Set(lemmas1.filter((l) => l.length > 1));
   const set2 = new Set(lemmas2.filter((l) => l.length > 1));
 
-  const intersection = [...set1].filter((l) => set2.has(l));
-  const union = new Set([...set1, ...set2]);
+  const intersection = Array.from(set1).filter((l) => set2.has(l));
+  const union = new Set(Array.from(set1).concat(Array.from(set2)));
 
   const jaccardSimilarity = union.size > 0 ? intersection.length / union.size : 0;
 

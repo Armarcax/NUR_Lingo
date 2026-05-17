@@ -9,7 +9,7 @@ import {
   lemmatize,
   areMorphologicallyEquivalent,
   isArmenian,
-} from "../src/lib/nlp/morphology";
+} from "./morphology";
 
 describe("isArmenian()", () => {
   it("detects Armenian Unicode", () => {

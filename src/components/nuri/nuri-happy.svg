@@ -1,0 +1,19 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Նռան մարմին - կարմիր -->
+  <ellipse cx="60" cy="70" rx="45" ry="40" fill="#D90012"/>
+  <!-- Նռան պսակ - ծիրանագույն -->
+  <path d="M45 35 L55 20 L65 35 L75 20 L70 40 L50 40 Z" fill="#FFA500"/>
+  <!-- Նռան հատիկներ - կապույտ -->
+  <circle cx="45" cy="65" r="6" fill="#0033A0"/>
+  <circle cx="60" cy="60" r="7" fill="#0033A0"/>
+  <circle cx="75" cy="68" r="6" fill="#0033A0"/>
+  <circle cx="52" cy="80" r="5" fill="#0033A0"/>
+  <circle cx="68" cy="82" r="5" fill="#0033A0"/>
+  <!-- Աչքեր - ուրախ -->
+  <ellipse cx="48" cy="58" rx="5" ry="7" fill="white"/>
+  <ellipse cx="72" cy="58" rx="5" ry="7" fill="white"/>
+  <circle cx="48" cy="60" r="3" fill="#0033A0"/>
+  <circle cx="72" cy="60" r="3" fill="#0033A0"/>
+  <!-- Ժպիտ -->
+  <path d="M45 75 Q60 85 75 75" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
+</svg>
