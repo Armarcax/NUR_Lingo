@@ -22,6 +22,7 @@ interface ValidateRequest {
   englishOriginal: string;
   allValidAnswers?: string[];
   useAI?: boolean;              // opt-in to AI layer
+  strictMode?: boolean;         // if true, only exact matches or registered patterns are allowed
   debug?: boolean;              // include debug info in response
 }
 
@@ -78,6 +79,7 @@ export async function POST(req: NextRequest) {
         expectedAnswer: body.expectedAnswer,
         englishOriginal: body.englishOriginal,
         allValidAnswers: body.allValidAnswers,
+        strictMode: body.strictMode,
       });
     }
 

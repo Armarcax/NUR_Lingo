@@ -24,7 +24,7 @@ interface ExState {
 }
 
 const NURI_LINES: Record<string, string[]> = {
-  correct_perfect: ["Կատարյալ! Հիանալի! 🌟", "Վայ, HAYQ վաստակեցիր! 🏆", "Չեմ հավատում! 🎉"],
+  correct_perfect: ["Կատարյալ! Հիանալի! 🌟", "Վայ, ՀԱՅՔ վաստակեցիր! 🏆", "Չեմ հավատում! 🎉"],
   correct:         ["Շատ լավ! ✅", "Այո! Հայերեն գիտես! 👍", "Ճիշտ է: Շարունակիր:"],
   incorrect:       ["Մի տխրիր! Կարող ես 💪", "Կրկնիր! Կստացվի", "Շատ մոտ էր, բայց կփորձենք նորից!"],
   thinking:        ["Մտածիր... 💭", "Հայերենը հիասքանչ է 🤔", "Ոչ այստեղ, ոչ այնտեղ..."],
@@ -78,6 +78,7 @@ export default function LearnPage() {
           englishOriginal: current.prompt.replace(/Translate to Armenian:|Arrange:/gi,"").replace(/"/g,"").trim(),
           allValidAnswers: current.acceptableAnswers,
           useAI: false,
+          strictMode: current.type === "word_order", // Enforce strict mode for word order
         }),
       });
       const data = await res.json();
@@ -130,7 +131,18 @@ export default function LearnPage() {
   const progress = (ex.index / lesson.exercises.length) * 100;
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "#0a0b14", color: "white" }}>
+    <div className="min-h-screen flex flex-col relative text-white">
+      {/* Background with overlay */}
+      <div className="fixed inset-0 z-[-1]">
+        <Image
+          src="/images/pomegranate-bg.jpg"
+          alt="Background"
+          fill
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-black/60" />
+      </div>
 
       {/* Top flag stripe */}
       <div className="h-1.5 w-full flex">
@@ -190,7 +202,7 @@ export default function LearnPage() {
                 <span className="opacity-30">•</span>
                 <span>{current.cefr}</span>
                 <span className="opacity-30">•</span>
-                <span>+{current.hayqReward} HAYQ</span>
+                <span>+{current.hayqReward} ՀԱՅՔ</span>
               </div>
 
               {/* Prompt */}
@@ -245,7 +257,7 @@ export default function LearnPage() {
                 </div>
                 <div>
                   <p className={`text-xl font-bold ${ex.state==='correct'?'text-green-400':'text-red-400'}`}>
-                    {ex.state==="correct" ? `Ճիշտ է! +${ex.hayqEarned} HAYQ 🪙` : "Սխալ է"}
+                    {ex.state==="correct" ? `Ճիշտ է! +${ex.hayqEarned} ՀԱՅՔ 🪙` : "Սխալ է"}
                   </p>
                   {ex.corrections?.[0] && ex.state==="incorrect" && (
                     <p className="text-white/70 mt-1 italic">
@@ -337,7 +349,18 @@ function MultiChoice({ options, selected, onSelect, disabled, correct, showResul
 
 function LessonSelector({ onSelect }: { onSelect:(l:Lesson)=>void }) {
   return (
-    <div className="min-h-screen bg-[#0a0b14] text-white">
+    <div className="min-h-screen relative text-white">
+      <div className="fixed inset-0 z-[-1]">
+        <Image
+          src="/images/pomegranate-bg.jpg"
+          alt="Background"
+          fill
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-black/60" />
+      </div>
+
       <div className="h-1.5 w-full flex">
         <div className="h-full flex-1" style={{ background: "#D90012" }} />
         <div className="h-full flex-1" style={{ background: "#0033A0" }} />
@@ -351,7 +374,7 @@ function LessonSelector({ onSelect }: { onSelect:(l:Lesson)=>void }) {
         </div>
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2 font-bold text-[#FFA500]">
-            <span className="text-xl">🪙</span> HAYQ
+            <span className="text-xl">🪙</span> ՀԱՅՔ
           </div>
         </div>
       </nav>
@@ -366,7 +389,7 @@ function LessonSelector({ onSelect }: { onSelect:(l:Lesson)=>void }) {
           </h1>
           <div className="flex flex-wrap gap-4 justify-center md:justify-start text-white/50 font-medium">
             <span className="flex items-center gap-1"><span className="text-green-500">✓</span> Իմաստային ուսուցում</span>
-            <span className="flex items-center gap-1"><span className="text-green-500">✓</span> HAYQ պարգևներ</span>
+            <span className="flex items-center gap-1"><span className="text-green-500">✓</span> ՀԱՅՔ պարգևներ</span>
           </div>
         </div>
         <Nuri mood="happy" size={180} className="drop-shadow-2xl" />
@@ -421,7 +444,17 @@ function CompletionScreen({ lesson, totalHAYQ, hearts, onContinue }:
   { lesson:Lesson; totalHAYQ:number; hearts:number; onContinue:()=>void }) {
   const level = hayqToLevel(totalHAYQ);
   return (
-    <div className="min-h-screen bg-[#0a0b14] flex flex-col items-center justify-center p-8 text-center relative">
+    <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center relative text-white">
+      <div className="fixed inset-0 z-[-1]">
+        <Image
+          src="/images/pomegranate-bg.jpg"
+          alt="Background"
+          fill
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-black/60" />
+      </div>
+
       <div className="h-1.5 w-full flex fixed top-0 left-0 right-0">
         <div className="h-full flex-1" style={{ background: "#D90012" }} />
         <div className="h-full flex-1" style={{ background: "#0033A0" }} />
@@ -440,7 +473,7 @@ function CompletionScreen({ lesson, totalHAYQ, hearts, onContinue }:
 
         <div className="grid grid-cols-3 gap-4">
           {[
-            { label:"HAYQ", value:`+${totalHAYQ}`, color:"text-[#FFA500]" },
+            { label:"ՀԱՅՔ", value:`+${totalHAYQ}`, color:"text-[#FFA500]" },
             { label:"Սիրտ", value:hearts > 0 ? "❤️".repeat(hearts) : "💔", color:"text-[#D90012]" },
             { label:"Մակարդակ", value:level.titleArmenian, color:level.color },
           ].map(s => (
@@ -457,7 +490,7 @@ function CompletionScreen({ lesson, totalHAYQ, hearts, onContinue }:
               <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1">Հաջորդ մակարդակը</p>
               <p className="text-lg font-black" style={{ color: level.color }}>{level.titleArmenian}</p>
             </div>
-            <p className="text-sm font-bold text-white/40">{level.nextLevelHAYQ === Infinity ? "ԱՌԱՎԵԼԱԳՈՒՅՆ" : `${totalHAYQ} / ${level.nextLevelHAYQ} HAYQ`}</p>
+            <p className="text-sm font-bold text-white/40">{level.nextLevelHAYQ === Infinity ? "ԱՌԱՎԵԼԱԳՈՒՅՆ" : `${totalHAYQ} / ${level.nextLevelHAYQ} ՀԱՅՔ`}</p>
           </div>
           {level.nextLevelHAYQ !== Infinity && (
             <div className="h-4 rounded-full bg-white/5 overflow-hidden p-1 border border-white/10">

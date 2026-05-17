@@ -21,79 +21,20 @@ export default function Nuri({
   className = "",
 }: NuriProps) {
 
-  // Mapping moods to our SVG assets
-  const getSvgPath = (m: NuriMood) => {
+  // Mapping moods to our PNG assets
+  const getPngPath = (m: NuriMood) => {
     switch (m) {
       case "happy":
       case "celebrating":
-        return "/src/components/nuri/nuri-happy.svg";
+        return "/images/nuri/nuri-happy.png";
       case "encouraging":
       case "thinking":
       case "idle":
-        return "/src/components/nuri/nuri-encouraging.svg";
+        return "/images/nuri/nuri-encouraging.png";
       case "sad":
-        return "/src/components/nuri/nuri-sad.svg";
+        return "/images/nuri/nuri-sad.png";
       default:
-        return "/src/components/nuri/nuri-happy.svg";
-    }
-  };
-
-  // Since we are in a Next.js app, we should ideally put SVGs in /public
-  // or import them. But for this task, I'll render the SVG directly
-  // to ensure it works without complex asset management.
-
-  const renderSvg = (m: NuriMood) => {
-    if (m === "happy" || m === "celebrating") {
-      return (
-        <svg width="100%" height="100%" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <ellipse cx="60" cy="70" rx="45" ry="40" fill="#D90012"/>
-          <path d="M45 35 L55 20 L65 35 L75 20 L70 40 L50 40 Z" fill="#FFA500"/>
-          <circle cx="45" cy="65" r="6" fill="#0033A0"/>
-          <circle cx="60" cy="60" r="7" fill="#0033A0"/>
-          <circle cx="75" cy="68" r="6" fill="#0033A0"/>
-          <circle cx="52" cy="80" r="5" fill="#0033A0"/>
-          <circle cx="68" cy="82" r="5" fill="#0033A0"/>
-          <ellipse cx="48" cy="58" rx="5" ry="7" fill="white"/>
-          <ellipse cx="72" cy="58" rx="5" ry="7" fill="white"/>
-          <circle cx="48" cy="60" r="3" fill="#0033A0"/>
-          <circle cx="72" cy="60" r="3" fill="#0033A0"/>
-          <path d="M45 75 Q60 85 75 75" stroke="white" strokeWidth="3" strokeLinecap="round" fill="none"/>
-        </svg>
-      );
-    } else if (m === "sad") {
-      return (
-        <svg width="100%" height="100%" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <ellipse cx="60" cy="70" rx="45" ry="40" fill="#B8000E"/>
-          <path d="M45 35 L55 20 L65 35 L75 20 L70 40 L50 40 Z" fill="#E59400"/>
-          <circle cx="45" cy="65" r="6" fill="#002277"/>
-          <circle cx="60" cy="60" r="7" fill="#002277"/>
-          <circle cx="75" cy="68" r="6" fill="#002277"/>
-          <ellipse cx="48" cy="60" rx="5" ry="6" fill="white"/>
-          <ellipse cx="72" cy="60" rx="5" ry="6" fill="white"/>
-          <circle cx="48" cy="62" r="3" fill="#0033A0"/>
-          <circle cx="72" cy="62" r="3" fill="#0033A0"/>
-          <ellipse cx="44" cy="70" rx="2" ry="4" fill="#6BB6FF" opacity="0.8"/>
-          <path d="M50 82 Q60 77 70 82" stroke="white" strokeWidth="3" strokeLinecap="round" fill="none"/>
-        </svg>
-      );
-    } else {
-      // Encouraging / Thinking / Idle
-      return (
-        <svg width="100%" height="100%" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <ellipse cx="60" cy="70" rx="45" ry="40" fill="#D90012"/>
-          <path d="M45 35 L55 20 L65 35 L75 20 L70 40 L50 40 Z" fill="#FFA500"/>
-          <circle cx="45" cy="65" r="6" fill="#0033A0"/>
-          <circle cx="60" cy="60" r="7" fill="#0033A0"/>
-          <circle cx="75" cy="68" r="6" fill="#0033A0"/>
-          <ellipse cx="48" cy="58" rx="6" ry="5" fill="white"/>
-          <ellipse cx="72" cy="58" rx="6" ry="5" fill="white"/>
-          <circle cx="48" cy="59" r="3" fill="#0033A0"/>
-          <circle cx="72" cy="59" r="3" fill="#0033A0"/>
-          <ellipse cx="60" cy="78" rx="8" ry="4" fill="white"/>
-          <ellipse cx="95" cy="75" rx="8" ry="12" fill="#FFA500" transform="rotate(20 95 75)"/>
-          <circle cx="98" cy="65" r="6" fill="#FFA500"/>
-        </svg>
-      );
+        return "/images/nuri/nuri-happy.png";
     }
   };
 
@@ -124,7 +65,13 @@ export default function Nuri({
         >💭</motion.div>
       )}
 
-      {renderSvg(mood)}
+      <Image
+        src={getPngPath(mood)}
+        alt={`Nuri mascot - ${mood}`}
+        width={size}
+        height={size}
+        priority={mood === "happy" || mood === "idle"}
+      />
     </motion.div>
   );
 }

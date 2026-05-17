@@ -174,12 +174,13 @@ export interface ValidationRequest {
   expectedAnswer: string;         // primary correct answer
   englishOriginal: string;        // original English question
   allValidAnswers?: string[];     // additional valid forms
+  strictMode?: boolean;           // if true, skip morphology and synonym expansion
 }
 
 export async function validateAnswer(
   req: ValidationRequest
 ): Promise<ValidationResult> {
-  const { userAnswer, expectedAnswer, englishOriginal, allValidAnswers = [] } = req;
+  const { userAnswer, expectedAnswer, englishOriginal, allValidAnswers = [], strictMode = false } = req;
 
   if (!userAnswer.trim()) {
     return {
@@ -206,6 +207,18 @@ export async function validateAnswer(
   // Layer 2: Pattern registry
   const patternResult = patternRegistryMatch(userAnswer, englishOriginal);
   if (patternResult) return patternResult;
+
+  // If in strict mode, we stop here (only exact or registered patterns allowed)
+  if (strictMode) {
+    return {
+      accepted: false,
+      score: SCORE_REJECT,
+      layer: "pattern_registry",
+      feedback: "Բառերը սխալ դասավորությամբ են կամ բացակայում են: (Words are in wrong order or missing.)",
+      corrections: allForms.slice(0, 1),
+      confidence: 1.0,
+    };
+  }
 
   // Layer 3: Morphological
   const morphResult = morphologicalMatch(userAnswer, expectedAnswer, allForms);

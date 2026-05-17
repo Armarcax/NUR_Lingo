@@ -31,7 +31,7 @@ export default function Home() {
           <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium"
             style={{ background:"rgba(217,0,18,0.1)", border:"1px solid rgba(217,0,18,0.25)", color:"#ff8899" }}>
-            🇦🇲 Հայկական AI Լեզվի Platforma
+            🇦🇲 Հայկական AI Լեզվի Հարթակ
           </motion.div>
 
           <motion.h1 initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.1 }}
@@ -126,7 +126,7 @@ export default function Home() {
 
       <div className="h-1.5 w-full flag-stripe" />
       <footer className="px-6 py-6 text-center text-white/20 text-xs">
-        NUR Lingo · Երևան, Հայաստան 🇦🇲 · Հայկական AI Լեզվի Platforma
+        NUR Lingo · Երևան, Հայաստան 🇦🇲 · Հայկական AI Լեզվի Հարթակ
       </footer>
     </main>
   );

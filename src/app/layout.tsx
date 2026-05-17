@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "NUR Lingo — Հայկական AI Լեզվի Platforma",
+  title: "NUR Lingo — Հայկական AI Լեզվի Հարթակ",
   description: "AI-native Armenian ↔ English language learning. Semantic understanding, HAYQ tokens, Նուռ mascot.",
   keywords: ["Armenian","հայերեն","language learning","AI","HAYQ","NLP","Armenia"],
   icons: { icon: "/logo.png", apple: "/logo.png" },
