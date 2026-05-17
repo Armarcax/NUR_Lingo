@@ -2,7 +2,7 @@
  * NUR Lingo — Semantic Validator Unit Tests
  */
 import { describe, it, expect } from "vitest";
-import { validateAnswer, exactMatch, patternRegistryMatch, scoreToGrade } from "../src/lib/semantic/validator";
+import { validateAnswer, exactMatch, patternRegistryMatch, scoreToGrade } from "./validator";
 
 describe("exactMatch()", () => {
   it("matches identical strings", () => {

@@ -10,7 +10,7 @@ import {
   getLessonById,
   getUnitById,
   getLessonsForUnit,
-  xpToLevel,
+  hayqToLevel,
 } from "@/lib/lessons/engine";
 
 export const runtime = "edge";
@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { lessonId, xpEarned, correctAnswers, totalAnswers } = body;
+    const { lessonId, hayqEarned, correctAnswers, totalAnswers } = body;
 
     if (!lessonId) {
       return NextResponse.json({ error: "lessonId required" }, { status: 400 });
@@ -67,12 +67,12 @@ export async function POST(req: NextRequest) {
     }
 
     const score = totalAnswers > 0 ? Math.round((correctAnswers / totalAnswers) * 100) : 0;
-    const levelInfo = xpToLevel(xpEarned ?? 0);
+    const levelInfo = hayqToLevel(hayqEarned ?? 0);
 
     return NextResponse.json({
       lessonId,
       score,
-      xpEarned: xpEarned ?? 0,
+      hayqEarned: hayqEarned ?? 0,
       levelInfo,
       status: score >= 70 ? "completed" : "needs_review",
       message:

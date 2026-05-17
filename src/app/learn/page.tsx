@@ -24,11 +24,11 @@ interface ExState {
 }
 
 const NURI_LINES: Record<string, string[]> = {
-  correct_perfect: ["Կataryal! Hifanali! 🌟", "Wow, HAYQ earned! 🏆", "Kchem karak! 🎉"],
-  correct:         ["Shat lav! ✅", "Ayo! Hayeren gites! 👍", "Ëntrel e! Shararunak!"],
-  incorrect:       ["Mի aner! Karogh es 💪", "Verakanchir! Kareli e", "Shat mots e, bayts kgas!"],
-  thinking:        ["Mtatsir... 💭", "Hayeren e, inchvor jyur 🤔", "Voch stelsts, voch aystegh..."],
-  idle:            ["Barev! Soverum enq! 🍎", "Inch pes es? Ready e?", "Hayeren soverl HAYQ e 🪙"],
+  correct_perfect: ["Կատարյալ! Հիանալի! 🌟", "Վայ, HAYQ վաստակեցիր! 🏆", "Չեմ հավատում! 🎉"],
+  correct:         ["Շատ լավ! ✅", "Այո! Հայերեն գիտես! 👍", "Ճիշտ է: Շարունակիր:"],
+  incorrect:       ["Մի տխրիր! Կարող ես 💪", "Կրկնիր! Կստացվի", "Շատ մոտ էր, բայց կփորձենք նորից!"],
+  thinking:        ["Մտածիր... 💭", "Հայերենը հիասքանչ է 🤔", "Ոչ այստեղ, ոչ այնտեղ..."],
+  idle:            ["Բարև! Սովորենք միասին! 🍎", "Ինչպե՞ս ես: Պատրա՞ստ ես:", "Հայերեն սովորելը հաճելի է 🪙"],
 };
 
 function randomLine(key: string) {
@@ -101,7 +101,7 @@ export default function LearnPage() {
         ),
       }));
     } catch {
-      setEx(s => ({ ...s, state: "incorrect", feedback: "Connection error.", nuriMood: "sad", nuriSpeech: "Vat internet! 😅" }));
+      setEx(s => ({ ...s, state: "incorrect", feedback: "Կապի սխալ:", nuriMood: "sad", nuriSpeech: "Վատ ինտերնետ! 😅" }));
     }
   }, [current, ex.userAnswer, ex.state, selectedWords]);
 
@@ -124,95 +124,106 @@ export default function LearnPage() {
       onContinue={() => { setLesson(null); setComplete(false); setHearts(3); setTotal(0); }} />;
 
   if (!lesson)
-    return <LessonSelector onSelect={l => { setLesson(l); setEx({ index:0, userAnswer:"", state:"idle", feedback:"", score:0, hayqEarned:0, nuriMood:"happy", nuriSpeech:"Bayc inchov skasenq! 🍎" }); setHearts(3); setTotal(0); }} />;
+    return <LessonSelector onSelect={l => { setLesson(l); setEx({ index:0, userAnswer:"", state:"idle", feedback:"", score:0, hayqEarned:0, nuriMood:"happy", nuriSpeech:"Եկեք սկսենք: 🍎" }); setHearts(3); setTotal(0); }} />;
 
   if (!current) return null;
   const progress = (ex.index / lesson.exercises.length) * 100;
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "var(--color-bg)", color: "white" }}>
+    <div className="min-h-screen flex flex-col" style={{ background: "#0a0b14", color: "white" }}>
 
       {/* Top flag stripe */}
-      <div className="h-1 w-full flag-stripe" />
+      <div className="h-1.5 w-full flex">
+        <div className="h-full flex-1" style={{ background: "#D90012" }} />
+        <div className="h-full flex-1" style={{ background: "#0033A0" }} />
+        <div className="h-full flex-1" style={{ background: "#FFA500" }} />
+      </div>
 
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b" style={{ borderColor: "var(--color-border)" }}>
-        <button onClick={() => setLesson(null)} className="text-white/40 hover:text-white text-xl transition-colors">✕</button>
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-white/10">
+        <button onClick={() => setLesson(null)} className="text-white/40 hover:text-white text-2xl transition-colors">✕</button>
 
         {/* Progress */}
-        <div className="flex-1 h-3 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
+        <div className="flex-1 h-3 rounded-full overflow-hidden bg-white/10 mx-4">
           <motion.div className="h-full rounded-full"
-            style={{ background: "linear-gradient(90deg,var(--hy-red),var(--hy-orange))" }}
+            style={{ background: "linear-gradient(90deg, #D90012, #FFA500)" }}
             animate={{ width: `${progress}%` }} transition={{ duration: 0.5, ease: "easeOut" }} />
         </div>
 
         {/* Hearts */}
-        <div className="flex gap-0.5">
+        <div className="flex gap-1 mr-4">
           {[0,1,2].map(i => (
-            <motion.span key={i} animate={{ scale: i < hearts ? 1 : 0.6, opacity: i < hearts ? 1 : 0.25 }} className="text-lg">❤️</motion.span>
+            <motion.span key={i} animate={{ scale: i < hearts ? 1 : 0.8, opacity: i < hearts ? 1 : 0.3 }} className="text-xl">❤️</motion.span>
           ))}
         </div>
 
         {/* HAYQ */}
-        <div className="hayq-chip">🪙 {totalHAYQ}</div>
+        <div className="bg-white/5 border border-white/10 px-3 py-1 rounded-xl flex items-center gap-2 text-sm font-bold">
+          <span className="text-yellow-400">🪙</span> {totalHAYQ}
+        </div>
       </div>
 
       {/* Exercise */}
-      <div className="flex-1 flex flex-col lg:flex-row items-center justify-center gap-8 px-4 py-8 max-w-4xl mx-auto w-full">
+      <div className="flex-1 flex flex-col lg:flex-row items-center justify-center gap-12 px-6 py-12 max-w-5xl mx-auto w-full">
 
         {/* Nuri sidebar */}
-        <div className="flex flex-col items-center gap-3 lg:w-48 shrink-0">
+        <div className="flex flex-col items-center gap-4 lg:w-56 shrink-0">
           <NuriSpeech text={ex.nuriSpeech} mood={ex.nuriMood} />
-          <Nuri mood={ex.nuriMood} size={110} />
+          <Nuri mood={ex.nuriMood} size={140} />
         </div>
 
         {/* Exercise card */}
-        <div className="flex-1 w-full">
+        <div className="flex-1 w-full bg-white/5 p-8 rounded-3xl border border-white/10 shadow-2xl">
           <AnimatePresence mode="wait">
             <motion.div key={ex.index}
-              initial={{ opacity:0, x:40 }} animate={{ opacity:1, x:0 }} exit={{ opacity:0, x:-40 }}
-              transition={{ duration:0.25 }}
-              className="space-y-5">
+              initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:-20 }}
+              transition={{ duration:0.3 }}
+              className="space-y-6">
 
               {/* Type badge */}
-              <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest"
-                style={{ color:"var(--hy-orange)" }}>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-[#FFA500]/10 border border-[#FFA500]/20 text-[10px] font-bold uppercase tracking-wider text-[#FFA500]">
                 <span>
-                  {current.type === "translation_en_to_hy" ? "🔤 Translate"
-                  : current.type === "word_order" ? "🔀 Arrange"
-                  : "🎯 Choose"}
+                  {current.type === "translation_en_to_hy" ? "🔤 Թարգմանություն"
+                  : current.type === "word_order" ? "🔀 Դասավորիր"
+                  : "🎯 Ընտրություն"}
                 </span>
-                <span className="text-white/20">·</span>
-                <span className="text-white/30">{current.cefr} · +{current.hayqReward} HAYQ</span>
+                <span className="opacity-30">•</span>
+                <span>{current.cefr}</span>
+                <span className="opacity-30">•</span>
+                <span>+{current.hayqReward} HAYQ</span>
               </div>
 
               {/* Prompt */}
-              <h2 className="text-xl lg:text-2xl font-light leading-relaxed">{current.prompt}</h2>
+              <h2 className="text-2xl lg:text-3xl font-medium leading-tight">{current.prompt}</h2>
 
               {/* Hint */}
               {current.hint && (
-                <p className="text-sm italic pl-3 border-l-2" style={{ color:"rgba(242,168,0,0.7)", borderColor:"rgba(242,168,0,0.3)" }}>
-                  💡 {current.hint}
-                </p>
+                <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/20 flex gap-3 italic text-sm text-blue-200/70">
+                  <span>💡</span>
+                  <p>{current.hint}</p>
+                </div>
               )}
 
               {/* Input */}
-              {current.type === "word_order" ? (
-                <WordOrderInput selected={selectedWords} available={availWords}
-                  onSelect={w => { setSW(p=>[...p,w]); setAW(p=>{const i=p.indexOf(w);return[...p.slice(0,i),...p.slice(i+1)]}); }}
-                  onDeselect={w => { setAW(p=>[...p,w]); setSW(p=>{const i=p.lastIndexOf(w);return[...p.slice(0,i),...p.slice(i+1)]}); }}
-                  disabled={ex.state!=="idle"} />
-              ) : current.type === "multiple_choice" && current.options ? (
-                <MultiChoice options={current.options} selected={ex.userAnswer}
-                  onSelect={v => setEx(s=>({...s,userAnswer:v}))}
-                  disabled={ex.state!=="idle"} correct={current.targetAnswer} showResult={ex.state!=="idle"} />
-              ) : (
-                <textarea value={ex.userAnswer}
-                  onChange={e => setEx(s=>({...s,userAnswer:e.target.value}))}
-                  onKeyDown={onKey} disabled={ex.state!=="idle"}
-                  placeholder="Մuтqagreq hayeren..."
-                  className="answer-input" dir="auto" lang="hy" />
-              )}
+              <div className="mt-8">
+                {current.type === "word_order" ? (
+                  <WordOrderInput selected={selectedWords} available={availWords}
+                    onSelect={w => { setSW(p=>[...p,w]); setAW(p=>{const i=p.indexOf(w);return[...p.slice(0,i),...p.slice(i+1)]}); }}
+                    onDeselect={w => { setAW(p=>[...p,w]); setSW(p=>{const i=p.lastIndexOf(w);return[...p.slice(0,i),...p.slice(i+1)]}); }}
+                    disabled={ex.state!=="idle"} />
+                ) : current.type === "multiple_choice" && current.options ? (
+                  <MultiChoice options={current.options} selected={ex.userAnswer}
+                    onSelect={v => setEx(s=>({...s,userAnswer:v}))}
+                    disabled={ex.state!=="idle"} correct={current.targetAnswer} showResult={ex.state!=="idle"} />
+                ) : (
+                  <textarea value={ex.userAnswer}
+                    onChange={e => setEx(s=>({...s,userAnswer:e.target.value}))}
+                    onKeyDown={onKey} disabled={ex.state!=="idle"}
+                    placeholder="Մուտքագրեք հայերեն..."
+                    className="w-full bg-white/5 border-2 border-white/10 rounded-2xl p-6 text-xl focus:border-[#0033A0] outline-none transition-all resize-none min-h-[160px]"
+                    dir="auto" lang="hy" autoFocus />
+                )}
+              </div>
             </motion.div>
           </AnimatePresence>
         </div>
@@ -221,29 +232,35 @@ export default function LearnPage() {
       {/* Feedback bar */}
       <AnimatePresence>
         {(ex.state === "correct" || ex.state === "incorrect") && (
-          <motion.div initial={{ y:80, opacity:0 }} animate={{ y:0, opacity:1 }} exit={{ y:80, opacity:0 }}
-            className="border-t-2 p-5"
+          <motion.div initial={{ y:100 }} animate={{ y:0 }} exit={{ y:100 }}
+            className="fixed bottom-0 left-0 right-0 p-6 lg:p-10 border-t-4"
             style={{
-              background: ex.state==="correct" ? "rgba(16,80,40,0.9)" : "rgba(80,16,16,0.9)",
-              borderColor: ex.state==="correct" ? "var(--hy-orange)" : "var(--hy-red)",
+              background: ex.state==="correct" ? "#132d1b" : "#311414",
+              borderColor: ex.state==="correct" ? "#22c55e" : "#D90012",
             }}>
-            <div className="max-w-2xl mx-auto flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <p className="font-bold text-lg mb-1">
-                  {ex.state==="correct" ? `✅ Ëntrel e! +${ex.hayqEarned} HAYQ 🪙` : "❌ Mтatir"}
-                </p>
-                <p className="text-sm text-white/60">{ex.feedback}</p>
-                {ex.corrections?.[0] && ex.state==="incorrect" && (
-                  <p className="text-sm mt-1">
-                    <span className="text-white/40">Ëntrel pastasхan: </span>
-                    <span className="font-armenian font-semibold" style={{ color:"var(--hy-orange)" }}>{ex.corrections[0]}</span>
+            <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex items-center gap-4 text-center md:text-left">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl ${ex.state==='correct'?'bg-green-500':'bg-red-500'}`}>
+                  {ex.state==="correct" ? "✓" : "✕"}
+                </div>
+                <div>
+                  <p className={`text-xl font-bold ${ex.state==='correct'?'text-green-400':'text-red-400'}`}>
+                    {ex.state==="correct" ? `Ճիշտ է! +${ex.hayqEarned} HAYQ 🪙` : "Սխալ է"}
                   </p>
-                )}
+                  {ex.corrections?.[0] && ex.state==="incorrect" && (
+                    <p className="text-white/70 mt-1 italic">
+                      Ճիշտ պատասխանը՝ <span className="font-bold text-white not-italic ml-1">{ex.corrections[0]}</span>
+                    </p>
+                  )}
+                </div>
               </div>
               <button onClick={next}
-                className="px-6 py-3 rounded-2xl font-bold text-white shrink-0 transition-all active:scale-95"
-                style={{ background: ex.state==="correct" ? "var(--hy-orange)" : "var(--hy-red)", color: ex.state==="correct" ? "#07080f" : "white" }}>
-                Shаrunakel →
+                className="w-full md:w-auto px-12 py-4 rounded-2xl font-black text-lg uppercase tracking-wider transition-all active:scale-95 shadow-lg"
+                style={{
+                  background: ex.state==="correct" ? "#22c55e" : "#D90012",
+                  color: "white"
+                }}>
+                Շարունակել
               </button>
             </div>
           </motion.div>
@@ -252,13 +269,13 @@ export default function LearnPage() {
 
       {/* Submit button */}
       {ex.state === "idle" && (
-        <div className="p-4 border-t" style={{ borderColor:"var(--color-border)" }}>
+        <div className="p-6 border-t border-white/10 bg-white/5">
           <div className="max-w-2xl mx-auto">
             <button onClick={submit}
               disabled={!ex.userAnswer.trim() && current.type !== "word_order"}
-              className="w-full py-4 rounded-2xl font-bold text-lg transition-all active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed"
-              style={{ background:"linear-gradient(135deg,var(--hy-red),var(--hy-blue))", color:"white", boxShadow:"0 4px 24px rgba(217,0,18,0.25)" }}>
-              Stugel → 
+              className="w-full py-5 rounded-2xl font-black text-xl uppercase tracking-widest transition-all active:scale-[0.98] disabled:opacity-20 disabled:grayscale"
+              style={{ background: "linear-gradient(135deg, #D90012, #0033A0)", color: "white", boxShadow: "0 8px 32px rgba(217,0,18,0.3)" }}>
+              Ստուգել
             </button>
           </div>
         </div>
@@ -267,47 +284,49 @@ export default function LearnPage() {
   );
 }
 
-// ── Word Order ────────────────────────────────────────────────────────────────
 function WordOrderInput({ selected, available, onSelect, onDeselect, disabled }:
   { selected:string[]; available:string[]; onSelect:(w:string)=>void; onDeselect:(w:string)=>void; disabled:boolean }) {
   return (
-    <div className="space-y-4">
-      <div className="min-h-[56px] p-3 rounded-2xl border-2 border-dashed flex flex-wrap gap-2"
-        style={{ borderColor:"rgba(242,168,0,0.25)", background:"rgba(242,168,0,0.03)" }}>
-        {selected.length === 0 && <span className="text-white/25 text-sm self-center">Ëntrел bardery storevin...</span>}
+    <div className="space-y-6">
+      <div className="min-h-[80px] p-4 rounded-2xl border-2 border-dashed border-white/10 bg-white/5 flex flex-wrap gap-3">
+        {selected.length === 0 && <span className="text-white/20 text-sm self-center italic">Ընտրեք բառերը...</span>}
         {selected.map((w,i) => (
           <motion.button key={`s${i}${w}`} initial={{ scale:0.8 }} animate={{ scale:1 }}
-            onClick={() => !disabled && onDeselect(w)} className="word-chip-selected">{w}</motion.button>
+            onClick={() => !disabled && onDeselect(w)}
+            className="px-5 py-2 rounded-xl bg-[#0033A0] border-b-4 border-blue-900 text-white font-bold hover:brightness-110 active:border-b-0 active:translate-y-1 transition-all">
+            {w}
+          </motion.button>
         ))}
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-3">
         {available.map((w,i) => (
           <motion.button key={`a${i}${w}`} initial={{ scale:0.8 }} animate={{ scale:1 }}
-            onClick={() => !disabled && onSelect(w)} className="word-chip-available">{w}</motion.button>
+            onClick={() => !disabled && onSelect(w)}
+            className="px-5 py-2 rounded-xl bg-white/10 border-b-4 border-white/5 text-white font-bold hover:bg-white/20 active:border-b-0 active:translate-y-1 transition-all">
+            {w}
+          </motion.button>
         ))}
       </div>
     </div>
   );
 }
 
-// ── Multiple Choice ───────────────────────────────────────────────────────────
 function MultiChoice({ options, selected, onSelect, disabled, correct, showResult }:
   { options:string[]; selected:string; onSelect:(v:string)=>void; disabled:boolean; correct:string; showResult:boolean }) {
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {options.map(opt => {
         const isSel = selected === opt;
         const isOk  = opt === correct;
-        let bg = "rgba(255,255,255,0.05)"; let border = "rgba(255,255,255,0.1)"; let color = "white";
+        let bg = "bg-white/5"; let border = "border-white/10"; let color = "text-white";
         if (showResult) {
-          if (isOk)       { bg="rgba(0,120,60,0.25)"; border="rgba(0,200,100,0.5)"; color="#6effa0"; }
-          else if (isSel) { bg="rgba(120,0,0,0.25)";  border="rgba(217,0,18,0.5)";  color="#ffaaaa"; }
-          else            { color="rgba(255,255,255,0.25)"; }
-        } else if (isSel) { bg="rgba(242,168,0,0.1)"; border="var(--hy-orange)"; color="var(--hy-orange)"; }
+          if (isOk)       { bg="bg-green-500/20"; border="border-green-500"; color="text-green-400"; }
+          else if (isSel) { bg="bg-red-500/20";  border="border-red-500";  color="text-red-400"; }
+          else            { bg="bg-white/5"; border="border-white/5"; color="opacity-20"; }
+        } else if (isSel) { bg="bg-[#0033A0]/20"; border="border-[#0033A0]"; color="text-[#60a5fa]"; }
         return (
           <button key={opt} onClick={() => !disabled && onSelect(opt)}
-            className="p-4 rounded-2xl border-2 text-left font-medium transition-all text-sm"
-            style={{ background:bg, borderColor:border, color }}>
+            className={`p-6 rounded-2xl border-2 text-left font-bold transition-all ${bg} ${border} ${color} ${!disabled && 'hover:bg-white/10'}`}>
             {opt}
           </button>
         );
@@ -316,80 +335,76 @@ function MultiChoice({ options, selected, onSelect, disabled, correct, showResul
   );
 }
 
-// ── Lesson Selector ───────────────────────────────────────────────────────────
 function LessonSelector({ onSelect }: { onSelect:(l:Lesson)=>void }) {
   return (
-    <div className="min-h-screen" style={{ background:"var(--color-bg)", color:"white" }}>
-      <div className="h-1.5 flag-stripe" />
-
-      {/* Nav */}
-      <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor:"var(--color-border)" }}>
-        <div className="flex items-center gap-3">
-          <Image src="/logo.png" alt="NUR Lingo" width={34} height={34} className="rounded-xl" />
-          <span className="font-bold tracking-widest text-sm uppercase" style={{ color:"var(--hy-orange)" }}>NUR Lingo</span>
-        </div>
-        <div className="hayq-chip">🪙 HAYQ</div>
+    <div className="min-h-screen bg-[#0a0b14] text-white">
+      <div className="h-1.5 w-full flex">
+        <div className="h-full flex-1" style={{ background: "#D90012" }} />
+        <div className="h-full flex-1" style={{ background: "#0033A0" }} />
+        <div className="h-full flex-1" style={{ background: "#FFA500" }} />
       </div>
 
-      {/* Hero */}
-      <div className="px-6 pt-8 pb-4 max-w-3xl mx-auto">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-xs uppercase tracking-widest mb-2" style={{ color:"var(--hy-orange)" }}>🇦🇲 Hayeren · Armenian</p>
-            <h1 className="text-3xl font-light leading-tight">
-              Sovorecir<br/><span style={{ color:"var(--hy-red)" }}>Hayeren</span>
-            </h1>
-            <p className="text-white/40 text-sm mt-2">Semantic engine · HAYQ rewards · Nuri mascot</p>
+      <nav className="flex items-center justify-between px-8 py-5 border-b border-white/10 bg-white/5 sticky top-0 z-50 backdrop-blur-md">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D90012] to-[#FFA500] flex items-center justify-center font-black text-xl shadow-lg">Ն</div>
+          <span className="font-black tracking-tighter text-xl uppercase italic">NUR Lingo</span>
+        </div>
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2 font-bold text-[#FFA500]">
+            <span className="text-xl">🪙</span> HAYQ
           </div>
-          <Nuri mood="happy" size={90} />
         </div>
+      </nav>
+
+      <div className="px-8 pt-12 pb-8 max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-10">
+        <div className="flex-1 text-center md:text-left">
+          <p className="text-[#FFA500] font-black uppercase tracking-widest text-xs mb-4 flex items-center justify-center md:justify-start gap-2">
+            <span className="text-base">🇦🇲</span> Հայերեն • Armenian
+          </p>
+          <h1 className="text-5xl md:text-6xl font-black leading-none mb-6">
+            Սովորիր <span className="text-[#D90012]">Հայերեն</span>
+          </h1>
+          <div className="flex flex-wrap gap-4 justify-center md:justify-start text-white/50 font-medium">
+            <span className="flex items-center gap-1"><span className="text-green-500">✓</span> Իմաստային ուսուցում</span>
+            <span className="flex items-center gap-1"><span className="text-green-500">✓</span> HAYQ պարգևներ</span>
+          </div>
+        </div>
+        <Nuri mood="happy" size={180} className="drop-shadow-2xl" />
       </div>
 
-      {/* Units */}
-      <div className="px-6 pb-16 max-w-3xl mx-auto space-y-8">
+      <div className="px-8 pb-24 max-w-4xl mx-auto space-y-12 mt-12">
         {UNITS.map(unit => {
           const lessons = LESSONS.filter(l => l.unitId === unit.id);
           return (
-            <div key={unit.id}>
-              {/* Unit header */}
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-xl"
-                  style={{ background:`linear-gradient(135deg,${unit.colorFrom},${unit.colorTo})`, boxShadow:`0 4px 16px ${unit.colorFrom}44` }}>
+            <div key={unit.id} className="relative">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-xl"
+                  style={{ background: `linear-gradient(135deg, ${unit.colorFrom}, ${unit.colorTo})` }}>
                   {unit.iconEmoji}
                 </div>
                 <div>
-                  <h2 className="font-semibold">{unit.titleArmenian}</h2>
-                  <p className="text-white/40 text-xs">{unit.title} · {unit.cefr}</p>
+                  <h2 className="text-2xl font-black">{unit.titleArmenian}</h2>
+                  <p className="text-white/40 font-bold text-sm uppercase tracking-tight">{unit.title} • {unit.cefr}</p>
                 </div>
               </div>
 
-              {/* Lessons */}
-              <div className="space-y-3 pl-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {lessons.map((l, i) => (
-                  <motion.button key={l.id} whileHover={{ scale:1.01 }} whileTap={{ scale:0.98 }}
+                  <motion.button key={l.id} whileHover={{ scale:1.02 }} whileTap={{ scale:0.98 }}
                     onClick={() => onSelect(l)}
-                    className="lesson-card w-full group">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold"
-                          style={{ background:`linear-gradient(135deg,${unit.colorFrom}33,${unit.colorTo}33)`, color:unit.colorFrom }}>
+                    className="bg-white/5 border-2 border-white/10 rounded-3xl p-6 hover:bg-white/10 hover:border-white/20 transition-all text-left group">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-xs font-black mb-3 group-hover:bg-[#FFA500] group-hover:text-black transition-colors">
                           {i+1}
                         </div>
-                        <div className="text-left">
-                          <p className="font-medium text-sm">{l.titleArmenian}</p>
-                          <p className="text-white/40 text-xs">{l.title}</p>
-                        </div>
+                        <h3 className="text-lg font-bold mb-1">{l.titleArmenian}</h3>
+                        <p className="text-white/40 text-xs font-medium">{l.description}</p>
                       </div>
-                      <div className="flex items-center gap-3 text-xs text-white/30">
-                        <span className="hayq-chip text-xs">🪙 {l.hayqTotal}</span>
-                        <span>⏱ {l.estimatedMinutes}m</span>
-                        <span className="group-hover:translate-x-1 transition-transform" style={{ color:"var(--hy-orange)" }}>→</span>
+                      <div className="flex flex-col items-end gap-2">
+                        <span className="bg-yellow-400/10 text-yellow-500 px-2 py-1 rounded-lg text-[10px] font-black italic">🪙 {l.hayqTotal}</span>
+                        <span className="text-white/20 text-[10px] font-bold">⏱ {l.estimatedMinutes} րոպե</span>
                       </div>
-                    </div>
-                    <div className="flex gap-2 mt-2 flex-wrap pl-11">
-                      {l.grammarFocus.slice(0,2).map(g => (
-                        <span key={g} className="text-[10px] px-2 py-0.5 rounded-full" style={{ background:"rgba(0,51,160,0.2)", color:"#a0b4ff" }}>{g}</span>
-                      ))}
                     </div>
                   </motion.button>
                 ))}
@@ -398,65 +413,65 @@ function LessonSelector({ onSelect }: { onSelect:(l:Lesson)=>void }) {
           );
         })}
       </div>
-      <div className="h-1.5 flag-stripe" />
     </div>
   );
 }
 
-// ── Completion ────────────────────────────────────────────────────────────────
 function CompletionScreen({ lesson, totalHAYQ, hearts, onContinue }:
   { lesson:Lesson; totalHAYQ:number; hearts:number; onContinue:()=>void }) {
   const level = hayqToLevel(totalHAYQ);
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center"
-      style={{ background:"var(--color-bg)", color:"white" }}>
-      <div className="h-1.5 w-full flag-stripe fixed top-0" />
+    <div className="min-h-screen bg-[#0a0b14] flex flex-col items-center justify-center p-8 text-center relative">
+      <div className="h-1.5 w-full flex fixed top-0 left-0 right-0">
+        <div className="h-full flex-1" style={{ background: "#D90012" }} />
+        <div className="h-full flex-1" style={{ background: "#0033A0" }} />
+        <div className="h-full flex-1" style={{ background: "#FFA500" }} />
+      </div>
 
-      <motion.div initial={{ scale:0.5, opacity:0 }} animate={{ scale:1, opacity:1 }}
-        transition={{ type:"spring", damping:10 }} className="space-y-6 max-w-sm w-full">
+      <motion.div initial={{ scale:0.8, opacity:0 }} animate={{ scale:1, opacity:1 }}
+        className="space-y-8 max-w-md w-full">
 
-        <Nuri mood="celebrating" size={150} className="mx-auto" />
+        <Nuri mood="celebrating" size={200} className="mx-auto drop-shadow-2xl" />
 
         <div>
-          <h1 className="text-3xl font-bold">Shnorhavor! 🎉</h1>
-          <p className="text-white/50 mt-1">{lesson.titleArmenian} — complete!</p>
+          <h1 className="text-5xl font-black text-white mb-2">Շնորհավոր! 🎉</h1>
+          <p className="text-xl text-white/50 font-medium italic">Դասն ավարտված է:</p>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-4">
           {[
-            { label:"HAYQ", value:`+${totalHAYQ}`, color:"var(--hy-orange)" },
-            { label:"Hearts", value:"❤️".repeat(hearts)+"🖤".repeat(3-hearts), color:"var(--hy-red)" },
-            { label:"Level", value:level.titleArmenian, color:level.color },
+            { label:"HAYQ", value:`+${totalHAYQ}`, color:"text-[#FFA500]" },
+            { label:"Սիրտ", value:hearts > 0 ? "❤️".repeat(hearts) : "💔", color:"text-[#D90012]" },
+            { label:"Մակարդակ", value:level.titleArmenian, color:level.color },
           ].map(s => (
-            <div key={s.label} className="rounded-2xl p-3 text-center border"
-              style={{ background:"var(--color-card)", borderColor:"var(--color-border)" }}>
-              <div className="font-bold text-lg" style={{ color:s.color }}>{s.value}</div>
-              <div className="text-xs text-white/40 mt-0.5">{s.label}</div>
+            <div key={s.label} className="bg-white/5 border border-white/10 rounded-3xl p-5 shadow-lg">
+              <div className={`text-xl font-black mb-1 ${s.color}`}>{s.value}</div>
+              <div className="text-[10px] font-black uppercase tracking-widest text-white/30">{s.label}</div>
             </div>
           ))}
         </div>
 
-        {/* HAYQ progress bar */}
-        <div className="rounded-2xl p-4 border text-left space-y-2"
-          style={{ background:"rgba(242,168,0,0.05)", borderColor:"rgba(242,168,0,0.2)" }}>
-          <div className="flex justify-between text-xs">
-            <span style={{ color:"var(--hy-orange)" }}>🪙 {level.titleArmenian}</span>
-            <span className="text-white/40">{level.nextLevelHAYQ === Infinity ? "MAX" : `${level.nextLevelHAYQ} HAYQ`}</span>
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-4 shadow-xl">
+          <div className="flex justify-between items-end">
+            <div className="text-left">
+              <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1">Հաջորդ մակարդակը</p>
+              <p className="text-lg font-black" style={{ color: level.color }}>{level.titleArmenian}</p>
+            </div>
+            <p className="text-sm font-bold text-white/40">{level.nextLevelHAYQ === Infinity ? "ԱՌԱՎԵԼԱԳՈՒՅՆ" : `${totalHAYQ} / ${level.nextLevelHAYQ} HAYQ`}</p>
           </div>
           {level.nextLevelHAYQ !== Infinity && (
-            <div className="h-2 rounded-full overflow-hidden" style={{ background:"rgba(255,255,255,0.08)" }}>
-              <motion.div className="h-full rounded-full"
-                style={{ background:"linear-gradient(90deg,var(--hy-orange),var(--hy-red))" }}
+            <div className="h-4 rounded-full bg-white/5 overflow-hidden p-1 border border-white/10">
+              <motion.div className="h-full rounded-full bg-gradient-to-r from-[#D90012] via-[#0033A0] to-[#FFA500]"
                 initial={{ width:0 }}
                 animate={{ width:`${Math.min((totalHAYQ/level.nextLevelHAYQ)*100,100)}%` }}
-                transition={{ delay:0.5, duration:1 }} />
+                transition={{ delay:0.5, duration:1.5, ease: "easeOut" }} />
             </div>
           )}
         </div>
 
-        <button onClick={onContinue} className="btn-orange w-full rounded-2xl py-4 text-lg">
-          Sharуnakel →
+        <button onClick={onContinue}
+          className="w-full py-5 rounded-2xl font-black text-xl uppercase tracking-widest shadow-2xl transition-all active:scale-95 bg-white text-black hover:bg-white/90">
+          Շարունակել
         </button>
       </motion.div>
     </div>

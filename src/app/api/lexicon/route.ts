@@ -115,7 +115,7 @@ export async function GET(req: NextRequest) {
   });
 }
 
-export async function GET_PATTERNS(req: NextRequest) {
+async function GET_PATTERNS(req: NextRequest) {
   return NextResponse.json({
     total: SENTENCE_PATTERNS.length,
     patterns: SENTENCE_PATTERNS,
