@@ -77,9 +77,8 @@ export default function Nuri({
 }
 
 export function getMoodFromScore(score: number, accepted: boolean): NuriMood {
-  if (!accepted) return "encouraging";
-  if (score >= 0.98) return "celebrating";
-  return "happy";
+  if (!accepted) return "sad";
+  return "encouraging";
 }
 
 // ── Speech bubble ────────────────────────────────────────────────────────────

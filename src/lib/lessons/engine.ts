@@ -351,7 +351,3 @@ export const getUnitById    = (id: string) => UNITS.find(u => u.id === id);
 export const getLessonsForUnit = (uid: string) => LESSONS.filter(l => l.unitId === uid);
 export const scoreToGrade = (s: number) =>
   s >= 0.98 ? "perfect" : s >= 0.85 ? "excellent" : s >= 0.75 ? "good" : s >= 0.5 ? "partial" : "incorrect";
-
-export function xpToLevel(xp: number): number {
-  return Math.floor(xp / 60) + 1;
-}

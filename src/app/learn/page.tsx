@@ -110,7 +110,7 @@ export default function LearnPage() {
     if (!lesson) return;
     const nextIdx = ex.index + 1;
     if (nextIdx >= lesson.exercises.length) { setComplete(true); return; }
-    setEx({ index: nextIdx, userAnswer: "", state: "idle", feedback: "", score: 0, hayqEarned: 0, nuriMood: "idle", nuriSpeech: randomLine("idle") });
+    setEx({ index: nextIdx, userAnswer: "", state: "idle", feedback: "", score: 0, hayqEarned: 0, nuriMood: "happy", nuriSpeech: randomLine("idle") });
     setSW([]); setAW([]);
   }, [lesson, ex.index]);
 
