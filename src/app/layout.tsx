@@ -26,7 +26,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body className="font-mono antialiased" style={{ background: "var(--color-bg)" }}>
+      <body
+        className="font-mono antialiased"
+        style={{
+          background: "url('/images/pomegranate-bg.jpg') no-repeat center center fixed",
+          backgroundSize: "cover",
+          margin: 0,
+          padding: 0,
+        }}
+      >
         {children}
       </body>
     </html>

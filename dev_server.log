@@ -2,13 +2,19 @@
 > nur-lingo@1.0.0 dev
 > next dev
 
- ⚠ Port 3000 is in use, trying 3001 instead.
- ⚠ Port 3001 is in use, trying 3002 instead.
- ⚠ Port 3002 is in use, trying 3003 instead.
   ▲ Next.js 14.2.35
-  - Local:        http://localhost:3003
+  - Local:        http://localhost:3000
   - Experiments (use with caution):
     · typedRoutes
 
  ✓ Starting...
- ✓ Ready in 2.4s
+ ✓ Ready in 2.2s
+ ○ Compiling / ...
+ ✓ Compiled / in 9.2s (1250 modules)
+ GET / 200 in 10205ms
+ ✓ Compiled in 1063ms (633 modules)
+ ○ Compiling /learn ...
+ ✓ Compiled /learn in 2s (1246 modules)
+ GET /learn 200 in 2292ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+[?25h
