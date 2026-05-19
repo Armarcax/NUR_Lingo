@@ -1,52 +1,61 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getEmbedding, cosineSimilarity } from "@/lib/ai/embeddings";
-import { evaluateWithAI } from "@/lib/ai/evaluator";
+import { fullValidationWithAI } from "@/lib/ai/evaluator";
+import { getLessonById } from "@/lib/lessons/engine";
 
 export const runtime = "edge";
 
 export async function POST(req: NextRequest) {
   try {
-    const { userAnswer, lessonId, expectedAnswers } = await req.json();
+    const {
+      userAnswer,
+      lessonId,
+      expectedAnswers = [],
+      sourceLanguage = "en",
+      targetLanguage = "hy",
+    } = await req.json();
 
-    if (!userAnswer || !expectedAnswers || expectedAnswers.length === 0) {
+    if (!userAnswer || !lessonId) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // 1. Get embedding for user answer (translated if needed)
-    // For Phase 1, we assume comparison is done in the target language (English)
-    // If the input is Armenian, we use evaluateWithAI which handles translation + logic
-
-    // However, the task specifically asked for embeddings and cosine similarity.
-    // Let's implement the logic:
-    // Translate user answer to English via Gemini (handled by evaluateWithAI if we use it)
-
-    // Plan:
-    // a. Get embeddings for all accepted answers
-    // b. Get embedding for user answer
-    // c. Calculate max cosine similarity
-
-    // Note: Armenian to English translation is best done via evaluateWithAI for nuance,
-    // but the task specifies embedding similarity.
-
-    const userVec = await getEmbedding(userAnswer);
-
-    // Get embeddings for all expected answers in parallel
-    const ansVectors = await Promise.all((expectedAnswers as string[]).map(ans => getEmbedding(ans)));
-
-    let maxSim = 0;
-    for (const ansVec of ansVectors) {
-      const sim = cosineSimilarity(userVec, ansVec);
-      if (sim > maxSim) maxSim = sim;
+    const lesson = getLessonById(lessonId);
+    if (!lesson) {
+        return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
     }
 
-    const correct = maxSim > 0.85;
+    // Determine the source sentence and expected answer for validation
+    // In current UX, most exercises are translation from prompt (source) to userAnswer (target)
+    // We'll find the exercise that matches the lesson context or just use the provided expectedAnswers
+
+    // For now, we assume the first expected answer is the primary one
+    const primaryExpected = expectedAnswers[0] || "";
+
+    // We need the source sentence for the AI to judge semantic equivalence properly.
+    // We'll try to find the exercise in the lesson to get the prompt.
+    const exercise = lesson.exercises.find(e =>
+        e.targetAnswer === primaryExpected || e.acceptableAnswers.includes(primaryExpected)
+    );
+
+    const sourceSentence = exercise ? exercise.prompt : primaryExpected;
+
+    const result = await fullValidationWithAI({
+      userAnswer,
+      expectedAnswer: primaryExpected,
+      sourceSentence,
+      sourceLanguage,
+      targetLanguage,
+      allValidForms: expectedAnswers,
+    });
 
     return NextResponse.json({
-      correct,
-      hayq: correct ? 10 : 0,
-      seeds: 0,
-      score: maxSim,
-      feedback: correct ? "Excellent!" : "Try again!",
+      correct: result.accepted,
+      hayq: result.accepted ? (result.score >= 0.95 ? 20 : 15) : 0,
+      seeds: result.accepted && result.score >= 0.98 ? 1 : 0,
+      score: result.score,
+      feedback: result.feedback,
+      corrections: result.corrections,
+      layer: result.layer,
+      aiUsed: result.aiUsed,
     });
 
   } catch (error) {

@@ -86,7 +86,7 @@ async function seedUnits() {
     description:   u.description,
     cefr_level:    u.cefr,
     icon_emoji:    u.iconEmoji,
-    color_class:   u.color,
+    color_class:   u.colorFrom,
     sort_order:    i,
     is_published:  true,
   }));

@@ -33,13 +33,13 @@ describe("patternRegistryMatch()", () => {
       "Գնում եմ տուն",
     ];
     for (const v of variants) {
-      const r = patternRegistryMatch(v, "I am going home");
+      const r = patternRegistryMatch(v, "I am going home", "en");
       expect(r?.accepted).toBe(true);
     }
   });
 
   it("returns null if no pattern found", () => {
-    const r = patternRegistryMatch("something", "nonexistent english");
+    const r = patternRegistryMatch("something", "nonexistent english", "en");
     expect(r).toBeNull();
   });
 });
@@ -49,7 +49,9 @@ describe("validateAnswer() — full pipeline", () => {
     const r = await validateAnswer({
       userAnswer: "Ես գնում եմ տուն",
       expectedAnswer: "Ես գնում եմ տուն",
-      englishOriginal: "I am going home",
+      sourceSentence: "I am going home",
+      sourceLanguage: "en",
+      targetLanguage: "hy",
     });
     expect(r.accepted).toBe(true);
     expect(r.score).toBeGreaterThanOrEqual(0.95);
@@ -59,7 +61,9 @@ describe("validateAnswer() — full pipeline", () => {
     const r = await validateAnswer({
       userAnswer: "Ես տուն եմ գնում",
       expectedAnswer: "Ես գնում եմ տուն",
-      englishOriginal: "I am going home",
+      sourceSentence: "I am going home",
+      sourceLanguage: "en",
+      targetLanguage: "hy",
     });
     expect(r.accepted).toBe(true);
   });
@@ -68,7 +72,9 @@ describe("validateAnswer() — full pipeline", () => {
     const r = await validateAnswer({
       userAnswer: "Տուն եմ գնում",
       expectedAnswer: "Ես գնում եմ տուն",
-      englishOriginal: "I am going home",
+      sourceSentence: "I am going home",
+      sourceLanguage: "en",
+      targetLanguage: "hy",
     });
     expect(r.accepted).toBe(true);
   });
@@ -77,7 +83,9 @@ describe("validateAnswer() — full pipeline", () => {
     const r = await validateAnswer({
       userAnswer: "Ես ուտում եմ հաց",
       expectedAnswer: "Ես գնում եմ տուն",
-      englishOriginal: "I am going home",
+      sourceSentence: "I am going home",
+      sourceLanguage: "en",
+      targetLanguage: "hy",
     });
     expect(r.accepted).toBe(false);
     expect(r.corrections).toBeDefined();
@@ -87,7 +95,9 @@ describe("validateAnswer() — full pipeline", () => {
     const r = await validateAnswer({
       userAnswer: "   ",
       expectedAnswer: "Ես գնում եմ տուն",
-      englishOriginal: "I am going home",
+      sourceSentence: "I am going home",
+      sourceLanguage: "en",
+      targetLanguage: "hy",
     });
     expect(r.accepted).toBe(false);
   });

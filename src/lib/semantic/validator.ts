@@ -4,7 +4,7 @@
  * Multi-layer answer checking pipeline:
  *   Layer 1: Exact match (fast path)
  *   Layer 2: Pattern registry match
- *   Layer 3: Morphological equivalence
+ *   Layer 3: Morphological equivalence (Armenian only)
  *   Layer 4: Synonym expansion
  *   Layer 5: AI semantic evaluation (LLM fallback)
  *
@@ -15,6 +15,7 @@ import {
   normalizeArmenian,
   areMorphologicallyEquivalent,
   extractSemanticTokens,
+  isArmenian,
 } from "../nlp/morphology";
 import {
   lookupSentencePattern,
@@ -59,14 +60,16 @@ export function exactMatch(
   userAnswer: string,
   expectedAnswer: string
 ): ValidationResult | null {
-  const u = normalizeArmenian(userAnswer);
-  const e = normalizeArmenian(expectedAnswer);
+  const isHy = isArmenian(expectedAnswer);
+  const u = isHy ? normalizeArmenian(userAnswer) : userAnswer.trim().toLowerCase();
+  const e = isHy ? normalizeArmenian(expectedAnswer) : expectedAnswer.trim().toLowerCase();
+
   if (u === e) {
     return {
       accepted: true,
       score: SCORE_EXACT,
       layer: "exact_match",
-      feedback: "Կատարյալ։ Ճիշտ պատասխան! (Perfect answer!)",
+      feedback: "Perfect answer!",
       confidence: 1.0,
     };
   }
@@ -77,9 +80,13 @@ export function exactMatch(
 
 export function patternRegistryMatch(
   userAnswer: string,
-  englishOriginal: string
+  sourceSentence: string,
+  sourceLanguage: "en" | "hy"
 ): ValidationResult | null {
-  const validForms = getAllValidArmenianForms(englishOriginal);
+  // Pattern registry currently mostly for English -> Armenian
+  if (sourceLanguage !== "en") return null;
+
+  const validForms = getAllValidArmenianForms(sourceSentence);
   if (validForms.length === 0) return null;
 
   const u = normalizeArmenian(userAnswer);
@@ -89,7 +96,7 @@ export function patternRegistryMatch(
       accepted: true,
       score: SCORE_PATTERN,
       layer: "pattern_registry",
-      feedback: "Ճիշտ է։ Ճշգրիտ ձևակերպում! (Correct — valid phrasing!)",
+      feedback: "Correct — valid phrasing!",
       alternatives: validForms.filter((v) => normalizeArmenian(v) !== u),
       confidence: 0.99,
     };
@@ -104,6 +111,9 @@ export function morphologicalMatch(
   referenceAnswer: string,
   allValidForms: string[]
 ): ValidationResult | null {
+  // Only for Armenian
+  if (!isArmenian(referenceAnswer)) return null;
+
   // Check against reference
   const vsReference = areMorphologicallyEquivalent(userAnswer, referenceAnswer);
   if (vsReference.equivalent) {
@@ -111,7 +121,7 @@ export function morphologicalMatch(
       accepted: true,
       score: SCORE_MORPHOLOGICAL,
       layer: "morphological",
-      feedback: "Ճիշտ իմաստ! Բառերի կարգը կարող է տարբեր լինել: (Correct meaning! Word order may vary.)",
+      feedback: "Correct meaning! Word order may vary.",
       confidence: vsReference.overlap,
       debug: { morphological_overlap: vsReference.details },
     };
@@ -125,7 +135,7 @@ export function morphologicalMatch(
         accepted: true,
         score: SCORE_MORPHOLOGICAL,
         layer: "morphological",
-        feedback: "Ճիշտ! Ձեր պատասխանը ճիշտ նույն իմաստն ունի: (Correct! Your answer has the same meaning.)",
+        feedback: "Correct! Your answer has the same meaning.",
         confidence: vsForm.overlap,
         debug: { morphological_overlap: vsForm.details, matched_form: validForm },
       };
@@ -140,6 +150,9 @@ export function synonymExpansionMatch(
   userAnswer: string,
   referenceAnswer: string
 ): ValidationResult | null {
+  // Currently optimized for Armenian
+  if (!isArmenian(referenceAnswer)) return null;
+
   const { lemmas: userLemmas } = extractSemanticTokens(userAnswer);
   const { lemmas: refLemmas } = extractSemanticTokens(referenceAnswer);
 
@@ -159,7 +172,7 @@ export function synonymExpansionMatch(
       accepted: true,
       score: SCORE_SYNONYM,
       layer: "synonym_expansion",
-      feedback: "Շատ լավ! Հոմանիշների կիրառությամբ ճիշտ է: (Very good! Correct with synonyms.)",
+      feedback: "Very good! Correct with synonyms.",
       confidence: overlap,
       debug: { synonym_overlap: overlap, matched: intersection },
     };
@@ -172,7 +185,9 @@ export function synonymExpansionMatch(
 export interface ValidationRequest {
   userAnswer: string;
   expectedAnswer: string;         // primary correct answer
-  englishOriginal: string;        // original English question
+  sourceSentence: string;         // original question
+  sourceLanguage: "en" | "hy";
+  targetLanguage: "en" | "hy";
   allValidAnswers?: string[];     // additional valid forms
   strictMode?: boolean;           // if true, skip morphology and synonym expansion
 }
@@ -180,20 +195,32 @@ export interface ValidationRequest {
 export async function validateAnswer(
   req: ValidationRequest
 ): Promise<ValidationResult> {
-  const { userAnswer, expectedAnswer, englishOriginal, allValidAnswers = [], strictMode = false } = req;
+  const {
+    userAnswer,
+    expectedAnswer,
+    sourceSentence,
+    sourceLanguage,
+    targetLanguage,
+    allValidAnswers = [],
+    strictMode = false
+  } = req;
 
   if (!userAnswer.trim()) {
     return {
       accepted: false,
       score: SCORE_REJECT,
       layer: "exact_match",
-      feedback: "Պատասխանը դատարկ է: (Answer is empty.)",
+      feedback: "Answer is empty.",
       confidence: 1.0,
     };
   }
 
   // All valid forms for this question
-  const patternForms = getAllValidArmenianForms(englishOriginal);
+  let patternForms: string[] = [];
+  if (sourceLanguage === "en" && targetLanguage === "hy") {
+    patternForms = getAllValidArmenianForms(sourceSentence);
+  }
+
   const allForms = [
     ...new Set([expectedAnswer, ...patternForms, ...allValidAnswers]),
   ];
@@ -205,7 +232,7 @@ export async function validateAnswer(
   }
 
   // Layer 2: Pattern registry
-  const patternResult = patternRegistryMatch(userAnswer, englishOriginal);
+  const patternResult = patternRegistryMatch(userAnswer, sourceSentence, sourceLanguage);
   if (patternResult) return patternResult;
 
   // If in strict mode, we stop here (only exact or registered patterns allowed)
@@ -214,26 +241,32 @@ export async function validateAnswer(
       accepted: false,
       score: SCORE_REJECT,
       layer: "pattern_registry",
-      feedback: "Բառերը սխալ դասավորությամբ են կամ բացակայում են: (Words are in wrong order or missing.)",
+      feedback: "Words are in wrong order or missing.",
       corrections: allForms.slice(0, 1),
       confidence: 1.0,
     };
   }
 
-  // Layer 3: Morphological
-  const morphResult = morphologicalMatch(userAnswer, expectedAnswer, allForms);
-  if (morphResult) return morphResult;
+  // Layer 3: Morphological (Armenian only)
+  if (targetLanguage === "hy") {
+    const morphResult = morphologicalMatch(userAnswer, expectedAnswer, allForms);
+    if (morphResult) return morphResult;
+  }
 
-  // Layer 4: Synonym expansion
-  const synonymResult = synonymExpansionMatch(userAnswer, expectedAnswer);
-  if (synonymResult) return synonymResult;
+  // Layer 4: Synonym expansion (Armenian only for now)
+  if (targetLanguage === "hy") {
+    const synonymResult = synonymExpansionMatch(userAnswer, expectedAnswer);
+    if (synonymResult) return synonymResult;
+  }
 
   // Default reject — caller may optionally run AI layer
   return {
     accepted: false,
     score: SCORE_REJECT,
-    layer: "morphological",
-    feedback: buildFeedback(userAnswer, expectedAnswer, allForms),
+    layer: targetLanguage === "hy" ? "morphological" : "exact_match",
+    feedback: targetLanguage === "hy"
+        ? buildFeedback(userAnswer, expectedAnswer, allForms)
+        : `Incorrect. Expected: "${expectedAnswer}"`,
     corrections: allForms.slice(0, 3),
     confidence: 0.9,
   };
@@ -254,16 +287,16 @@ function buildFeedback(
   const missing = [...eSet].filter((l) => !uSet.has(l) && l.length > 1);
   const extra = [...uSet].filter((l) => !eSet.has(l) && l.length > 1);
 
-  const parts: string[] = ["Ճիշտ չէ: (Not quite right.)"];
+  const parts: string[] = ["Not quite right."];
 
   if (missing.length > 0) {
-    parts.push(`Բացակայող բառեր (Missing concepts): [${missing.join(", ")}]`);
+    parts.push(`Missing concepts: [${missing.join(", ")}]`);
   }
   if (extra.length > 0) {
-    parts.push(`Ավելորդ բառեր (Extra words): [${extra.join(", ")}]`);
+    parts.push(`Extra words: [${extra.join(", ")}]`);
   }
   if (allValid.length > 0) {
-    parts.push(`Ճիշտ պատասխան (Correct answer): "${allValid[0]}"`);
+    parts.push(`Correct answer: "${allValid[0]}"`);
   }
 
   return parts.join(" | ");

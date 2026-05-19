@@ -8,17 +8,32 @@
  * Complies with RA Language Law (2011) standard orthography
  */
 
-// ─── Armenian Unicode utilities ────────────────────────────────────────────
+// ─── Language Detection & Unicode utilities ────────────────────────────────
 
 export const ARMENIAN_UNICODE_RANGE = /[\u0531-\u058F\uFB13-\uFB17]+/g;
 export const ARMENIAN_CHAR = /[\u0531-\u058F\uFB13-\uFB17]/;
 
+/**
+ * Returns true if the text contains Armenian characters.
+ */
 export function isArmenian(text: string): boolean {
   return ARMENIAN_CHAR.test(text);
 }
 
-export function containsArmenian(text: string): boolean {
-  return ARMENIAN_CHAR.test(text);
+/**
+ * Returns true if the text consists primarily of Latin characters.
+ */
+export function isEnglish(text: string): boolean {
+  return /^[a-zA-Z\s.,!?;:()[\]"']+$/.test(text);
+}
+
+/**
+ * Detects the language of the provided text.
+ */
+export function detectLanguage(text: string): "en" | "hy" | "unknown" {
+  if (isArmenian(text)) return "hy";
+  if (isEnglish(text)) return "en";
+  return "unknown";
 }
 
 // ─── Morphological Rule Types ───────────────────────────────────────────────
@@ -242,7 +257,7 @@ export function lemmatize(wordOrPhrase: string): LemmatizeResult {
  * Lemmatize all tokens in a sentence and return unique lemma set.
  */
 export function lemmatizeSentence(sentence: string): Set<string> {
-  const tokens = tokenizeArmenian(sentence);
+  const tokens = tokenizeText(sentence);
   const lemmas = new Set<string>();
   for (const token of tokens) {
     const result = lemmatize(token);
@@ -251,15 +266,14 @@ export function lemmatizeSentence(sentence: string): Set<string> {
   return lemmas;
 }
 
-// ─── Armenian Tokenizer ──────────────────────────────────────────────────────
+// ─── Tokenization & Normalization ──────────────────────────────────────────
 
 const ARMENIAN_PUNCTUATION = /[։՝՞՛«»]/g;
 
 /**
- * Tokenize Armenian text into word tokens.
- * Handles Armenian punctuation and Unicode properly.
+ * Generic tokenizer that handles Armenian and English properly.
  */
-export function tokenizeArmenian(text: string): string[] {
+export function tokenizeText(text: string): string[] {
   return text
     .replace(ARMENIAN_PUNCTUATION, " ")
     .replace(/[.,!?;:()[\]"']/g, " ")
@@ -269,9 +283,9 @@ export function tokenizeArmenian(text: string): string[] {
 }
 
 /**
- * Normalize Armenian text: strip punctuation, lowercase, normalize whitespace.
+ * Generic normalizer that handles both Armenian and English.
  */
-export function normalizeArmenian(text: string): string {
+export function normalizeText(text: string): string {
   return text
     .replace(ARMENIAN_PUNCTUATION, "")
     .replace(/[.,!?;:()[\]"']/g, "")
@@ -280,28 +294,40 @@ export function normalizeArmenian(text: string): string {
     .toLowerCase();
 }
 
+/**
+ * @deprecated Use tokenizeText instead.
+ */
+export function tokenizeArmenian(text: string): string[] {
+  return tokenizeText(text);
+}
+
+/**
+ * @deprecated Use normalizeText instead.
+ */
+export function normalizeArmenian(text: string): string {
+  return normalizeText(text);
+}
+
 // ─── Sentence Structure Analysis ────────────────────────────────────────────
 
 export type WordOrder = "SOV" | "SVO" | "OSV" | "OVS" | "VSO" | "VOS" | "unknown";
 
 /**
- * Armenian canonical word order is SOV but SVO and other orders are 
- * grammatically valid due to free word order with case marking.
- * This function extracts the semantic content regardless of order.
+ * extracts semantic tokens regardless of word order.
  */
 export function extractSemanticTokens(sentence: string): {
   tokens: string[];
   lemmas: string[];
   normalized: string;
 } {
-  const normalized = normalizeArmenian(sentence);
-  const tokens = tokenizeArmenian(normalized);
+  const normalized = normalizeText(sentence);
+  const tokens = tokenizeText(normalized);
   const lemmas = tokens.map((t) => lemmatize(t).lemma);
   return { tokens, lemmas, normalized };
 }
 
 /**
- * Check if two Armenian sentences are morphologically equivalent
+ * Check if two sentences are morphologically equivalent
  * (same lemmas, possibly different word order or inflection).
  */
 export function areMorphologicallyEquivalent(

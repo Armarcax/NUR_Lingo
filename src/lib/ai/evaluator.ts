@@ -41,9 +41,11 @@ const DEFAULT_MODELS: Record<AIProvider, string> = {
 // ─── AI Evaluation Request ───────────────────────────────────────────────────
 
 export interface AIEvalRequest {
-  englishSentence: string;
-  expectedArmenian: string;
-  userArmenian: string;
+  sourceSentence: string;
+  expectedAnswer: string;
+  userAnswer: string;
+  sourceLanguage: "en" | "hy";
+  targetLanguage: "en" | "hy";
   allValidForms?: string[];
   context?: string;
 }
@@ -62,16 +64,17 @@ export interface AIEvalResponse {
 
 // ─── System Prompt ───────────────────────────────────────────────────────────
 
-const SYSTEM_PROMPT = `You are an expert Armenian language evaluator for NUR Lingo, an Armenian language learning platform.
+const SYSTEM_PROMPT = `You are an expert language evaluator for NUR Lingo, an Armenian language learning platform.
 
-Your task: Evaluate whether a student's Armenian answer is SEMANTICALLY EQUIVALENT to the expected answer.
+Your task: Evaluate whether a student's answer is SEMANTICALLY EQUIVALENT to the expected answer, given the source sentence.
 
-KEY PRINCIPLES for Armenian language evaluation:
+KEY PRINCIPLES for evaluation:
 1. Armenian has FREE WORD ORDER. "Ես գնում եմ տուն" and "Ես տուն եմ գնում" are BOTH correct for "I am going home".
-2. Subject pronouns can be DROPPED when implied by verb conjugation.
-3. SYNONYMS should be accepted (e.g., "բնակարան" for "տուն" in appropriate context).
+2. Subject pronouns can be DROPPED in Armenian when implied by verb conjugation.
+3. SYNONYMS should be accepted (e.g., "բնակարան" for "տուն", "auto" for "car").
 4. Different but equivalent verb forms should be accepted if meaning is preserved.
-5. Eastern Armenian (Արևելահայերեն) standard orthography is preferred (RA official standard).
+5. Eastern Armenian (Արևելահայերեն) standard orthography is preferred for Armenian.
+6. Minor spelling mistakes or typos should be flagged but may still be accepted if the meaning is clear (lower the score slightly).
 
 Response format — return ONLY valid JSON:
 {
@@ -80,7 +83,7 @@ Response format — return ONLY valid JSON:
   "areFunctionallyEquivalent": true/false,
   "reasoning": "brief explanation in English",
   "issues": ["list of issues if any"],
-  "suggestions": ["better Armenian phrasings if applicable"],
+  "suggestions": ["better phrasings if applicable"],
   "confidence": 0.0-1.0
 }`;
 
@@ -91,13 +94,13 @@ function buildPrompt(req: AIEvalRequest): string {
     ? `\nKnown valid forms:\n${req.allValidForms.map((f) => `  • ${f}`).join("\n")}`
     : "";
 
-  return `Evaluate this Armenian language exercise:
+  return `Evaluate this language exercise:
 
-English sentence: "${req.englishSentence}"
-Expected Armenian answer: "${req.expectedArmenian}"
-Student's Armenian answer: "${req.userArmenian}"${validList}
+Source sentence (${req.sourceLanguage}): "${req.sourceSentence}"
+Expected answer (${req.targetLanguage}): "${req.expectedAnswer}"
+Student's answer (${req.targetLanguage}): "${req.userAnswer}"${validList}
 
-Does the student's answer convey the same meaning as the English sentence?
+Does the student's answer convey the same meaning as the source sentence and is it semantically equivalent to the expected answer?
 Return ONLY the JSON object described in the system prompt.`;
 }
 
@@ -106,7 +109,7 @@ Return ONLY the JSON object described in the system prompt.`;
 const evalCache = new Map<string, AIEvalResponse>();
 
 function cacheKey(req: AIEvalRequest): string {
-  return `${req.englishSentence}|||${req.userArmenian}`;
+  return `${req.sourceSentence}|||${req.userAnswer}|||${req.targetLanguage}`;
 }
 
 // ─── OpenRouter / compatible API call ───────────────────────────────────────
@@ -257,9 +260,11 @@ export async function fullValidationWithAI(
   const { validateAnswer } = await import("../semantic/validator");
 
   const ruleResult = await validateAnswer({
-    userAnswer: req.userArmenian,
-    expectedAnswer: req.expectedArmenian,
-    englishOriginal: req.englishSentence,
+    userAnswer: req.userAnswer,
+    expectedAnswer: req.expectedAnswer,
+    sourceSentence: req.sourceSentence,
+    sourceLanguage: req.sourceLanguage,
+    targetLanguage: req.targetLanguage,
     allValidAnswers: req.allValidForms,
   });
 
