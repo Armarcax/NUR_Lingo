@@ -41,6 +41,7 @@ export default function LearnPage() {
   const [complete, setComplete] = useState(false);
   const [hearts, setHearts]     = useState(3);
   const [totalHAYQ, setTotal]   = useState(0);
+  const [totalSeeds, setSeeds]  = useState(0);
   const [selectedWords, setSW]  = useState<string[]>([]);
   const [availWords, setAW]     = useState<string[]>([]);
 
@@ -69,35 +70,33 @@ export default function LearnPage() {
     setEx(s => ({ ...s, state: "submitting", nuriMood: "thinking", nuriSpeech: randomLine("thinking") }));
 
     try {
-      const res  = await fetch("/api/validate", {
+      const res  = await fetch("/api/check-answer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userAnswer: answer,
-          expectedAnswer: current.targetAnswer,
-          englishOriginal: current.prompt.replace(/Translate to Armenian:|Arrange:/gi,"").replace(/"/g,"").trim(),
-          allValidAnswers: current.acceptableAnswers,
-          useAI: false,
-          strictMode: current.type === "word_order", // Enforce strict mode for word order
+          lessonId: lesson.id,
+          expectedAnswers: current.acceptableAnswers.length > 0 ? current.acceptableAnswers : [current.targetAnswer],
         }),
       });
       const data = await res.json();
-      const hayq = data.accepted ? current.hayqReward : 0;
-      const mood = getMoodFromScore(data.score, data.accepted);
+      const hayq = data.correct ? data.hayq : 0;
+      const seeds = data.correct ? data.seeds : 0;
+      const mood = getMoodFromScore(data.score, data.correct);
 
-      if (!data.accepted) setHearts(h => Math.max(0, h - 1));
+      if (!data.correct) setHearts(h => Math.max(0, h - 1));
       setTotal(t => t + hayq);
+      setSeeds(s => s + seeds);
       setEx(s => ({
         ...s,
-        state: data.accepted ? "correct" : "incorrect",
+        state: data.correct ? "correct" : "incorrect",
         feedback: data.feedback,
         score: data.score,
         hayqEarned: hayq,
-        corrections: data.corrections,
         nuriMood: mood,
         nuriSpeech: randomLine(
           data.score >= 0.98 ? "correct_perfect"
-          : data.accepted   ? "correct"
+          : data.correct   ? "correct"
           : "incorrect"
         ),
       }));
@@ -109,10 +108,15 @@ export default function LearnPage() {
   const next = useCallback(() => {
     if (!lesson) return;
     const nextIdx = ex.index + 1;
-    if (nextIdx >= lesson.exercises.length) { setComplete(true); return; }
+    if (nextIdx >= lesson.exercises.length) {
+      // Award seed for perfect lesson
+      if (hearts === 3) setSeeds(s => s + 1);
+      setComplete(true);
+      return;
+    }
     setEx({ index: nextIdx, userAnswer: "", state: "idle", feedback: "", score: 0, hayqEarned: 0, nuriMood: "happy", nuriSpeech: randomLine("idle") });
     setSW([]); setAW([]);
-  }, [lesson, ex.index]);
+  }, [lesson, ex.index, hearts]);
 
   const onKey = useCallback((e: React.KeyboardEvent) => {
     if (e.key !== "Enter") return;
@@ -121,11 +125,11 @@ export default function LearnPage() {
   }, [ex.state, submit, next]);
 
   if (complete && lesson)
-    return <CompletionScreen lesson={lesson} totalHAYQ={totalHAYQ} hearts={hearts}
-      onContinue={() => { setLesson(null); setComplete(false); setHearts(3); setTotal(0); }} />;
+    return <CompletionScreen lesson={lesson} totalHAYQ={totalHAYQ} totalSeeds={totalSeeds} hearts={hearts}
+      onContinue={() => { setLesson(null); setComplete(false); setHearts(3); setTotal(0); setSeeds(0); }} />;
 
   if (!lesson)
-    return <LessonSelector onSelect={l => { setLesson(l); setEx({ index:0, userAnswer:"", state:"idle", feedback:"", score:0, hayqEarned:0, nuriMood:"happy", nuriSpeech:"Եկեք սկսենք: 🍎" }); setHearts(3); setTotal(0); }} />;
+    return <LessonSelector onSelect={l => { setLesson(l); setEx({ index:0, userAnswer:"", state:"idle", feedback:"", score:0, hayqEarned:0, nuriMood:"happy", nuriSpeech:"Եկեք սկսենք: 🍎" }); setHearts(3); setTotal(0); setSeeds(0); }} />;
 
   if (!current) return null;
   const progress = (ex.index / lesson.exercises.length) * 100;
@@ -169,9 +173,14 @@ export default function LearnPage() {
           ))}
         </div>
 
-        {/* HAYQ */}
-        <div className="bg-white/5 border border-white/10 px-3 py-1 rounded-xl flex items-center gap-2 text-sm font-bold">
-          <span className="text-yellow-400">🪙</span> {totalHAYQ}
+        {/* HAYQ & Seeds */}
+        <div className="flex gap-2">
+          <div className="bg-white/5 border border-white/10 px-3 py-1 rounded-xl flex items-center gap-2 text-sm font-bold">
+            <span className="text-yellow-400">🪙</span> {totalHAYQ}
+          </div>
+          <div className="bg-white/5 border border-white/10 px-3 py-1 rounded-xl flex items-center gap-2 text-sm font-bold">
+            <span className="text-red-400">🍎</span> {totalSeeds}
+          </div>
         </div>
       </div>
 
@@ -349,99 +358,100 @@ function MultiChoice({ options, selected, onSelect, disabled, correct, showResul
 
 function LessonSelector({ onSelect }: { onSelect:(l:Lesson)=>void }) {
   return (
-    <div className="min-h-screen relative text-white">
-      <div className="fixed inset-0 z-[-1]">
+    <div className="min-h-screen relative text-white bg-[#07080f]">
+      {/* Background with overlay */}
+      <div className="fixed inset-0 z-0">
         <Image
           src="/images/pomegranate-bg.jpg"
           alt="Background"
           fill
-          className="object-cover"
+          className="object-cover opacity-20"
           priority
         />
-        <div className="absolute inset-0 bg-black/60" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#07080f]/0 to-[#07080f]" />
       </div>
 
-      <div className="h-1.5 w-full flex">
-        <div className="h-full flex-1" style={{ background: "#D90012" }} />
-        <div className="h-full flex-1" style={{ background: "#0033A0" }} />
-        <div className="h-full flex-1" style={{ background: "#FFA500" }} />
-      </div>
-
-      <nav className="flex items-center justify-between px-8 py-5 border-b border-white/10 bg-white/5 sticky top-0 z-50 backdrop-blur-md">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D90012] to-[#FFA500] flex items-center justify-center font-black text-xl shadow-lg">Ն</div>
-          <span className="font-black tracking-tighter text-xl uppercase italic">NUR Lingo</span>
-        </div>
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2 font-bold text-[#FFA500]">
-            <span className="text-xl">🪙</span> ՀԱՅՔ
+      <div className="relative z-10">
+        <nav className="flex items-center justify-between px-8 py-5 border-b border-white/10 bg-white/5 backdrop-blur-md">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D90012] to-[#FFA500] flex items-center justify-center font-black text-xl shadow-lg">Ն</div>
+            <span className="font-black tracking-tighter text-xl uppercase italic">NUR Lingo</span>
           </div>
-        </div>
-      </nav>
-
-      <div className="px-8 pt-12 pb-8 max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-10">
-        <div className="flex-1 text-center md:text-left">
-          <p className="text-[#FFA500] font-black uppercase tracking-widest text-xs mb-4 flex items-center justify-center md:justify-start gap-2">
-            <span className="text-base">🇦🇲</span> Հայերեն • Armenian
-          </p>
-          <h1 className="text-5xl md:text-6xl font-black leading-none mb-6">
-            Սովորիր <span className="text-[#D90012]">Հայերեն</span>
-          </h1>
-          <div className="flex flex-wrap gap-4 justify-center md:justify-start text-white/50 font-medium">
-            <span className="flex items-center gap-1"><span className="text-green-500">✓</span> Իմաստային ուսուցում</span>
-            <span className="flex items-center gap-1"><span className="text-green-500">✓</span> ՀԱՅՔ պարգևներ</span>
-          </div>
-        </div>
-        <Nuri mood="happy" size={180} className="drop-shadow-2xl" />
-      </div>
-
-      <div className="px-8 pb-24 max-w-4xl mx-auto space-y-12 mt-12">
-        {UNITS.map(unit => {
-          const lessons = LESSONS.filter(l => l.unitId === unit.id);
-          return (
-            <div key={unit.id} className="relative">
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-xl"
-                  style={{ background: `linear-gradient(135deg, ${unit.colorFrom}, ${unit.colorTo})` }}>
-                  {unit.iconEmoji}
-                </div>
-                <div>
-                  <h2 className="text-2xl font-black">{unit.titleArmenian}</h2>
-                  <p className="text-white/40 font-bold text-sm uppercase tracking-tight">{unit.title} • {unit.cefr}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {lessons.map((l, i) => (
-                  <motion.button key={l.id} whileHover={{ scale:1.02 }} whileTap={{ scale:0.98 }}
-                    onClick={() => onSelect(l)}
-                    className="bg-white/5 border-2 border-white/10 rounded-3xl p-6 hover:bg-white/10 hover:border-white/20 transition-all text-left group">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-xs font-black mb-3 group-hover:bg-[#FFA500] group-hover:text-black transition-colors">
-                          {i+1}
-                        </div>
-                        <h3 className="text-lg font-bold mb-1">{l.titleArmenian}</h3>
-                        <p className="text-white/40 text-xs font-medium">{l.description}</p>
-                      </div>
-                      <div className="flex flex-col items-end gap-2">
-                        <span className="bg-yellow-400/10 text-yellow-500 px-2 py-1 rounded-lg text-[10px] font-black italic">🪙 {l.hayqTotal}</span>
-                        <span className="text-white/20 text-[10px] font-bold">⏱ {l.estimatedMinutes} րոպե</span>
-                      </div>
-                    </div>
-                  </motion.button>
-                ))}
-              </div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 font-bold text-[#FFA500]">
+              <span className="text-xl">🪙</span> ՀԱՅՔ
             </div>
-          );
-        })}
+            <div className="flex items-center gap-2 font-bold text-red-400">
+              <span className="text-xl">🍎</span> Սերմեր
+            </div>
+          </div>
+        </nav>
+
+        <div className="px-8 pt-12 pb-8 max-w-4xl mx-auto text-center">
+          <h1 className="text-5xl md:text-6xl font-black leading-none mb-4">
+            Seed <span className="text-[#D90012]">World</span>
+          </h1>
+          <p className="text-white/50 font-medium">Organic learning path — Armenian Soul</p>
+        </div>
+
+        <div className="max-w-4xl mx-auto px-8 pb-24 relative">
+          {/* Organic path map using SVG/Framer Motion */}
+          <div className="flex flex-col items-center gap-12 mt-12">
+            {UNITS.map((unit, uIdx) => {
+              const lessons = LESSONS.filter(l => l.unitId === unit.id);
+              return (
+                <div key={unit.id} className="w-full space-y-12">
+                  <div className="flex flex-col items-center">
+                    <div className="px-6 py-2 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                      <h2 className="text-xl font-black text-[#FFA500]">{unit.titleArmenian}</h2>
+                    </div>
+                  </div>
+
+                  <div className="relative flex flex-col items-center gap-8">
+                    {lessons.map((l, i) => {
+                      // Alternate left/right offset for organic feel
+                      const xOffset = (i % 2 === 0 ? 40 : -40) * (Math.sin(i + uIdx));
+                      return (
+                        <motion.button
+                          key={l.id}
+                          initial={{ scale: 0.8, opacity: 0 }}
+                          whileInView={{ scale: 1, opacity: 1 }}
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => onSelect(l)}
+                          className="relative group"
+                          style={{ x: xOffset }}
+                        >
+                          {/* Lesson Seed (Pomegranate Seed) */}
+                          <div className={`w-20 h-20 rounded-full flex items-center justify-center text-2xl shadow-2xl transition-all border-4
+                            ${i === 0 && uIdx === 0 ? 'border-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.5)]' : 'border-white/20'}`}
+                            style={{ background: `linear-gradient(135deg, ${unit.colorFrom}, ${unit.colorTo})` }}>
+                            {unit.iconEmoji}
+                          </div>
+
+                          {/* Tooltip */}
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
+                            <div className="bg-black/80 border border-white/10 backdrop-blur-md px-4 py-2 rounded-xl whitespace-nowrap">
+                              <p className="font-bold text-sm">{l.titleArmenian}</p>
+                              <p className="text-[10px] text-white/50">{l.cefr} • +{l.hayqTotal} HAYQ</p>
+                            </div>
+                          </div>
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-function CompletionScreen({ lesson, totalHAYQ, hearts, onContinue }:
-  { lesson:Lesson; totalHAYQ:number; hearts:number; onContinue:()=>void }) {
+function CompletionScreen({ lesson, totalHAYQ, totalSeeds, hearts, onContinue }:
+  { lesson:Lesson; totalHAYQ:number; totalSeeds:number; hearts:number; onContinue:()=>void }) {
   const level = hayqToLevel(totalHAYQ);
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center relative text-white">
@@ -471,15 +481,16 @@ function CompletionScreen({ lesson, totalHAYQ, hearts, onContinue }:
           <p className="text-xl text-white/50 font-medium italic">Դասն ավարտված է:</p>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-4 gap-4">
           {[
             { label:"ՀԱՅՔ", value:`+${totalHAYQ}`, color:"text-[#FFA500]" },
+            { label:"Սերմեր", value:`+${totalSeeds}`, color:"text-red-400" },
             { label:"Սիրտ", value:hearts > 0 ? "❤️".repeat(hearts) : "💔", color:"text-[#D90012]" },
             { label:"Մակարդակ", value:level.titleArmenian, color:level.color },
           ].map(s => (
             <div key={s.label} className="bg-white/5 border border-white/10 rounded-3xl p-5 shadow-lg">
-              <div className={`text-xl font-black mb-1 ${s.color}`}>{s.value}</div>
-              <div className="text-[10px] font-black uppercase tracking-widest text-white/30">{s.label}</div>
+              <div className={`text-sm font-black mb-1 ${s.color}`}>{s.value}</div>
+              <div className="text-[8px] font-black uppercase tracking-widest text-white/30">{s.label}</div>
             </div>
           ))}
         </div>

@@ -12,7 +12,7 @@ interface NuriProps {
   className?: string;
 }
 
-export type NuriMood = "happy" | "thinking" | "celebrating" | "sad" | "idle" | "encouraging";
+export type NuriMood = "happy" | "thinking" | "celebrating" | "sad" | "idle" | "encouraging" | "excited" | "surprised";
 
 export default function Nuri({
   mood = "idle",
@@ -26,11 +26,13 @@ export default function Nuri({
     switch (m) {
       case "happy":
       case "celebrating":
+      case "excited":
         return "/images/nuri/nuri-happy.png";
       case "encouraging":
       case "thinking":
       case "idle":
         return "/images/nuri/nuri-encouraging.png";
+      case "surprised":
       case "sad":
         return "/images/nuri/nuri-sad.png";
       default:
@@ -96,6 +98,8 @@ export function NuriSpeech({
     encouraging: "border-orange-400/50 bg-orange-950/40",
     thinking:    "border-blue-400/50 bg-blue-950/40",
     idle:        "border-white/20 bg-white/5",
+    excited:     "border-pink-400/50 bg-pink-950/40",
+    surprised:   "border-purple-400/50 bg-purple-950/40",
   };
 
   return (
