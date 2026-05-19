@@ -47,17 +47,30 @@ export default function Home() {
             ոչ թե ճշգրիտ բառ։ Ազատ բառակարգ, հոմանիշ, ձևաբանություն։
           </motion.p>
 
-          {/* HAYQ preview */}
-          <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.3 }}
-            className="flex items-center gap-4 p-4 rounded-2xl border"
-            style={{ background:"rgba(242,168,0,0.05)", borderColor:"rgba(242,168,0,0.2)" }}>
-            <span className="text-3xl">🪙</span>
-            <div>
-              <p className="font-bold" style={{ color:"var(--hy-orange)" }}>HAYQ Token</p>
-              <p className="text-white/40 text-sm">Ճիշտ պատասխան → HAYQ վաստակ</p>
-            </div>
-            <div className="ml-auto hayq-chip">+50 HAYQ</div>
-          </motion.div>
+          {/* Rewards preview */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <motion.div initial={{ opacity:0, x:-20 }} animate={{ opacity:1, x:0 }} transition={{ delay:0.3 }}
+              className="flex items-center gap-4 p-4 rounded-2xl border"
+              style={{ background:"rgba(242,168,0,0.05)", borderColor:"rgba(242,168,0,0.2)" }}>
+              <span className="text-3xl">🪙</span>
+              <div>
+                <p className="font-bold text-xs uppercase tracking-wider text-white/30">Layer 1</p>
+                <p className="font-bold" style={{ color:"var(--hy-orange)" }}>HAYQ Points</p>
+                <p className="text-white/40 text-[10px]">Daily activity tokens</p>
+              </div>
+            </motion.div>
+
+            <motion.div initial={{ opacity:0, x:20 }} animate={{ opacity:1, x:0 }} transition={{ delay:0.35 }}
+              className="flex items-center gap-4 p-4 rounded-2xl border"
+              style={{ background:"rgba(217,0,18,0.05)", borderColor:"rgba(217,0,18,0.2)" }}>
+              <span className="text-3xl">🍎</span>
+              <div>
+                <p className="font-bold text-xs uppercase tracking-wider text-white/30">Layer 2</p>
+                <p className="font-bold" style={{ color:"var(--hy-red)" }}>Seeds</p>
+                <p className="text-white/40 text-[10px]">Rare organic rewards</p>
+              </div>
+            </motion.div>
+          </div>
 
           <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.4 }}
             className="flex flex-wrap gap-3">

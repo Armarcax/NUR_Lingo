@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fullValidationWithAI } from "@/lib/ai/evaluator";
-import { getLessonById } from "@/lib/lessons/engine";
+import { getLessonById, HAYQ_REWARDS, SEED_REWARDS } from "@/lib/lessons/engine";
 
 export const runtime = "edge";
 
@@ -24,14 +24,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Determine the source sentence and expected answer for validation
-    // In current UX, most exercises are translation from prompt (source) to userAnswer (target)
-    // We'll find the exercise that matches the lesson context or just use the provided expectedAnswers
-
-    // For now, we assume the first expected answer is the primary one
     const primaryExpected = expectedAnswers[0] || "";
 
-    // We need the source sentence for the AI to judge semantic equivalence properly.
-    // We'll try to find the exercise in the lesson to get the prompt.
+    // Find the exercise to get the correct prompt (source)
     const exercise = lesson.exercises.find(e =>
         e.targetAnswer === primaryExpected || e.acceptableAnswers.includes(primaryExpected)
     );
@@ -47,10 +42,27 @@ export async function POST(req: NextRequest) {
       allValidForms: expectedAnswers,
     });
 
+    // Reward calculation based on standardized engine constants
+    let hayq = 0;
+    let seeds = 0;
+
+    if (result.accepted) {
+      if (result.score >= 0.98) {
+        hayq = HAYQ_REWARDS.PERFECT;
+        seeds = SEED_REWARDS.PERFECT_EXERCISE;
+      } else if (result.score >= 0.85) {
+        hayq = HAYQ_REWARDS.EXCELLENT;
+      } else if (result.score >= 0.75) {
+        hayq = HAYQ_REWARDS.GOOD;
+      } else {
+        hayq = HAYQ_REWARDS.PARTIAL;
+      }
+    }
+
     return NextResponse.json({
       correct: result.accepted,
-      hayq: result.accepted ? (result.score >= 0.95 ? 20 : 15) : 0,
-      seeds: result.accepted && result.score >= 0.98 ? 1 : 0,
+      hayq,
+      seeds,
       score: result.score,
       feedback: result.feedback,
       corrections: result.corrections,

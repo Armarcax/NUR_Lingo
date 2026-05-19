@@ -6,7 +6,7 @@ import Nuri, { NuriSpeech, getMoodFromScore, type NuriMood } from "@/components/
 import {
   LESSONS, UNITS,
   type Exercise, type Lesson,
-  HAYQ_REWARDS, hayqToLevel, scoreToGrade,
+  HAYQ_REWARDS, SEED_REWARDS, hayqToLevel, scoreToGrade,
 } from "@/lib/lessons/engine";
 
 type AnswerState = "idle" | "submitting" | "correct" | "incorrect";
@@ -119,8 +119,10 @@ export default function LearnPage() {
     if (!lesson) return;
     const nextIdx = ex.index + 1;
     if (nextIdx >= lesson.exercises.length) {
-      // Award seed for perfect lesson
-      if (hearts === 3) setSeeds(s => s + 1);
+      // Award seed for perfect lesson & lesson completion bonus
+      if (hearts === 3) setSeeds(s => s + SEED_REWARDS.PERFECT_LESSON);
+      setTotal(t => t + HAYQ_REWARDS.LESSON_COMPLETE);
+
       setComplete(true);
       return;
     }

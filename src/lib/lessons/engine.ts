@@ -67,16 +67,23 @@ export interface Unit {
 // ─── HAYQ Reward Table ───────────────────────────────────────────────────────
 
 export const HAYQ_REWARDS = {
-  perfect:         25,
-  excellent:       18,
-  good:            12,
-  partial:          5,
-  streak_3:        10,
-  streak_7:        30,
-  streak_30:      100,
-  lesson_complete: 40,
-  unit_complete:  200,
-  first_lesson:    50,   // bonus
+  PERFECT:         25,   // score >= 0.98
+  EXCELLENT:       20,   // score >= 0.85
+  GOOD:            15,   // score >= 0.75
+  PARTIAL:          5,   // score >= 0.5
+  STREAK_3:        10,
+  STREAK_7:        30,
+  STREAK_30:      100,
+  LESSON_COMPLETE: 40,
+  UNIT_COMPLETE:  200,
+  FIRST_LESSON:    50,
+};
+
+export const SEED_REWARDS = {
+  PERFECT_EXERCISE: 1,    // score >= 0.98
+  PERFECT_LESSON:   1,    // No hearts lost
+  STREAK_7:         1,
+  UNIT_COMPLETE:    5,
 };
 
 // ─── HAYQ Level System ────────────────────────────────────────────────────────
