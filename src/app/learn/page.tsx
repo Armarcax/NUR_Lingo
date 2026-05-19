@@ -42,6 +42,7 @@ export default function LearnPage() {
   const [hearts, setHearts]     = useState(3);
   const [totalHAYQ, setTotal]   = useState(0);
   const [totalSeeds, setSeeds]  = useState(0);
+  const [streak, setStreak]     = useState(0);
   const [selectedWords, setSW]  = useState<string[]>([]);
   const [availWords, setAW]     = useState<string[]>([]);
 
@@ -82,7 +83,16 @@ export default function LearnPage() {
       const data = await res.json();
       const hayq = data.correct ? data.hayq : 0;
       const seeds = data.correct ? data.seeds : 0;
-      const mood = getMoodFromScore(data.score, data.correct);
+
+      let nextStreak = streak;
+      if (data.correct) {
+        nextStreak += 1;
+      } else {
+        nextStreak = 0;
+      }
+      setStreak(nextStreak);
+
+      const mood = getMoodFromScore(data.score, data.correct, nextStreak);
 
       if (!data.correct) setHearts(h => Math.max(0, h - 1));
       setTotal(t => t + hayq);
@@ -126,28 +136,16 @@ export default function LearnPage() {
 
   if (complete && lesson)
     return <CompletionScreen lesson={lesson} totalHAYQ={totalHAYQ} totalSeeds={totalSeeds} hearts={hearts}
-      onContinue={() => { setLesson(null); setComplete(false); setHearts(3); setTotal(0); setSeeds(0); }} />;
+      onContinue={() => { setLesson(null); setComplete(false); setHearts(3); setTotal(0); setSeeds(0); setStreak(0); }} />;
 
   if (!lesson)
-    return <LessonSelector onSelect={l => { setLesson(l); setEx({ index:0, userAnswer:"", state:"idle", feedback:"", score:0, hayqEarned:0, nuriMood:"happy", nuriSpeech:"Եկեք սկսենք: 🍎" }); setHearts(3); setTotal(0); setSeeds(0); }} />;
+    return <LessonSelector onSelect={l => { setLesson(l); setEx({ index:0, userAnswer:"", state:"idle", feedback:"", score:0, hayqEarned:0, nuriMood:"happy", nuriSpeech:"Եկեք սկսենք: 🍎" }); setHearts(3); setTotal(0); setSeeds(0); setStreak(0); }} />;
 
   if (!current) return null;
   const progress = (ex.index / lesson.exercises.length) * 100;
 
   return (
     <div className="min-h-screen flex flex-col relative text-white">
-      {/* Background with overlay */}
-      <div className="fixed inset-0 z-[-1]">
-        <Image
-          src="/images/pomegranate-bg.jpg"
-          alt="Background"
-          fill
-          className="object-cover"
-          priority
-        />
-        <div className="absolute inset-0 bg-black/60" />
-      </div>
-
       {/* Top flag stripe */}
       <div className="h-1.5 w-full flex">
         <div className="h-full flex-1" style={{ background: "#D90012" }} />
@@ -358,19 +356,7 @@ function MultiChoice({ options, selected, onSelect, disabled, correct, showResul
 
 function LessonSelector({ onSelect }: { onSelect:(l:Lesson)=>void }) {
   return (
-    <div className="min-h-screen relative text-white bg-[#07080f]">
-      {/* Background with overlay */}
-      <div className="fixed inset-0 z-0">
-        <Image
-          src="/images/pomegranate-bg.jpg"
-          alt="Background"
-          fill
-          className="object-cover opacity-20"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#07080f]/0 to-[#07080f]" />
-      </div>
-
+    <div className="min-h-screen relative text-white">
       <div className="relative z-10">
         <nav className="flex items-center justify-between px-8 py-5 border-b border-white/10 bg-white/5 backdrop-blur-md">
           <div className="flex items-center gap-4">
@@ -455,16 +441,6 @@ function CompletionScreen({ lesson, totalHAYQ, totalSeeds, hearts, onContinue }:
   const level = hayqToLevel(totalHAYQ);
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center relative text-white">
-      <div className="fixed inset-0 z-[-1]">
-        <Image
-          src="/images/pomegranate-bg.jpg"
-          alt="Background"
-          fill
-          className="object-cover"
-        />
-        <div className="absolute inset-0 bg-black/60" />
-      </div>
-
       <div className="h-1.5 w-full flex fixed top-0 left-0 right-0">
         <div className="h-full flex-1" style={{ background: "#D90012" }} />
         <div className="h-full flex-1" style={{ background: "#0033A0" }} />

@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 
 // ── Նուռ (Nuri) — NUR Lingo's redesigned pomegranate mascot ──────────────────
-// Uses the provided SVG designs for different emotions.
+// Uses the provided PNG designs for different emotions.
 
 interface NuriProps {
   mood?: NuriMood;
@@ -40,22 +40,103 @@ export default function Nuri({
     }
   };
 
+  // Define animations based on mood
+  const getAnimation = () => {
+    if (!animate) return {};
+
+    switch (mood) {
+      case "happy":
+        return {
+          y: [0, -15, 0],
+          rotate: [0, 5, -5, 0],
+        };
+      case "excited":
+        return {
+          scale: [1, 1.2, 1],
+          y: [0, -20, 0, -20, 0],
+          rotate: [0, 10, -10, 10, -10, 0],
+        };
+      case "sad":
+        return {
+          x: [0, -2, 2, -2, 2, 0],
+          y: [0, 2, 0],
+          opacity: [1, 0.8, 1],
+        };
+      case "encouraging":
+        return {
+          scale: [1, 1.05, 1],
+          rotate: [0, 2, -2, 0],
+        };
+      case "thinking":
+        return {
+          rotate: [0, -5, 5, 0],
+          x: [0, 2, -2, 0],
+        };
+      case "celebrating":
+        return {
+          scale: [1, 1.2, 1],
+          rotate: [0, 360],
+        };
+      default:
+        return {
+          y: [0, -5, 0],
+        };
+    }
+  };
+
+  const getTransition = () => {
+    switch (mood) {
+      case "excited":
+        return { duration: 0.5, repeat: Infinity, ease: "easeInOut" };
+      case "happy":
+        return { duration: 0.6, repeat: Infinity, ease: "easeInOut" };
+      case "celebrating":
+        return { duration: 1, repeat: Infinity, ease: "linear" };
+      case "sad":
+        return { duration: 2, repeat: Infinity };
+      default:
+        return { duration: 3, repeat: Infinity, ease: "easeInOut" };
+    }
+  };
+
   return (
     <motion.div
       className={`relative inline-block ${className}`}
-      animate={animate ? {
-        y: mood === "happy" ? [0, -12, 0] : [0, -5, 0],
-        scale: mood === "celebrating" ? [1, 1.1, 1] : 1
-      } : {}}
-      transition={{ duration: mood === "happy" ? 0.6 : 3, repeat: Infinity, ease: "easeInOut" }}
+      animate={getAnimation()}
+      transition={getTransition()}
       style={{ width: size, height: size }}
     >
-      {mood === "celebrating" && (
+      {(mood === "celebrating" || mood === "excited") && (
         <>
-          <motion.div className="absolute text-base sparkle-1" style={{ top: -8, right: -4 }}>⭐</motion.div>
-          <motion.div className="absolute text-sm sparkle-2" style={{ top: 4, left: -8 }}>✨</motion.div>
-          <motion.div className="absolute text-xs sparkle-3" style={{ bottom: 8, right: -6 }}>💫</motion.div>
+          <motion.div
+            className="absolute text-base"
+            style={{ top: -12, right: -4 }}
+            animate={{ scale: [1, 1.5, 1], opacity: [1, 0.5, 1] }}
+            transition={{ duration: 0.8, repeat: Infinity }}
+          >⭐</motion.div>
+          <motion.div
+            className="absolute text-sm"
+            style={{ top: 4, left: -10 }}
+            animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 1, repeat: Infinity }}
+          >✨</motion.div>
+          <motion.div
+            className="absolute text-xs"
+            style={{ bottom: 8, right: -8 }}
+            animate={{ x: [-2, 2, -2], y: [-2, 2, -2] }}
+            transition={{ duration: 0.5, repeat: Infinity }}
+          >💫</motion.div>
         </>
+      )}
+
+      {mood === "excited" && (
+        <motion.div
+          className="absolute -top-6 left-1/2 -translate-x-1/2 text-xl"
+          animate={{ y: [0, -10, 0], opacity: [0, 1, 0] }}
+          transition={{ duration: 1, repeat: Infinity }}
+        >
+          🔥
+        </motion.div>
       )}
 
       {mood === "thinking" && (
@@ -78,8 +159,10 @@ export default function Nuri({
   );
 }
 
-export function getMoodFromScore(score: number, accepted: boolean): NuriMood {
+export function getMoodFromScore(score: number, accepted: boolean, streak: number = 0): NuriMood {
   if (!accepted) return "sad";
+  if (streak >= 5) return "excited";
+  if (streak >= 3) return "happy";
   return "encouraging";
 }
 

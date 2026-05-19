@@ -27,14 +27,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body
-        className="font-mono antialiased"
+        className="font-mono antialiased relative"
         style={{
-          background: "url('/images/pomegranate-bg.jpg') no-repeat center center fixed",
-          backgroundSize: "cover",
           margin: 0,
           padding: 0,
         }}
       >
+        {/* Global background with overlay */}
+        <div
+          className="fixed inset-0 z-[-1] pointer-events-none"
+          style={{
+            background: "url('/images/pomegranate-bg.jpg') no-repeat center center fixed",
+            backgroundSize: "cover",
+          }}
+        />
+        <div className="fixed inset-0 z-[-1] bg-black/60 pointer-events-none" />
         {children}
       </body>
     </html>
