@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "NUR Lingo — Հայկական AI Լեզվի Platforma",
+  title: "NUR Lingo — Հայկական AI Լեզվի Հարթակ",
   description: "AI-native Armenian ↔ English language learning. Semantic understanding, HAYQ tokens, Նուռ mascot.",
   keywords: ["Armenian","հայերեն","language learning","AI","HAYQ","NLP","Armenia"],
   icons: { icon: "/logo.png", apple: "/logo.png" },
@@ -26,7 +26,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body className="font-mono antialiased" style={{ background: "var(--color-bg)" }}>
+      <body
+        className="font-mono antialiased relative"
+        style={{
+          margin: 0,
+          padding: 0,
+        }}
+      >
+        {/* Global background with overlay */}
+        <div
+          className="fixed inset-0 z-[-1] pointer-events-none"
+          style={{
+            background: "url('/images/pomegranate-bg.jpg') no-repeat center center fixed",
+            backgroundSize: "cover",
+          }}
+        />
+        <div className="fixed inset-0 z-[-1] bg-black/60 pointer-events-none" />
         {children}
       </body>
     </html>

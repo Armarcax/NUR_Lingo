@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 
 // ── Նուռ (Nuri) — NUR Lingo's redesigned pomegranate mascot ──────────────────
-// Uses the provided SVG designs for different emotions.
+// Uses the provided PNG designs for different emotions.
 
 interface NuriProps {
   mood?: NuriMood;
@@ -12,7 +12,7 @@ interface NuriProps {
   className?: string;
 }
 
-export type NuriMood = "happy" | "thinking" | "celebrating" | "sad" | "idle" | "encouraging";
+export type NuriMood = "happy" | "thinking" | "celebrating" | "sad" | "idle" | "encouraging" | "excited" | "surprised";
 
 export default function Nuri({
   mood = "idle",
@@ -21,98 +21,122 @@ export default function Nuri({
   className = "",
 }: NuriProps) {
 
-  // Mapping moods to our SVG assets
-  const getSvgPath = (m: NuriMood) => {
+  // Mapping moods to our PNG assets
+  const getPngPath = (m: NuriMood) => {
     switch (m) {
       case "happy":
       case "celebrating":
-        return "/src/components/nuri/nuri-happy.svg";
+      case "excited":
+        return "/images/nuri/nuri-happy.png";
       case "encouraging":
       case "thinking":
       case "idle":
-        return "/src/components/nuri/nuri-encouraging.svg";
+        return "/images/nuri/nuri-encouraging.png";
+      case "surprised":
       case "sad":
-        return "/src/components/nuri/nuri-sad.svg";
+        return "/images/nuri/nuri-sad.png";
       default:
-        return "/src/components/nuri/nuri-happy.svg";
+        return "/images/nuri/nuri-happy.png";
     }
   };
 
-  // Since we are in a Next.js app, we should ideally put SVGs in /public
-  // or import them. But for this task, I'll render the SVG directly
-  // to ensure it works without complex asset management.
+  // Define animations based on mood
+  const getAnimation = () => {
+    if (!animate) return {};
 
-  const renderSvg = (m: NuriMood) => {
-    if (m === "happy" || m === "celebrating") {
-      return (
-        <svg width="100%" height="100%" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <ellipse cx="60" cy="70" rx="45" ry="40" fill="#D90012"/>
-          <path d="M45 35 L55 20 L65 35 L75 20 L70 40 L50 40 Z" fill="#FFA500"/>
-          <circle cx="45" cy="65" r="6" fill="#0033A0"/>
-          <circle cx="60" cy="60" r="7" fill="#0033A0"/>
-          <circle cx="75" cy="68" r="6" fill="#0033A0"/>
-          <circle cx="52" cy="80" r="5" fill="#0033A0"/>
-          <circle cx="68" cy="82" r="5" fill="#0033A0"/>
-          <ellipse cx="48" cy="58" rx="5" ry="7" fill="white"/>
-          <ellipse cx="72" cy="58" rx="5" ry="7" fill="white"/>
-          <circle cx="48" cy="60" r="3" fill="#0033A0"/>
-          <circle cx="72" cy="60" r="3" fill="#0033A0"/>
-          <path d="M45 75 Q60 85 75 75" stroke="white" strokeWidth="3" strokeLinecap="round" fill="none"/>
-        </svg>
-      );
-    } else if (m === "sad") {
-      return (
-        <svg width="100%" height="100%" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <ellipse cx="60" cy="70" rx="45" ry="40" fill="#B8000E"/>
-          <path d="M45 35 L55 20 L65 35 L75 20 L70 40 L50 40 Z" fill="#E59400"/>
-          <circle cx="45" cy="65" r="6" fill="#002277"/>
-          <circle cx="60" cy="60" r="7" fill="#002277"/>
-          <circle cx="75" cy="68" r="6" fill="#002277"/>
-          <ellipse cx="48" cy="60" rx="5" ry="6" fill="white"/>
-          <ellipse cx="72" cy="60" rx="5" ry="6" fill="white"/>
-          <circle cx="48" cy="62" r="3" fill="#0033A0"/>
-          <circle cx="72" cy="62" r="3" fill="#0033A0"/>
-          <ellipse cx="44" cy="70" rx="2" ry="4" fill="#6BB6FF" opacity="0.8"/>
-          <path d="M50 82 Q60 77 70 82" stroke="white" strokeWidth="3" strokeLinecap="round" fill="none"/>
-        </svg>
-      );
-    } else {
-      // Encouraging / Thinking / Idle
-      return (
-        <svg width="100%" height="100%" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <ellipse cx="60" cy="70" rx="45" ry="40" fill="#D90012"/>
-          <path d="M45 35 L55 20 L65 35 L75 20 L70 40 L50 40 Z" fill="#FFA500"/>
-          <circle cx="45" cy="65" r="6" fill="#0033A0"/>
-          <circle cx="60" cy="60" r="7" fill="#0033A0"/>
-          <circle cx="75" cy="68" r="6" fill="#0033A0"/>
-          <ellipse cx="48" cy="58" rx="6" ry="5" fill="white"/>
-          <ellipse cx="72" cy="58" rx="6" ry="5" fill="white"/>
-          <circle cx="48" cy="59" r="3" fill="#0033A0"/>
-          <circle cx="72" cy="59" r="3" fill="#0033A0"/>
-          <ellipse cx="60" cy="78" rx="8" ry="4" fill="white"/>
-          <ellipse cx="95" cy="75" rx="8" ry="12" fill="#FFA500" transform="rotate(20 95 75)"/>
-          <circle cx="98" cy="65" r="6" fill="#FFA500"/>
-        </svg>
-      );
+    switch (mood) {
+      case "happy":
+        return {
+          y: [0, -15, 0],
+          rotate: [0, 5, -5, 0],
+        };
+      case "excited":
+        return {
+          scale: [1, 1.2, 1],
+          y: [0, -20, 0, -20, 0],
+          rotate: [0, 10, -10, 10, -10, 0],
+        };
+      case "sad":
+        return {
+          x: [0, -2, 2, -2, 2, 0],
+          y: [0, 2, 0],
+          opacity: [1, 0.8, 1],
+        };
+      case "encouraging":
+        return {
+          scale: [1, 1.05, 1],
+          rotate: [0, 2, -2, 0],
+        };
+      case "thinking":
+        return {
+          rotate: [0, -5, 5, 0],
+          x: [0, 2, -2, 0],
+        };
+      case "celebrating":
+        return {
+          scale: [1, 1.2, 1],
+          rotate: [0, 360],
+        };
+      default:
+        return {
+          y: [0, -5, 0],
+        };
+    }
+  };
+
+  const getTransition = () => {
+    switch (mood) {
+      case "excited":
+        return { duration: 0.5, repeat: Infinity, ease: "easeInOut" };
+      case "happy":
+        return { duration: 0.6, repeat: Infinity, ease: "easeInOut" };
+      case "celebrating":
+        return { duration: 1, repeat: Infinity, ease: "linear" };
+      case "sad":
+        return { duration: 2, repeat: Infinity };
+      default:
+        return { duration: 3, repeat: Infinity, ease: "easeInOut" };
     }
   };
 
   return (
     <motion.div
       className={`relative inline-block ${className}`}
-      animate={animate ? {
-        y: mood === "happy" ? [0, -12, 0] : [0, -5, 0],
-        scale: mood === "celebrating" ? [1, 1.1, 1] : 1
-      } : {}}
-      transition={{ duration: mood === "happy" ? 0.6 : 3, repeat: Infinity, ease: "easeInOut" }}
+      animate={getAnimation()}
+      transition={getTransition()}
       style={{ width: size, height: size }}
     >
-      {mood === "celebrating" && (
+      {(mood === "celebrating" || mood === "excited") && (
         <>
-          <motion.div className="absolute text-base sparkle-1" style={{ top: -8, right: -4 }}>⭐</motion.div>
-          <motion.div className="absolute text-sm sparkle-2" style={{ top: 4, left: -8 }}>✨</motion.div>
-          <motion.div className="absolute text-xs sparkle-3" style={{ bottom: 8, right: -6 }}>💫</motion.div>
+          <motion.div
+            className="absolute text-base"
+            style={{ top: -12, right: -4 }}
+            animate={{ scale: [1, 1.5, 1], opacity: [1, 0.5, 1] }}
+            transition={{ duration: 0.8, repeat: Infinity }}
+          >⭐</motion.div>
+          <motion.div
+            className="absolute text-sm"
+            style={{ top: 4, left: -10 }}
+            animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 1, repeat: Infinity }}
+          >✨</motion.div>
+          <motion.div
+            className="absolute text-xs"
+            style={{ bottom: 8, right: -8 }}
+            animate={{ x: [-2, 2, -2], y: [-2, 2, -2] }}
+            transition={{ duration: 0.5, repeat: Infinity }}
+          >💫</motion.div>
         </>
+      )}
+
+      {mood === "excited" && (
+        <motion.div
+          className="absolute -top-6 left-1/2 -translate-x-1/2 text-xl"
+          animate={{ y: [0, -10, 0], opacity: [0, 1, 0] }}
+          transition={{ duration: 1, repeat: Infinity }}
+        >
+          🔥
+        </motion.div>
       )}
 
       {mood === "thinking" && (
@@ -124,15 +148,22 @@ export default function Nuri({
         >💭</motion.div>
       )}
 
-      {renderSvg(mood)}
+      <Image
+        src={getPngPath(mood)}
+        alt={`Nuri mascot - ${mood}`}
+        width={size}
+        height={size}
+        priority={mood === "happy" || mood === "idle"}
+      />
     </motion.div>
   );
 }
 
-export function getMoodFromScore(score: number, accepted: boolean): NuriMood {
-  if (!accepted) return "encouraging";
-  if (score >= 0.98) return "celebrating";
-  return "happy";
+export function getMoodFromScore(score: number, accepted: boolean, streak: number = 0): NuriMood {
+  if (!accepted) return "sad";
+  if (streak >= 5) return "excited";
+  if (streak >= 3) return "happy";
+  return "encouraging";
 }
 
 // ── Speech bubble ────────────────────────────────────────────────────────────
@@ -150,6 +181,8 @@ export function NuriSpeech({
     encouraging: "border-orange-400/50 bg-orange-950/40",
     thinking:    "border-blue-400/50 bg-blue-950/40",
     idle:        "border-white/20 bg-white/5",
+    excited:     "border-pink-400/50 bg-pink-950/40",
+    surprised:   "border-purple-400/50 bg-purple-950/40",
   };
 
   return (
