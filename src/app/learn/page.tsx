@@ -8,6 +8,7 @@ import {
   type Exercise, type Lesson,
   HAYQ_REWARDS, SEED_REWARDS, hayqToLevel, scoreToGrade,
 } from "@/lib/lessons/engine";
+import { loadRewards, saveRewards, addRewards } from "@/lib/rewards/seeds";
 
 type AnswerState = "idle" | "submitting" | "correct" | "incorrect";
 
@@ -42,6 +43,8 @@ export default function LearnPage() {
   const [hearts, setHearts]     = useState(3);
   const [totalHAYQ, setTotal]   = useState(0);
   const [totalSeeds, setSeeds]  = useState(0);
+  const [sessionHAYQ, setSessionHAYQ]   = useState(0);
+  const [sessionSeeds, setSessionSeeds] = useState(0);
   const [streak, setStreak]     = useState(0);
   const [selectedWords, setSW]  = useState<string[]>([]);
   const [availWords, setAW]     = useState<string[]>([]);
@@ -53,6 +56,12 @@ export default function LearnPage() {
   });
 
   const current = lesson?.exercises[ex.index];
+
+  useEffect(() => {
+    const rewards = loadRewards();
+    setTotal(rewards.totalHAYQ);
+    setSeeds(rewards.totalSeeds);
+  }, []);
 
   useEffect(() => {
     if (current?.type === "word_order" && current.words) {
@@ -95,8 +104,15 @@ export default function LearnPage() {
       const mood = getMoodFromScore(data.score, data.correct, nextStreak);
 
       if (!data.correct) setHearts(h => Math.max(0, h - 1));
-      setTotal(t => t + hayq);
-      setSeeds(s => s + seeds);
+
+      if (data.correct) {
+        const updated = addRewards(hayq, seeds);
+        setTotal(updated.totalHAYQ);
+        setSeeds(updated.totalSeeds);
+        setSessionHAYQ(s => s + hayq);
+        setSessionSeeds(s => s + seeds);
+      }
+
       setEx(s => ({
         ...s,
         state: data.correct ? "correct" : "incorrect",
@@ -120,8 +136,14 @@ export default function LearnPage() {
     const nextIdx = ex.index + 1;
     if (nextIdx >= lesson.exercises.length) {
       // Award seed for perfect lesson & lesson completion bonus
-      if (hearts === 3) setSeeds(s => s + SEED_REWARDS.PERFECT_LESSON);
-      setTotal(t => t + HAYQ_REWARDS.LESSON_COMPLETE);
+      let bonusHayq = HAYQ_REWARDS.LESSON_COMPLETE;
+      let bonusSeeds = hearts === 3 ? SEED_REWARDS.PERFECT_LESSON : 0;
+
+      const updated = addRewards(bonusHayq, bonusSeeds);
+      setTotal(updated.totalHAYQ);
+      setSeeds(updated.totalSeeds);
+      setSessionHAYQ(s => s + bonusHayq);
+      setSessionSeeds(s => s + bonusSeeds);
 
       setComplete(true);
       return;
@@ -137,11 +159,11 @@ export default function LearnPage() {
   }, [ex.state, submit, next]);
 
   if (complete && lesson)
-    return <CompletionScreen lesson={lesson} totalHAYQ={totalHAYQ} totalSeeds={totalSeeds} hearts={hearts}
-      onContinue={() => { setLesson(null); setComplete(false); setHearts(3); setTotal(0); setSeeds(0); setStreak(0); }} />;
+    return <CompletionScreen lesson={lesson} totalHAYQ={sessionHAYQ} totalSeeds={sessionSeeds} hearts={hearts}
+      onContinue={() => { setLesson(null); setComplete(false); setHearts(3); setSessionHAYQ(0); setSessionSeeds(0); setStreak(0); }} />;
 
   if (!lesson)
-    return <LessonSelector onSelect={l => { setLesson(l); setEx({ index:0, userAnswer:"", state:"idle", feedback:"", score:0, hayqEarned:0, nuriMood:"happy", nuriSpeech:"Եկեք սկսենք: 🍎" }); setHearts(3); setTotal(0); setSeeds(0); setStreak(0); }} />;
+    return <LessonSelector totalHAYQ={totalHAYQ} totalSeeds={totalSeeds} onSelect={l => { setLesson(l); setEx({ index:0, userAnswer:"", state:"idle", feedback:"", score:0, hayqEarned:0, nuriMood:"happy", nuriSpeech:"Եկեք սկսենք: 🍎" }); setHearts(3); setSessionHAYQ(0); setSessionSeeds(0); setStreak(0); }} />;
 
   if (!current) return null;
   const progress = (ex.index / lesson.exercises.length) * 100;
@@ -356,8 +378,8 @@ function MultiChoice({ options, selected, onSelect, disabled, correct, showResul
   );
 }
 
-function LessonSelector({ onSelect }: { onSelect:(l:Lesson)=>void }) {
-  const [seeds] = useState(() => Array.from({ length: 12 }).map((_, i) => ({
+function LessonSelector({ totalHAYQ, totalSeeds, onSelect }: { totalHAYQ:number; totalSeeds:number; onSelect:(l:Lesson)=>void }) {
+  const [bgSeeds] = useState(() => Array.from({ length: 12 }).map((_, i) => ({
     id: i,
     x: Math.random() * 100,
     y: Math.random() * 100,
@@ -372,7 +394,7 @@ function LessonSelector({ onSelect }: { onSelect:(l:Lesson)=>void }) {
         style={{ backgroundImage: "radial-gradient(circle at 2px 2px, #D90012 1px, transparent 0)", backgroundSize: "40px 40px" }} />
 
       {/* Floating Seeds */}
-      {seeds.map(s => (
+      {bgSeeds.map(s => (
         <motion.div
           key={s.id}
           className="absolute rounded-full opacity-20 blur-sm"
@@ -399,10 +421,10 @@ function LessonSelector({ onSelect }: { onSelect:(l:Lesson)=>void }) {
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 font-bold text-[#FFA500] bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
-              <span className="text-xl">🪙</span> ՀԱՅՔ
+              <span className="text-xl">🪙</span> {totalHAYQ}
             </div>
             <div className="flex items-center gap-2 font-bold text-red-400 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
-              <span className="text-xl">🍎</span> Սերմեր
+              <span className="text-xl">🍎</span> {totalSeeds}
             </div>
           </div>
         </nav>
