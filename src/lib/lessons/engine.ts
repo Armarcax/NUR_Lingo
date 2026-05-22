@@ -1,122 +1,188 @@
 /**
- * NUR Lingo — Lesson Engine v3
- * HAYQ = Հայկական Ակտիվ Յուրացման Քանակ
- * All Armenian text uses proper Unicode. No transliteration.
+ * NUR Lingo — Lesson Engine v2
+ * HAYQ token system replaces XP throughout.
+ * HAYQ = Հայկական Ակտիվ Յուրացման Քանակ (Armenian Active Learning Quantity)
  */
 
 import { LEXICON, SENTENCE_PATTERNS, LexiconEntry } from "../lexicon/dictionary";
 
 export type ExerciseType =
-  | "translation_en_to_hy" | "translation_hy_to_en"
-  | "multiple_choice" | "fill_in_blank"
-  | "word_order" | "matching_pairs" | "error_correction";
+  | "translation_en_to_hy"
+  | "translation_hy_to_en"
+  | "multiple_choice"
+  | "fill_in_blank"
+  | "word_order"
+  | "matching_pairs"
+  | "error_correction";
 
 export type CEFRLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
 
 export interface Exercise {
-  id: string; type: ExerciseType;
-  prompt: string; promptArmenian?: string;
-  targetAnswer: string; acceptableAnswers: string[];
-  hint?: string; explanation?: string;
-  difficulty: 1|2|3|4|5; cefr: CEFRLevel;
-  hayqReward: number; timeLimit?: number;
-  options?: string[]; words?: string[];
-  lessonId: string; unitId: string;
+  id: string;
+  type: ExerciseType;
+  prompt: string;
+  promptArmenian?: string;
+  targetAnswer: string;
+  acceptableAnswers: string[];
+  hint?: string;
+  explanation?: string;
+  difficulty: 1 | 2 | 3 | 4 | 5;
+  cefr: CEFRLevel;
+  hayqReward: number;        // ← HAYQ instead of XP
+  timeLimit?: number;
+  options?: string[];
+  words?: string[];
+  lessonId: string;
+  unitId: string;
 }
 
 export interface Lesson {
-  id: string; unitId: string;
-  title: string; titleArmenian: string; description: string;
-  cefr: CEFRLevel; difficulty: 1|2|3|4|5;
+  id: string;
+  unitId: string;
+  title: string;
+  titleArmenian: string;
+  description: string;
+  cefr: CEFRLevel;
+  difficulty: 1 | 2 | 3 | 4 | 5;
   exercises: Exercise[];
-  prerequisiteLessons: string[]; hayqTotal: number;
-  estimatedMinutes: number; grammarFocus: string[]; vocabularyFocus: string[];
+  prerequisiteLessons: string[];
+  hayqTotal: number;         // ← HAYQ
+  estimatedMinutes: number;
+  grammarFocus: string[];
+  vocabularyFocus: string[];
 }
 
 export interface Unit {
-  id: string; title: string; titleArmenian: string; description: string;
-  cefr: CEFRLevel; lessons: string[]; iconEmoji: string;
-  colorFrom: string; colorTo: string;
+  id: string;
+  title: string;
+  titleArmenian: string;
+  description: string;
+  cefr: CEFRLevel;
+  lessons: string[];
+  iconEmoji: string;
+  colorFrom: string;
+  colorTo: string;
 }
 
-// ── HAYQ Rewards ──────────────────────────────────────────────────────────────
+// ─── HAYQ Reward Table ───────────────────────────────────────────────────────
+
 export const HAYQ_REWARDS = {
-  perfect: 25, excellent: 18, good: 12, partial: 5,
-  streak_3: 10, streak_7: 30, streak_30: 100,
-  lesson_complete: 40, unit_complete: 200, first_lesson: 50,
+  perfect:         25,
+  excellent:       18,
+  good:            12,
+  partial:          5,
+  streak_3:        10,
+  streak_7:        30,
+  streak_30:      100,
+  lesson_complete: 40,
+  unit_complete:  200,
+  first_lesson:    50,   // bonus
 };
 
-// ── HAYQ Level System ─────────────────────────────────────────────────────────
+// ─── HAYQ Level System ────────────────────────────────────────────────────────
+
 export interface HAYQLevel {
-  level: number; title: string; titleArmenian: string;
-  nextLevelHAYQ: number; color: string;
+  level: number;
+  title: string;
+  titleArmenian: string;
+  nextLevelHAYQ: number;
+  color: string;
 }
 
 export function hayqToLevel(hayq: number): HAYQLevel {
   const levels: HAYQLevel[] = [
-    { level:1, title:"Beginner",   titleArmenian:"Սկsnak",    nextLevelHAYQ:150,       color:"#9ca3af" },
-    { level:2, title:"Student",    titleArmenian:"Ուսանող",   nextLevelHAYQ:400,       color:"#60a5fa" },
-    { level:3, title:"Learner",    titleArmenian:"Ճanachox",  nextLevelHAYQ:800,       color:"#34d399" },
-    { level:4, title:"Speaker",    titleArmenian:"Խosox",     nextLevelHAYQ:1500,      color:"#F2A800" },
-    { level:5, title:"Proficient", titleArmenian:"Հmuт",      nextLevelHAYQ:2500,      color:"#D90012" },
-    { level:6, title:"Fluent",     titleArmenian:"Чkun",      nextLevelHAYQ:4000,      color:"#a855f7" },
-    { level:7, title:"Master",     titleArmenian:"Varpayet",  nextLevelHAYQ:Infinity,  color:"#F2A800" },
+    { level:1, title:"Beginner",    titleArmenian:"Սկսնակ",      nextLevelHAYQ:150,  color:"#9ca3af" },
+    { level:2, title:"Student",     titleArmenian:"Ուսանող",     nextLevelHAYQ:400,  color:"#60a5fa" },
+    { level:3, title:"Learner",     titleArmenian:"Ճանաչող",     nextLevelHAYQ:800,  color:"#34d399" },
+    { level:4, title:"Speaker",     titleArmenian:"Խոսող",       nextLevelHAYQ:1500, color:"#F2A800" },
+    { level:5, title:"Proficient",  titleArmenian:"Հմուտ",       nextLevelHAYQ:2500, color:"#D90012" },
+    { level:6, title:"Fluent",      titleArmenian:"Ճկուն",       nextLevelHAYQ:4000, color:"#a855f7" },
+    { level:7, title:"Master",      titleArmenian:"Վարպետ",      nextLevelHAYQ:Infinity, color:"#F2A800" },
   ];
-  const thresholds = [0,150,400,800,1500,2500,4000];
   for (let i = levels.length - 1; i >= 0; i--) {
-    if (hayq >= thresholds[i]) return levels[i];
+    const threshold = i === 0 ? 0 : [0,150,400,800,1500,2500,4000][i];
+    if (hayq >= threshold) return levels[i];
   }
   return levels[0];
 }
 
-// ── Units ─────────────────────────────────────────────────────────────────────
+// ─── Units ────────────────────────────────────────────────────────────────────
+
 export const UNITS: Unit[] = [
-  { id:"unit_greetings", title:"Greetings & Basics", titleArmenian:"Ողջույններ և Հիմունքներ",
-    description:"Ծanot'atsir, vogjuyn tur, nerkayet'stsir", cefr:"A1",
-    lessons:["lesson_1","lesson_1b"], iconEmoji:"👋", colorFrom:"#D90012", colorTo:"#8b0000" },
-  { id:"unit_home", title:"Home & Movement", titleArmenian:"Տուն և Շarzhum",
-    description:"Nkaraghir qo tuny, khos gnal-gaлu mashin", cefr:"A1",
-    lessons:["lesson_2","lesson_2b"], iconEmoji:"🏠", colorFrom:"#0033A0", colorTo:"#001a6b" },
-  { id:"unit_food", title:"Food & Drink", titleArmenian:"Ուtelic ev Xmelic",
-    description:"Hayкakan xohanots, utел-хmel barapashar", cefr:"A1",
-    lessons:["lesson_3","lesson_3b"], iconEmoji:"🍽️", colorFrom:"#F2A800", colorTo:"#b07800" },
-  { id:"unit_family", title:"Family", titleArmenian:"Yntaniq",
-    description:"Yntaniqui andamner, haraberut'yunner", cefr:"A1",
-    lessons:["lesson_4","lesson_4b"], iconEmoji:"👨‍👩‍👧", colorFrom:"#D90012", colorTo:"#0033A0" },
-  { id:"unit_education", title:"Education", titleArmenian:"Krtut'yun",
-    description:"Dprots, gark, usucich, usanox", cefr:"A2",
-    lessons:["lesson_5","lesson_5b"], iconEmoji:"📚", colorFrom:"#0033A0", colorTo:"#F2A800" },
+  {
+    id: "unit_greetings",
+    title: "Greetings & Basics",
+    titleArmenian: "Ողջույններ և Հիմունքներ",
+    description: "Ծանոթացիր, ողջունիր և ներկայացիր",
+    cefr: "A1",
+    lessons: ["lesson_1", "lesson_1b"],
+    iconEmoji: "👋",
+    colorFrom: "#D90012",
+    colorTo: "#8b0000",
+  },
+  {
+    id: "unit_home",
+    title: "Home & Movement",
+    titleArmenian: "Տուն և Շարժում",
+    description: "Նկարագրիր տունդ, խոսիր գնալ-գալու մասին",
+    cefr: "A1",
+    lessons: ["lesson_2", "lesson_2b"],
+    iconEmoji: "🏠",
+    colorFrom: "#0033A0",
+    colorTo: "#001a6b",
+  },
+  {
+    id: "unit_food",
+    title: "Food & Drink",
+    titleArmenian: "Ուտելիք և Ըմպելիք",
+    description: "Հայկական խոհանոց, ուտել-խմելու բառապաշար",
+    cefr: "A1",
+    lessons: ["lesson_3", "lesson_3b"],
+    iconEmoji: "🍽️",
+    colorFrom: "#F2A800",
+    colorTo: "#b07800",
+  },
+  {
+    id: "unit_family",
+    title: "Family",
+    titleArmenian: "Ընտանիք",
+    description: "Ընտանիքի անդամներ, հարաբերություններ",
+    cefr: "A1",
+    lessons: ["lesson_4", "lesson_4b"],
+    iconEmoji: "👨‍👩‍👧",
+    colorFrom: "#D90012",
+    colorTo: "#0033A0",
+  },
+  {
+    id: "unit_education",
+    title: "Education",
+    titleArmenian: "Կրթություն",
+    description: "Դպրոց, գիրք, ուսուցիչ, ուսանող",
+    cefr: "A2",
+    lessons: ["lesson_5", "lesson_5b"],
+    iconEmoji: "📚",
+    colorFrom: "#0033A0",
+    colorTo: "#F2A800",
+  },
 ];
 
-// ── Safe helpers (NO MORE undefined crashes) ──────────────────────────────────
-function byId(id: string): LexiconEntry | undefined {
-  return LEXICON.find(e => e.id === id);
-}
+// ─── Exercise generators ──────────────────────────────────────────────────────
 
-function safeList(ids: string[]): LexiconEntry[] {
-  return ids
-    .map(id => byId(id))
-    .filter((e): e is LexiconEntry => !!e && Array.isArray(e.english) && e.english.length > 0);
-}
-
-function safe(...items: (Exercise | null | undefined)[]): Exercise[] {
-  return items.filter((e): e is Exercise => e !== null && e !== undefined);
-}
-
-// ── Exercise generators ───────────────────────────────────────────────────────
 export function generateTranslationExercise(
   patternId: string, lessonId: string, unitId: string
 ): Exercise | null {
   const pattern = SENTENCE_PATTERNS.find(p => p.id === patternId);
   if (!pattern) return null;
   return {
-    id: `ex_${patternId}_tr`, type: "translation_en_to_hy",
+    id: `ex_${patternId}_tr`,
+    type: "translation_en_to_hy",
     prompt: `Translate to Armenian: "${pattern.english_template}"`,
-    promptArmenian: `Թargmanel hayeren: "${pattern.english_template}"`,
+    promptArmenian: `Թարգմանիր հայերեն՝ "${pattern.english_template}"`,
     targetAnswer: pattern.armenian_variants[0],
     acceptableAnswers: pattern.armenian_variants,
     hint: pattern.grammar_note,
-    explanation: pattern.grammar_note ? `📝 ${pattern.grammar_note}` : undefined,
+    explanation: pattern.grammar_note
+      ? `📝 ${pattern.grammar_note}` : undefined,
     difficulty: pattern.difficulty as 1|2|3|4|5,
     cefr: diffToCEFR(pattern.difficulty),
     hayqReward: pattern.difficulty * 6,
@@ -125,23 +191,22 @@ export function generateTranslationExercise(
 }
 
 export function generateMCExercise(
-  entry: LexiconEntry | undefined,
-  lessonId: string, unitId: string,
+  entry: LexiconEntry, lessonId: string, unitId: string,
   distractors: LexiconEntry[]
-): Exercise | null {
-  if (!entry || !Array.isArray(entry.english) || entry.english.length === 0) return null;
+): Exercise {
   const correct = entry.english[0];
-  const wrong = distractors
-    .filter(d => d.id !== entry.id && Array.isArray(d.english) && d.english.length > 0)
-    .map(d => d.english[0])
-    .slice(0, 3);
+  const wrong = distractors.filter(d => d.id !== entry.id).map(d => d.english[0]).slice(0,3);
   const options = shuffle([correct, ...wrong]);
   return {
-    id: `ex_${entry.id}_mc`, type: "multiple_choice",
+    id: `ex_${entry.id}_mc`,
+    type: "multiple_choice",
     prompt: `What does "${entry.word}" mean?`,
-    promptArmenian: `Ի՞նչ է նշanакum "${entry.word}"?`,
-    targetAnswer: correct, acceptableAnswers: entry.english, options,
-    difficulty: entry.difficulty, cefr: diffToCEFR(entry.difficulty),
+    promptArmenian: `Ի՞նչ է նշանակում "${entry.word}"-ը`,
+    targetAnswer: correct,
+    acceptableAnswers: entry.english,
+    options,
+    difficulty: entry.difficulty,
+    cefr: diffToCEFR(entry.difficulty),
     hayqReward: entry.difficulty * 3,
     lessonId, unitId,
   };
@@ -155,11 +220,14 @@ export function generateWordOrderExercise(
   const canonical = pattern.armenian_variants[0];
   const words = shuffle(canonical.split(" "));
   return {
-    id: `ex_${patternId}_wo`, type: "word_order",
+    id: `ex_${patternId}_wo`,
+    type: "word_order",
     prompt: `Arrange: "${pattern.english_template}"`,
-    promptArmenian: `Dasavorel bardery: "${pattern.english_template}"`,
-    targetAnswer: canonical, acceptableAnswers: pattern.armenian_variants,
-    words, explanation: pattern.grammar_note,
+    promptArmenian: `Դասավորիր բառերը՝ "${pattern.english_template}"`,
+    targetAnswer: canonical,
+    acceptableAnswers: pattern.armenian_variants,
+    words,
+    explanation: pattern.grammar_note,
     difficulty: pattern.difficulty as 1|2|3|4|5,
     cefr: diffToCEFR(pattern.difficulty),
     hayqReward: pattern.difficulty * 4,
@@ -167,115 +235,123 @@ export function generateWordOrderExercise(
   };
 }
 
-// ── Lessons ───────────────────────────────────────────────────────────────────
-// All IDs below are verified to exist in dictionary.ts
+// ─── Lessons ──────────────────────────────────────────────────────────────────
+
 export const LESSONS: Lesson[] = [
   {
     id: "lesson_1", unitId: "unit_greetings",
-    title: "Hello Armenia", titleArmenian: "Բарев Hayastan",
-    description: "Arlajin barery — vogjuynner u tsanotut'yun",
+    title: "Hello Armenia", titleArmenian: "Բարև Հայաստան",
+    description: "Առաջին բառերը՝ ողջույններ և ծանոթություն",
     cefr: "A1", difficulty: 1, prerequisiteLessons: [],
     hayqTotal: 90, estimatedMinutes: 8,
-    grammarFocus: ["«լinел» бayi nerka zamanaky", "anjnakan deranuнner"],
-    vocabularyFocus: ["barev", "лав", "ес", "du"],
-    exercises: safe(
-      // pron_001=ես, adj_003=լavl, pron_002=du, pron_003=na
-      generateMCExercise(byId("pron_001"), "lesson_1", "unit_greetings",
-        safeList(["pron_002","pron_003","pron_004"])),
-      generateMCExercise(byId("adj_003"), "lesson_1", "unit_greetings",
-        safeList(["adj_001","adj_002","adj_008"])),
-      generateTranslationExercise("sp_009", "lesson_1", "unit_greetings"),
-      generateTranslationExercise("sp_010", "lesson_1", "unit_greetings"),
-      generateTranslationExercise("sp_017", "lesson_1", "unit_greetings"),
-    ),
+    grammarFocus: ["«լինել» բայի ներկա ժամանակը", "անձնական դերանուններ"],
+    vocabularyFocus: ["բարև", "լավ", "ես", "դու"],
+    exercises: [
+      generateMCExercise(
+        LEXICON.find(e => e.word === "բարև")
+          ?? LEXICON.find(e => e.id === "greet_001")!,
+        "lesson_1","unit_greetings",
+        LEXICON.filter(e => e.grammar_type === "adjective").slice(0,3)
+      ),
+      generateMCExercise(
+        LEXICON.find(e => e.word === "լավ")
+          ?? LEXICON.find(e => e.id === "adj_003")!,
+        "lesson_1","unit_greetings",
+        LEXICON.filter(e => e.grammar_type === "adjective").slice(1,4)
+      ),
+      generateTranslationExercise("sp_009","lesson_1","unit_greetings"),
+      generateTranslationExercise("sp_010","lesson_1","unit_greetings"),
+    ].filter(Boolean) as Exercise[],
   },
   {
     id: "lesson_2", unitId: "unit_home",
-    title: "Going Home", titleArmenian: "Tun gnal",
-    description: "Khos tan ev sharzman mashin",
+    title: "Going Home", titleArmenian: "Տուն գնալ",
+    description: "Խոսիր տան և շարժման մասին",
     cefr: "A1", difficulty: 1, prerequisiteLessons: ["lesson_1"],
     hayqTotal: 110, estimatedMinutes: 10,
-    grammarFocus: ["nерка sharunaкan", "azat barakan"],
-    vocabularyFocus: ["tun", "gnal", "aprel", "Erevan"],
-    exercises: safe(
-      generateTranslationExercise("sp_001", "lesson_2", "unit_home"),
-      generateTranslationExercise("sp_005", "lesson_2", "unit_home"),
-      generateWordOrderExercise("sp_001", "lesson_2", "unit_home"),
-      generateWordOrderExercise("sp_005", "lesson_2", "unit_home"),
-      // home_001=տun, home_002=senyak, city_002=Erevan
-      generateMCExercise(byId("home_001"), "lesson_2", "unit_home",
-        safeList(["home_002","home_003","city_002"])),
-    ),
+    grammarFocus: ["ներկա շարունակական", "ազատ բառապաշար"],
+    vocabularyFocus: ["տուն", "գնալ", "ապրել", "Երևան"],
+    exercises: [
+      generateTranslationExercise("sp_001","lesson_2","unit_home"),
+      generateTranslationExercise("sp_005","lesson_2","unit_home"),
+      generateWordOrderExercise("sp_001","lesson_2","unit_home"),
+      generateWordOrderExercise("sp_005","lesson_2","unit_home"),
+    ].filter(Boolean) as Exercise[],
   },
   {
     id: "lesson_3", unitId: "unit_food",
-    title: "Eating & Drinking", titleArmenian: "Utel u Xmel",
-    description: "Utелiki barapashar u zruytsner",
+    title: "Eating & Drinking", titleArmenian: "Ուտել ու Խմել",
+    description: "Ուտելիքի բառապաշար և զրույցներ սեղանի շուրջ",
     cefr: "A1", difficulty: 1, prerequisiteLessons: ["lesson_1"],
     hayqTotal: 100, estimatedMinutes: 9,
-    grammarFocus: ["ughjigh xndir", "bayi xonarhum"],
-    vocabularyFocus: ["utel", "xmel", "hac", "jur"],
-    exercises: safe(
-      generateTranslationExercise("sp_002", "lesson_3", "unit_food"),
-      generateTranslationExercise("sp_020", "lesson_3", "unit_food"),
-      generateWordOrderExercise("sp_002", "lesson_3", "unit_food"),
-      // food_001=ջuр, food_002=hac, food_009=surj, food_010=tey
-      generateMCExercise(byId("food_001"), "lesson_3", "unit_food",
-        safeList(["food_009","food_010","food_003"])),
-      generateMCExercise(byId("food_002"), "lesson_3", "unit_food",
-        safeList(["food_005","food_006","food_007"])),
-    ),
+    grammarFocus: ["ուղիղ խնդիր", "բայի խոնարհում"],
+    vocabularyFocus: ["ուտել", "խմել", "հաց", "ջուր"],
+    exercises: [
+      generateTranslationExercise("sp_002","lesson_3","unit_food"),
+      generateWordOrderExercise("sp_002","lesson_3","unit_food"),
+      generateMCExercise(
+        LEXICON.find(e => e.id === "food_002")!,
+        "lesson_3","unit_food",
+        LEXICON.filter(e => e.embedding_group === "food_drink").slice(1,4)
+      ),
+    ].filter(Boolean) as Exercise[],
   },
   {
     id: "lesson_4", unitId: "unit_family",
-    title: "My Family", titleArmenian: "Im Yntaniqy",
-    description: "Yntaniqui andamner u statsakan holog",
+    title: "My Family", titleArmenian: "Իմ ընտանիքը",
+    description: "Ընտանիքի անդամներ և ստացական հոլով",
     cefr: "A1", difficulty: 1, prerequisiteLessons: ["lesson_2"],
     hayqTotal: 120, estimatedMinutes: 11,
-    grammarFocus: ["statsakan hodер", "masnagiтut'yunner"],
-    vocabularyFocus: ["mayrs", "hayrs", "bjshkuhi", "usucich"],
-    exercises: safe(
-      generateTranslationExercise("sp_006", "lesson_4", "unit_family"),
-      generateTranslationExercise("sp_007", "lesson_4", "unit_family"),
-      generateTranslationExercise("sp_004", "lesson_4", "unit_family"),
-      generateWordOrderExercise("sp_006", "lesson_4", "unit_family"),
-      // prof_002=bjshkuhi, prof_001=bjishk, prof_003=usucich, edu_003=usanox
-      generateMCExercise(byId("prof_002"), "lesson_4", "unit_family",
-        safeList(["prof_001","prof_003","edu_003"])),
-      // fam_001=mayr, fam_002=hayr, fam_005=quyr, fam_006=yeghbayr
-      generateMCExercise(byId("fam_001"), "lesson_4", "unit_family",
-        safeList(["fam_002","fam_005","fam_006"])),
-    ),
+    grammarFocus: ["ստացական հոդեր", "մասնագիտություններ"],
+    vocabularyFocus: ["մայրս", "հայրս", "բժշկուհի", "ուսուցիչ"],
+    exercises: [
+      generateTranslationExercise("sp_006","lesson_4","unit_family"),
+      generateTranslationExercise("sp_007","lesson_4","unit_family"),
+      generateTranslationExercise("sp_004","lesson_4","unit_family"),
+      generateWordOrderExercise("sp_006","lesson_4","unit_family"),
+      generateMCExercise(
+        LEXICON.find(e => e.id === "prof_002")!,
+        "lesson_4","unit_family",
+        LEXICON.filter(e => e.embedding_group === "work_profession"
+          || e.embedding_group === "education_learning").slice(0,3)
+      ),
+    ].filter(Boolean) as Exercise[],
   },
   {
     id: "lesson_5", unitId: "unit_education",
-    title: "School & Books", titleArmenian: "Dprots u Gark",
-    description: "Krtakan barapashar",
+    title: "School & Books", titleArmenian: "Դպրոց ու Գիրք",
+    description: "Կրթական բառապաշար",
     cefr: "A2", difficulty: 2, prerequisiteLessons: ["lesson_4"],
     hayqTotal: 130, estimatedMinutes: 12,
-    grammarFocus: ["nерка sharunaкan (kardal/grel)", "nergoyakan holog"],
-    vocabularyFocus: ["dprots", "gark", "kardalel", "grel"],
-    exercises: safe(
-      generateTranslationExercise("sp_008", "lesson_5", "unit_education"),
-      generateWordOrderExercise("sp_008", "lesson_5", "unit_education"),
-      // edu_002=gark, edu_001=dprots, tech_001=hagelust
-      generateMCExercise(byId("edu_002"), "lesson_5", "unit_education",
-        safeList(["edu_001","home_007","tech_001"])),
-      // edu_003=usanox, edu_004=ashakert, prof_003=usucich
-      generateMCExercise(byId("edu_003"), "lesson_5", "unit_education",
-        safeList(["edu_004","prof_003","fam_009"])),
-    ),
+    grammarFocus: ["ներկա շարունակական (կարդալ/գրել)", "ներգոյական հոլով"],
+    vocabularyFocus: ["դպրոց", "գիրք", "կարդալ", "գրել"],
+    exercises: [
+      generateTranslationExercise("sp_008","lesson_5","unit_education"),
+      generateWordOrderExercise("sp_008","lesson_5","unit_education"),
+      generateMCExercise(
+        LEXICON.find(e => e.id === "edu_002")!,
+        "lesson_5","unit_education",
+        LEXICON.filter(e => e.embedding_group === "education_learning").slice(0,3)
+      ),
+    ].filter(Boolean) as Exercise[],
   },
 ];
 
-// ── Utilities ──────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
 function diffToCEFR(d: number): CEFRLevel {
   return (["A1","A1","A2","B1","B2","C1"] as CEFRLevel[])[Math.min(d,5)] ?? "A1";
 }
-function shuffle<T>(arr: T[]): T[] { return [...arr].sort(() => Math.random() - 0.5); }
+function shuffle<T>(arr: T[]): T[] {
+  return [...arr].sort(() => Math.random() - 0.5);
+}
 
-export const getLessonById     = (id: string) => LESSONS.find(l => l.id === id);
-export const getUnitById       = (id: string) => UNITS.find(u => u.id === id);
+export const getLessonById  = (id: string) => LESSONS.find(l => l.id === id);
+export const getUnitById    = (id: string) => UNITS.find(u => u.id === id);
 export const getLessonsForUnit = (uid: string) => LESSONS.filter(l => l.unitId === uid);
-export const scoreToGrade      = (s: number) =>
+export const scoreToGrade = (s: number) =>
   s >= 0.98 ? "perfect" : s >= 0.85 ? "excellent" : s >= 0.75 ? "good" : s >= 0.5 ? "partial" : "incorrect";
+
+export function xpToLevel(xp: number): number {
+  return Math.floor(xp / 60) + 1;
+}

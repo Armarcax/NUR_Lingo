@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "NUR Lingo — AI Language Learning",
-  description: "Learn Armenian, English, Russian with AI semantic understanding and HAYQ rewards.",
-  keywords: ["Armenian","հայerен","language learning","AI","HAYQ","multilingual"],
+  title: "NUR Lingo — Հայկական AI Լեզվի Platforma",
+  description: "AI-native Armenian ↔ English language learning. Semantic understanding, HAYQ tokens, Նուռ mascot.",
+  keywords: ["Armenian","հայերեն","language learning","AI","HAYQ","NLP","Armenia"],
   icons: { icon: "/logo.png", apple: "/logo.png" },
   openGraph: {
     title: "NUR Lingo",
-    description: "AI-native multilingual platform — Armenian · English · Russian",
+    description: "Սովորիր հայերեն AI-ի հետ — semantic understanding, HAYQ reward system",
     images: ["/logo.png"],
     locale: "hy_AM",
     type: "website",

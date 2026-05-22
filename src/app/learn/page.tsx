@@ -1,208 +1,281 @@
 "use client";
-import { useState, useEffect, useCallback, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Nurik, { NurikSpeech, getMoodFromScore } from "@/components/nurik/Nurik";
-import type { NurikMood } from "@/components/nurik/Nurik";
-import { loadLangConfig, UI_STRINGS } from "@/lib/i18n/index";
-import type { LangCode, LangPair } from "@/lib/i18n/index";
-import { getLessonById } from "@/lib/i18n/multilingual";
-import type { MultiLesson, MultiExercise } from "@/lib/i18n/multilingual";
-import { loadRewards, saveRewards, addHAYQ, awardSeed, updateStreak } from "@/lib/rewards/seeds";
+import Image from "next/image";
+import Nuri, { NuriSpeech, getMoodFromScore, type NuriMood } from "@/components/Nuri";
+import {
+  LESSONS, UNITS,
+  type Exercise, type Lesson,
+  HAYQ_REWARDS, hayqToLevel, scoreToGrade,
+} from "@/lib/lessons/engine";
 
-const SPEECH: Record<LangCode, Record<string, string[]>> = {
-  hy: { correct_perfect:["Kataryal! 🌟","Shat lav! 🎉","+HAYQ! 🪙"], correct:["Ëntrel e! ✅","Lav e! 👍","Sharunakel!"], incorrect:["Mi aner! 💪","Karogh es!","Verakanchir!"], thinking:["Mtatsir... 💭","Inch sa..."], idle:["Barev! 🍎","Sovorel HAYQ e! 🪙","Ready?"] },
-  en: { correct_perfect:["Perfect! 🌟","Amazing! 🎉","+HAYQ! 🪙"], correct:["Correct! ✅","Great job! 👍","Keep going!"], incorrect:["Try again! 💪","You can do it!","Almost!"], thinking:["Thinking... 💭","Take your time..."], idle:["Hello! 🍎","Learning = HAYQ! 🪙","Ready?"] },
-  ru: { correct_perfect:["Идеально! 🌟","Отлично! 🎉","+HAYQ! 🪙"], correct:["Правильно! ✅","Молодец! 👍","Продолжай!"], incorrect:["Попробуй ещё! 💪","Ты можешь!","Почти!"], thinking:["Думаю... 💭","Подожди..."], idle:["Привет! 🍎","Учёба = HAYQ! 🪙","Готов?"] },
+type AnswerState = "idle" | "submitting" | "correct" | "incorrect";
+
+interface ExState {
+  index: number;
+  userAnswer: string;
+  state: AnswerState;
+  feedback: string;
+  score: number;
+  hayqEarned: number;
+  corrections?: string[];
+  nuriMood: NuriMood;
+  nuriSpeech: string;
+}
+
+const NURI_LINES: Record<string, string[]> = {
+  correct_perfect: ["Կատարյալ! Հիանալի! 🌟", "Վայ, HAYQ վաստակեցիր! 🏆", "Չեմ հավատում! 🎉"],
+  correct:         ["Շատ լավ! ✅", "Այո! Հայերեն գիտես! 👍", "Ճիշտ է: Շարունակիր:"],
+  incorrect:       ["Մի տխրիր! Կարող ես 💪", "Կրկնիր! Կստացվի", "Շատ մոտ էր, բայց կփորձենք նորից!"],
+  thinking:        ["Մտածիր... 💭", "Հայերենը հիասքանչ է 🤔", "Ոչ այստեղ, ոչ այնտեղ..."],
+  idle:            ["Բարև! Սովորենք միասին! 🍎", "Ինչպե՞ս ես: Պատրա՞ստ ես:", "Հայերեն սովորելը հաճելի է 🪙"],
 };
-const rnd = (a: string[]) => a[Math.floor(Math.random()*a.length)];
 
-function LearnInner() {
-  const params   = useSearchParams();
-  const router   = useRouter();
-  const lessonId = params.get("lesson") ?? "";
-  const pairParam= params.get("pair") as LangPair | null;
+function randomLine(key: string) {
+  const arr = NURI_LINES[key] ?? NURI_LINES.idle;
+  return arr[Math.floor(Math.random() * arr.length)];
+}
 
-  const [lesson, setLesson]   = useState<MultiLesson|null>(null);
-  const [native, setNative]   = useState<LangCode>("en");
-  const [idx, setIdx]         = useState(0);
-  const [answer, setAnswer]   = useState("");
-  const [selected, setSelected] = useState<string[]>([]);
-  const [available, setAvail] = useState<string[]>([]);
-  const [status, setStatus]   = useState<"idle"|"submitting"|"correct"|"incorrect">("idle");
-  const [totalHAYQ, setTotal] = useState(0);
-  const [hearts, setHearts]   = useState(3);
-  const [done, setDone]       = useState(false);
-  const [mood, setMood]       = useState<NurikMood>("idle");
-  const [speech, setSpeech]   = useState("🍎");
-  const [correction, setCorr] = useState("");
+export default function LearnPage() {
+  const [lesson, setLesson]     = useState<Lesson | null>(null);
+  const [complete, setComplete] = useState(false);
+  const [hearts, setHearts]     = useState(3);
+  const [totalHAYQ, setTotal]   = useState(0);
+  const [selectedWords, setSW]  = useState<string[]>([]);
+  const [availWords, setAW]     = useState<string[]>([]);
+
+  const [ex, setEx] = useState<ExState>({
+    index: 0, userAnswer: "", state: "idle",
+    feedback: "", score: 0, hayqEarned: 0,
+    nuriMood: "idle", nuriSpeech: randomLine("idle"),
+  });
+
+  const current = lesson?.exercises[ex.index];
 
   useEffect(() => {
-    const cfg = loadLangConfig();
-    const p   = pairParam ?? cfg?.pair ?? "en-hy";
-    const nat = cfg?.native ?? "en";
-    setNative(nat as LangCode);
-    const l = getLessonById(p as LangPair, lessonId);
-    if (!l) { router.push("/world"); return; }
-    setLesson(l);
-    setSpeech(rnd(SPEECH[nat as LangCode].idle));
-  }, [lessonId, pairParam, router]);
-
-  const current: MultiExercise|undefined = lesson?.exercises[idx];
-  useEffect(() => {
-    if (current?.type==="word_order" && current.words) {
-      setAvail([...current.words].sort(()=>Math.random()-0.5));
-      setSelected([]);
+    if (current?.type === "word_order" && current.words) {
+      setAW([...current.words]);
+      setSW([]);
     }
   }, [current]);
 
-  const ui = UI_STRINGS[native];
-
   const submit = useCallback(async () => {
-    if (!current || status==="submitting") return;
-    const userAnswer = current.type==="word_order" ? selected.join(" ") : answer.trim();
-    if (!userAnswer) return;
-    setStatus("submitting"); setMood("thinking"); setSpeech(rnd(SPEECH[native].thinking));
+    if (!current || ex.state === "submitting") return;
+    const answer = current.type === "word_order"
+      ? selectedWords.join(" ")
+      : ex.userAnswer.trim();
+    if (!answer) return;
+
+    setEx(s => ({ ...s, state: "submitting", nuriMood: "thinking", nuriSpeech: randomLine("thinking") }));
+
     try {
-      const res  = await fetch("/api/validate", { method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ userAnswer, expectedAnswer:current.targetAnswer,
-          englishOriginal:current.prompt["en"]??current.prompt[native], allValidAnswers:current.acceptableAnswers, useAI:false }) });
+      const res  = await fetch("/api/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userAnswer: answer,
+          expectedAnswer: current.targetAnswer,
+          englishOriginal: current.prompt.replace(/Translate to Armenian:|Arrange:/gi,"").replace(/"/g,"").trim(),
+          allValidAnswers: current.acceptableAnswers,
+          useAI: false,
+        }),
+      });
       const data = await res.json();
-      const accepted: boolean = data.accepted;
-      const s: number = data.score ?? 0;
-      const hayq = accepted ? current.hayqReward : 0;
-      if (!accepted) setHearts(h=>Math.max(0,h-1));
-      setTotal(t=>t+hayq); setCorr(data.corrections?.[0]??"");
-      setStatus(accepted?"correct":"incorrect");
-      const m = getMoodFromScore(s, accepted);
-      setMood(m);
-      setSpeech(rnd(s>=0.98 ? SPEECH[native].correct_perfect : accepted ? SPEECH[native].correct : SPEECH[native].incorrect));
-      const rewards = loadRewards();
-      saveRewards(addHAYQ(updateStreak(rewards), hayq));
+      const hayq = data.accepted ? current.hayqReward : 0;
+      const mood = getMoodFromScore(data.score, data.accepted);
+
+      if (!data.accepted) setHearts(h => Math.max(0, h - 1));
+      setTotal(t => t + hayq);
+      setEx(s => ({
+        ...s,
+        state: data.accepted ? "correct" : "incorrect",
+        feedback: data.feedback,
+        score: data.score,
+        hayqEarned: hayq,
+        corrections: data.corrections,
+        nuriMood: mood,
+        nuriSpeech: randomLine(
+          data.score >= 0.98 ? "correct_perfect"
+          : data.accepted   ? "correct"
+          : "incorrect"
+        ),
+      }));
     } catch {
-      setStatus("incorrect"); setMood("sad"); setSpeech("😅");
+      setEx(s => ({ ...s, state: "incorrect", feedback: "Կապի սխալ:", nuriMood: "sad", nuriSpeech: "Վատ ինտերնետ! 😅" }));
     }
-  }, [current, status, answer, selected, native]);
+  }, [current, ex.userAnswer, ex.state, selectedWords]);
 
   const next = useCallback(() => {
     if (!lesson) return;
-    if (idx+1>=lesson.exercises.length) {
-      const c: string[] = JSON.parse(localStorage.getItem("nur_completed")??"[]");
-      if (!c.includes(lesson.id)) { c.push(lesson.id); localStorage.setItem("nur_completed",JSON.stringify(c)); }
-      const r = loadRewards();
-      saveRewards(awardSeed(r,"first_lesson","Lesson complete!"));
-      setDone(true); return;
-    }
-    setIdx(i=>i+1); setAnswer(""); setSelected([]); setStatus("idle"); setCorr(""); setMood("idle");
-    setSpeech(rnd(SPEECH[native].idle));
-  }, [lesson, idx, native]);
+    const nextIdx = ex.index + 1;
+    if (nextIdx >= lesson.exercises.length) { setComplete(true); return; }
+    setEx({ index: nextIdx, userAnswer: "", state: "idle", feedback: "", score: 0, hayqEarned: 0, nuriMood: "idle", nuriSpeech: randomLine("idle") });
+    setSW([]); setAW([]);
+  }, [lesson, ex.index]);
 
   const onKey = useCallback((e: React.KeyboardEvent) => {
-    if (e.key!=="Enter") return;
-    if (status==="idle") submit(); else if (status!=="submitting") next();
-  }, [status, submit, next]);
+    if (e.key !== "Enter") return;
+    if (ex.state === "idle") submit();
+    else if (ex.state !== "submitting") next();
+  }, [ex.state, submit, next]);
 
-  if (done && lesson) return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center" style={{background:"var(--color-bg)",color:"white"}}>
-      <div className="h-1.5 flag-stripe fixed top-0 w-full"/>
-      <motion.div initial={{scale:0.5,opacity:0}} animate={{scale:1,opacity:1}} transition={{type:"spring",damping:10}} className="space-y-6 max-w-sm w-full">
-        <Nurik mood="excited" size={140} className="mx-auto"/>
-        <h1 className="text-3xl font-bold">{native==="hy"?"Shnorhavor! 🎉":native==="ru"?"Поздравляю! 🎉":"Congratulations! 🎉"}</h1>
-        <div className="grid grid-cols-3 gap-3">
-          {[{v:`+${totalHAYQ}`,l:"HAYQ",c:"var(--hy-orange)"},{v:"❤️".repeat(hearts)+"🖤".repeat(3-hearts),l:"Hearts",c:"var(--hy-red)"},{v:lesson.cefr,l:"Level",c:"#60a5fa"}].map(s=>(
-            <div key={s.l} className="rounded-2xl p-3 border text-center" style={{background:"var(--color-card)",borderColor:"var(--color-border)"}}>
-              <div className="font-bold text-xl" style={{color:s.c}}>{s.v}</div>
-              <div className="text-xs text-white/40">{s.l}</div>
-            </div>
-          ))}
-        </div>
-        <button onClick={()=>router.push("/world")} className="btn-orange w-full rounded-2xl py-4 text-lg">{ui.continue}</button>
-      </motion.div>
-    </div>
-  );
+  if (complete && lesson)
+    return <CompletionScreen lesson={lesson} totalHAYQ={totalHAYQ} hearts={hearts}
+      onContinue={() => { setLesson(null); setComplete(false); setHearts(3); setTotal(0); }} />;
 
-  if (!lesson||!current) return <div className="min-h-screen flex items-center justify-center" style={{background:"var(--color-bg)"}}><div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{borderColor:"var(--hy-orange)"}}/></div>;
+  if (!lesson)
+    return <LessonSelector onSelect={l => { setLesson(l); setEx({ index:0, userAnswer:"", state:"idle", feedback:"", score:0, hayqEarned:0, nuriMood:"happy", nuriSpeech:"Եկեք սկսենք: 🍎" }); setHearts(3); setTotal(0); }} />;
 
-  const progress = (idx/lesson.exercises.length)*100;
+  if (!current) return null;
+  const progress = (ex.index / lesson.exercises.length) * 100;
 
   return (
-    <div className="min-h-screen flex flex-col" style={{background:"var(--color-bg)",color:"white"}}>
-      <div className="h-1 flag-stripe"/>
-      <div className="flex items-center gap-3 px-4 py-3 border-b sticky top-0 z-10" style={{borderColor:"var(--color-border)",background:"var(--color-bg)"}}>
-        <button onClick={()=>router.push("/world")} className="text-white/40 hover:text-white text-xl">✕</button>
-        <div className="flex-1 h-3 rounded-full overflow-hidden" style={{background:"rgba(255,255,255,0.08)"}}>
-          <motion.div className="h-full rounded-full" style={{background:"linear-gradient(90deg,var(--hy-red),var(--hy-orange))"}} animate={{width:`${progress}%`}} transition={{duration:0.5}}/>
-        </div>
-        <div className="flex gap-0.5">{[0,1,2].map(i=><motion.span key={i} animate={{scale:i<hearts?1:0.5,opacity:i<hearts?1:0.2}} className="text-lg">❤️</motion.span>)}</div>
-        <div className="hayq-chip text-xs">🪙 {totalHAYQ}</div>
+    <div className="min-h-screen flex flex-col" style={{ background: "#0a0b14", color: "white" }}>
+
+      {/* Top flag stripe */}
+      <div className="h-1.5 w-full flex">
+        <div className="h-full flex-1" style={{ background: "#D90012" }} />
+        <div className="h-full flex-1" style={{ background: "#0033A0" }} />
+        <div className="h-full flex-1" style={{ background: "#FFA500" }} />
       </div>
 
-      <div className="flex-1 flex flex-col lg:flex-row items-center justify-center gap-8 px-4 py-8 max-w-4xl mx-auto w-full">
-        <div className="flex flex-col items-center gap-3 lg:w-44 shrink-0">
-          <NurikSpeech text={speech} mood={mood}/>
-          <Nurik mood={mood} size={100}/>
+      {/* Header */}
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-white/10">
+        <button onClick={() => setLesson(null)} className="text-white/40 hover:text-white text-2xl transition-colors">✕</button>
+
+        {/* Progress */}
+        <div className="flex-1 h-3 rounded-full overflow-hidden bg-white/10 mx-4">
+          <motion.div className="h-full rounded-full"
+            style={{ background: "linear-gradient(90deg, #D90012, #FFA500)" }}
+            animate={{ width: `${progress}%` }} transition={{ duration: 0.5, ease: "easeOut" }} />
         </div>
-        <div className="flex-1 w-full">
+
+        {/* Hearts */}
+        <div className="flex gap-1 mr-4">
+          {[0,1,2].map(i => (
+            <motion.span key={i} animate={{ scale: i < hearts ? 1 : 0.8, opacity: i < hearts ? 1 : 0.3 }} className="text-xl">❤️</motion.span>
+          ))}
+        </div>
+
+        {/* HAYQ */}
+        <div className="bg-white/5 border border-white/10 px-3 py-1 rounded-xl flex items-center gap-2 text-sm font-bold">
+          <span className="text-yellow-400">🪙</span> {totalHAYQ}
+        </div>
+      </div>
+
+      {/* Exercise */}
+      <div className="flex-1 flex flex-col lg:flex-row items-center justify-center gap-12 px-6 py-12 max-w-5xl mx-auto w-full">
+
+        {/* Nuri sidebar */}
+        <div className="flex flex-col items-center gap-4 lg:w-56 shrink-0">
+          <NuriSpeech text={ex.nuriSpeech} mood={ex.nuriMood} />
+          <Nuri mood={ex.nuriMood} size={140} />
+        </div>
+
+        {/* Exercise card */}
+        <div className="flex-1 w-full bg-white/5 p-8 rounded-3xl border border-white/10 shadow-2xl">
           <AnimatePresence mode="wait">
-            <motion.div key={idx} initial={{opacity:0,x:40}} animate={{opacity:1,x:0}} exit={{opacity:0,x:-40}} transition={{duration:0.22}} className="space-y-5">
-              <div className="flex items-center gap-2 text-xs uppercase tracking-widest" style={{color:"var(--hy-orange)"}}>
-                <span>{current.type==="translate"?"🔤 "+ui.translate:current.type==="word_order"?"🔀 "+ui.arrange:"🎯 "+ui.choose}</span>
-                <span className="text-white/20">·</span>
-                <span className="text-white/30">+{current.hayqReward} HAYQ</span>
+            <motion.div key={ex.index}
+              initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:-20 }}
+              transition={{ duration:0.3 }}
+              className="space-y-6">
+
+              {/* Type badge */}
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-[#FFA500]/10 border border-[#FFA500]/20 text-[10px] font-bold uppercase tracking-wider text-[#FFA500]">
+                <span>
+                  {current.type === "translation_en_to_hy" ? "🔤 Թարգմանություն"
+                  : current.type === "word_order" ? "🔀 Դասավորիր"
+                  : "🎯 Ընտրություն"}
+                </span>
+                <span className="opacity-30">•</span>
+                <span>{current.cefr}</span>
+                <span className="opacity-30">•</span>
+                <span>+{current.hayqReward} HAYQ</span>
               </div>
-              <h2 className="text-xl lg:text-2xl font-light leading-relaxed">{current.prompt[native]??current.prompt["en"]}</h2>
-              {current.hint?.[native] && <p className="text-sm italic pl-3 border-l-2" style={{color:"rgba(242,168,0,0.7)",borderColor:"rgba(242,168,0,0.3)"}}>💡 {current.hint[native]}</p>}
-              {current.type==="word_order" ? (
-                <div className="space-y-4">
-                  <div className="min-h-[56px] p-3 rounded-2xl border-2 border-dashed flex flex-wrap gap-2" style={{borderColor:"rgba(242,168,0,0.2)",background:"rgba(242,168,0,0.03)"}}>
-                    {!selected.length&&<span className="text-white/25 text-sm self-center">Select words below...</span>}
-                    {selected.map((w,i)=><motion.button key={`s${i}`} initial={{scale:0.8}} animate={{scale:1}} onClick={()=>status==="idle"&&(setAvail(p=>{const x=p.lastIndexOf(w);return [...p.slice(0,x),...p.slice(x+1)];}),setSelected(p=>{const x=p.lastIndexOf(w);return [...p.slice(0,x),...p.slice(x+1)];}))} className="word-chip-selected">{w}</motion.button>)}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {available.map((w,i)=><motion.button key={`a${i}`} initial={{scale:0.8}} animate={{scale:1}} onClick={()=>status==="idle"&&(setSelected(p=>[...p,w]),setAvail(p=>{const x=p.indexOf(w);return [...p.slice(0,x),...p.slice(x+1)];}))} className="word-chip-available">{w}</motion.button>)}
-                  </div>
+
+              {/* Prompt */}
+              <h2 className="text-2xl lg:text-3xl font-medium leading-tight">{current.prompt}</h2>
+
+              {/* Hint */}
+              {current.hint && (
+                <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/20 flex gap-3 italic text-sm text-blue-200/70">
+                  <span>💡</span>
+                  <p>{current.hint}</p>
                 </div>
-              ) : current.type==="multiple_choice"&&current.options ? (
-                <div className="grid grid-cols-2 gap-3">
-                  {current.options.map(opt=>{
-                    const isSel=answer===opt; const isOk=opt===current.targetAnswer; const show=status!=="idle"&&status!=="submitting";
-                    return <button key={opt} onClick={()=>status==="idle"&&setAnswer(opt)} className="p-4 rounded-2xl border-2 text-left font-medium transition-all text-sm" style={{background:show?(isOk?"rgba(0,120,60,0.25)":isSel?"rgba(120,0,0,0.25)":"rgba(255,255,255,0.03)"):isSel?"rgba(242,168,0,0.08)":"rgba(255,255,255,0.04)",borderColor:show?(isOk?"rgba(0,200,100,0.5)":isSel?"rgba(217,0,18,0.5)":"rgba(255,255,255,0.08)"):isSel?"var(--hy-orange)":"rgba(255,255,255,0.1)",color:show?(isOk?"#6effa0":isSel?"#ffaaaa":"rgba(255,255,255,0.25)"):isSel?"var(--hy-orange)":"white"}}>{opt}</button>;
-                  })}
-                </div>
-              ) : (
-                <textarea value={answer} onChange={e=>setAnswer(e.target.value)} onKeyDown={onKey} disabled={status!=="idle"}
-                  placeholder={native==="hy"?"Մuтqagreq...":native==="ru"?"Введите ответ...":"Type your answer..."}
-                  className="answer-input" dir="auto"/>
               )}
+
+              {/* Input */}
+              <div className="mt-8">
+                {current.type === "word_order" ? (
+                  <WordOrderInput selected={selectedWords} available={availWords}
+                    onSelect={w => { setSW(p=>[...p,w]); setAW(p=>{const i=p.indexOf(w);return[...p.slice(0,i),...p.slice(i+1)]}); }}
+                    onDeselect={w => { setAW(p=>[...p,w]); setSW(p=>{const i=p.lastIndexOf(w);return[...p.slice(0,i),...p.slice(i+1)]}); }}
+                    disabled={ex.state!=="idle"} />
+                ) : current.type === "multiple_choice" && current.options ? (
+                  <MultiChoice options={current.options} selected={ex.userAnswer}
+                    onSelect={v => setEx(s=>({...s,userAnswer:v}))}
+                    disabled={ex.state!=="idle"} correct={current.targetAnswer} showResult={ex.state!=="idle"} />
+                ) : (
+                  <textarea value={ex.userAnswer}
+                    onChange={e => setEx(s=>({...s,userAnswer:e.target.value}))}
+                    onKeyDown={onKey} disabled={ex.state!=="idle"}
+                    placeholder="Մուտքագրեք հայերեն..."
+                    className="w-full bg-white/5 border-2 border-white/10 rounded-2xl p-6 text-xl focus:border-[#0033A0] outline-none transition-all resize-none min-h-[160px]"
+                    dir="auto" lang="hy" autoFocus />
+                )}
+              </div>
             </motion.div>
           </AnimatePresence>
         </div>
       </div>
 
+      {/* Feedback bar */}
       <AnimatePresence>
-        {(status==="correct"||status==="incorrect")&&(
-          <motion.div initial={{y:80,opacity:0}} animate={{y:0,opacity:1}} exit={{y:80,opacity:0}} className="border-t-2 p-5"
-            style={{background:status==="correct"?"rgba(16,80,40,0.9)":"rgba(80,16,16,0.9)",borderColor:status==="correct"?"var(--hy-orange)":"var(--hy-red)"}}>
-            <div className="max-w-2xl mx-auto flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <p className="font-bold text-lg mb-1">{status==="correct"?`${ui.correct} +${current.hayqReward} HAYQ 🪙`:ui.wrong}</p>
-                {correction&&status==="incorrect"&&<p className="text-sm mt-1"><span className="text-white/40">{native==="ru"?"Правильно: ":"Correct: "}</span><span className="font-armenian font-semibold" style={{color:"var(--hy-orange)"}}>{correction}</span></p>}
+        {(ex.state === "correct" || ex.state === "incorrect") && (
+          <motion.div initial={{ y:100 }} animate={{ y:0 }} exit={{ y:100 }}
+            className="fixed bottom-0 left-0 right-0 p-6 lg:p-10 border-t-4"
+            style={{
+              background: ex.state==="correct" ? "#132d1b" : "#311414",
+              borderColor: ex.state==="correct" ? "#22c55e" : "#D90012",
+            }}>
+            <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex items-center gap-4 text-center md:text-left">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl ${ex.state==='correct'?'bg-green-500':'bg-red-500'}`}>
+                  {ex.state==="correct" ? "✓" : "✕"}
+                </div>
+                <div>
+                  <p className={`text-xl font-bold ${ex.state==='correct'?'text-green-400':'text-red-400'}`}>
+                    {ex.state==="correct" ? `Ճիշտ է! +${ex.hayqEarned} HAYQ 🪙` : "Սխալ է"}
+                  </p>
+                  {ex.corrections?.[0] && ex.state==="incorrect" && (
+                    <p className="text-white/70 mt-1 italic">
+                      Ճիշտ պատասխանը՝ <span className="font-bold text-white not-italic ml-1">{ex.corrections[0]}</span>
+                    </p>
+                  )}
+                </div>
               </div>
-              <button onClick={next} className="px-6 py-3 rounded-2xl font-bold shrink-0 active:scale-95"
-                style={{background:status==="correct"?"var(--hy-orange)":"var(--hy-red)",color:status==="correct"?"#07080f":"white"}}>{ui.next}</button>
+              <button onClick={next}
+                className="w-full md:w-auto px-12 py-4 rounded-2xl font-black text-lg uppercase tracking-wider transition-all active:scale-95 shadow-lg"
+                style={{
+                  background: ex.state==="correct" ? "#22c55e" : "#D90012",
+                  color: "white"
+                }}>
+                Շարունակել
+              </button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {status==="idle"&&(
-        <div className="p-4 border-t" style={{borderColor:"var(--color-border)"}}>
+      {/* Submit button */}
+      {ex.state === "idle" && (
+        <div className="p-6 border-t border-white/10 bg-white/5">
           <div className="max-w-2xl mx-auto">
             <button onClick={submit}
-              disabled={!answer.trim()&&current.type!=="word_order"&&!selected.length}
-              className="w-full py-4 rounded-2xl font-bold text-lg transition-all active:scale-[0.98] disabled:opacity-30"
-              style={{background:"linear-gradient(135deg,var(--hy-red),var(--hy-blue))",color:"white",boxShadow:"0 4px 24px rgba(217,0,18,0.25)"}}>
-              {ui.check}
+              disabled={!ex.userAnswer.trim() && current.type !== "word_order"}
+              className="w-full py-5 rounded-2xl font-black text-xl uppercase tracking-widest transition-all active:scale-[0.98] disabled:opacity-20 disabled:grayscale"
+              style={{ background: "linear-gradient(135deg, #D90012, #0033A0)", color: "white", boxShadow: "0 8px 32px rgba(217,0,18,0.3)" }}>
+              Ստուգել
             </button>
           </div>
         </div>
@@ -211,10 +284,196 @@ function LearnInner() {
   );
 }
 
-export default function LearnPage() {
+function WordOrderInput({ selected, available, onSelect, onDeselect, disabled }:
+  { selected:string[]; available:string[]; onSelect:(w:string)=>void; onDeselect:(w:string)=>void; disabled:boolean }) {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center" style={{background:"var(--color-bg)"}}><div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{borderColor:"var(--hy-orange)"}}/></div>}>
-      <LearnInner/>
-    </Suspense>
+    <div className="space-y-6">
+      <div className="min-h-[80px] p-4 rounded-2xl border-2 border-dashed border-white/10 bg-white/5 flex flex-wrap gap-3">
+        {selected.length === 0 && <span className="text-white/20 text-sm self-center italic">Ընտրեք բառերը...</span>}
+        {selected.map((w,i) => (
+          <motion.button key={`s${i}${w}`} initial={{ scale:0.8 }} animate={{ scale:1 }}
+            onClick={() => !disabled && onDeselect(w)}
+            className="px-5 py-2 rounded-xl bg-[#0033A0] border-b-4 border-blue-900 text-white font-bold hover:brightness-110 active:border-b-0 active:translate-y-1 transition-all">
+            {w}
+          </motion.button>
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-3">
+        {available.map((w,i) => (
+          <motion.button key={`a${i}${w}`} initial={{ scale:0.8 }} animate={{ scale:1 }}
+            onClick={() => !disabled && onSelect(w)}
+            className="px-5 py-2 rounded-xl bg-white/10 border-b-4 border-white/5 text-white font-bold hover:bg-white/20 active:border-b-0 active:translate-y-1 transition-all">
+            {w}
+          </motion.button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MultiChoice({ options, selected, onSelect, disabled, correct, showResult }:
+  { options:string[]; selected:string; onSelect:(v:string)=>void; disabled:boolean; correct:string; showResult:boolean }) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {options.map(opt => {
+        const isSel = selected === opt;
+        const isOk  = opt === correct;
+        let bg = "bg-white/5"; let border = "border-white/10"; let color = "text-white";
+        if (showResult) {
+          if (isOk)       { bg="bg-green-500/20"; border="border-green-500"; color="text-green-400"; }
+          else if (isSel) { bg="bg-red-500/20";  border="border-red-500";  color="text-red-400"; }
+          else            { bg="bg-white/5"; border="border-white/5"; color="opacity-20"; }
+        } else if (isSel) { bg="bg-[#0033A0]/20"; border="border-[#0033A0]"; color="text-[#60a5fa]"; }
+        return (
+          <button key={opt} onClick={() => !disabled && onSelect(opt)}
+            className={`p-6 rounded-2xl border-2 text-left font-bold transition-all ${bg} ${border} ${color} ${!disabled && 'hover:bg-white/10'}`}>
+            {opt}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function LessonSelector({ onSelect }: { onSelect:(l:Lesson)=>void }) {
+  return (
+    <div className="min-h-screen bg-[#0a0b14] text-white">
+      <div className="h-1.5 w-full flex">
+        <div className="h-full flex-1" style={{ background: "#D90012" }} />
+        <div className="h-full flex-1" style={{ background: "#0033A0" }} />
+        <div className="h-full flex-1" style={{ background: "#FFA500" }} />
+      </div>
+
+      <nav className="flex items-center justify-between px-8 py-5 border-b border-white/10 bg-white/5 sticky top-0 z-50 backdrop-blur-md">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D90012] to-[#FFA500] flex items-center justify-center font-black text-xl shadow-lg">Ն</div>
+          <span className="font-black tracking-tighter text-xl uppercase italic">NUR Lingo</span>
+        </div>
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2 font-bold text-[#FFA500]">
+            <span className="text-xl">🪙</span> HAYQ
+          </div>
+        </div>
+      </nav>
+
+      <div className="px-8 pt-12 pb-8 max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-10">
+        <div className="flex-1 text-center md:text-left">
+          <p className="text-[#FFA500] font-black uppercase tracking-widest text-xs mb-4 flex items-center justify-center md:justify-start gap-2">
+            <span className="text-base">🇦🇲</span> Հայերեն • Armenian
+          </p>
+          <h1 className="text-5xl md:text-6xl font-black leading-none mb-6">
+            Սովորիր <span className="text-[#D90012]">Հայերեն</span>
+          </h1>
+          <div className="flex flex-wrap gap-4 justify-center md:justify-start text-white/50 font-medium">
+            <span className="flex items-center gap-1"><span className="text-green-500">✓</span> Իմաստային ուսուցում</span>
+            <span className="flex items-center gap-1"><span className="text-green-500">✓</span> HAYQ պարգևներ</span>
+          </div>
+        </div>
+        <Nuri mood="happy" size={180} className="drop-shadow-2xl" />
+      </div>
+
+      <div className="px-8 pb-24 max-w-4xl mx-auto space-y-12 mt-12">
+        {UNITS.map(unit => {
+          const lessons = LESSONS.filter(l => l.unitId === unit.id);
+          return (
+            <div key={unit.id} className="relative">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-xl"
+                  style={{ background: `linear-gradient(135deg, ${unit.colorFrom}, ${unit.colorTo})` }}>
+                  {unit.iconEmoji}
+                </div>
+                <div>
+                  <h2 className="text-2xl font-black">{unit.titleArmenian}</h2>
+                  <p className="text-white/40 font-bold text-sm uppercase tracking-tight">{unit.title} • {unit.cefr}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {lessons.map((l, i) => (
+                  <motion.button key={l.id} whileHover={{ scale:1.02 }} whileTap={{ scale:0.98 }}
+                    onClick={() => onSelect(l)}
+                    className="bg-white/5 border-2 border-white/10 rounded-3xl p-6 hover:bg-white/10 hover:border-white/20 transition-all text-left group">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-xs font-black mb-3 group-hover:bg-[#FFA500] group-hover:text-black transition-colors">
+                          {i+1}
+                        </div>
+                        <h3 className="text-lg font-bold mb-1">{l.titleArmenian}</h3>
+                        <p className="text-white/40 text-xs font-medium">{l.description}</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                        <span className="bg-yellow-400/10 text-yellow-500 px-2 py-1 rounded-lg text-[10px] font-black italic">🪙 {l.hayqTotal}</span>
+                        <span className="text-white/20 text-[10px] font-bold">⏱ {l.estimatedMinutes} րոպե</span>
+                      </div>
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function CompletionScreen({ lesson, totalHAYQ, hearts, onContinue }:
+  { lesson:Lesson; totalHAYQ:number; hearts:number; onContinue:()=>void }) {
+  const level = hayqToLevel(totalHAYQ);
+  return (
+    <div className="min-h-screen bg-[#0a0b14] flex flex-col items-center justify-center p-8 text-center relative">
+      <div className="h-1.5 w-full flex fixed top-0 left-0 right-0">
+        <div className="h-full flex-1" style={{ background: "#D90012" }} />
+        <div className="h-full flex-1" style={{ background: "#0033A0" }} />
+        <div className="h-full flex-1" style={{ background: "#FFA500" }} />
+      </div>
+
+      <motion.div initial={{ scale:0.8, opacity:0 }} animate={{ scale:1, opacity:1 }}
+        className="space-y-8 max-w-md w-full">
+
+        <Nuri mood="celebrating" size={200} className="mx-auto drop-shadow-2xl" />
+
+        <div>
+          <h1 className="text-5xl font-black text-white mb-2">Շնորհավոր! 🎉</h1>
+          <p className="text-xl text-white/50 font-medium italic">Դասն ավարտված է:</p>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4">
+          {[
+            { label:"HAYQ", value:`+${totalHAYQ}`, color:"text-[#FFA500]" },
+            { label:"Սիրտ", value:hearts > 0 ? "❤️".repeat(hearts) : "💔", color:"text-[#D90012]" },
+            { label:"Մակարդակ", value:level.titleArmenian, color:level.color },
+          ].map(s => (
+            <div key={s.label} className="bg-white/5 border border-white/10 rounded-3xl p-5 shadow-lg">
+              <div className={`text-xl font-black mb-1 ${s.color}`}>{s.value}</div>
+              <div className="text-[10px] font-black uppercase tracking-widest text-white/30">{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-4 shadow-xl">
+          <div className="flex justify-between items-end">
+            <div className="text-left">
+              <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1">Հաջորդ մակարդակը</p>
+              <p className="text-lg font-black" style={{ color: level.color }}>{level.titleArmenian}</p>
+            </div>
+            <p className="text-sm font-bold text-white/40">{level.nextLevelHAYQ === Infinity ? "ԱՌԱՎԵԼԱԳՈՒՅՆ" : `${totalHAYQ} / ${level.nextLevelHAYQ} HAYQ`}</p>
+          </div>
+          {level.nextLevelHAYQ !== Infinity && (
+            <div className="h-4 rounded-full bg-white/5 overflow-hidden p-1 border border-white/10">
+              <motion.div className="h-full rounded-full bg-gradient-to-r from-[#D90012] via-[#0033A0] to-[#FFA500]"
+                initial={{ width:0 }}
+                animate={{ width:`${Math.min((totalHAYQ/level.nextLevelHAYQ)*100,100)}%` }}
+                transition={{ delay:0.5, duration:1.5, ease: "easeOut" }} />
+            </div>
+          )}
+        </div>
+
+        <button onClick={onContinue}
+          className="w-full py-5 rounded-2xl font-black text-xl uppercase tracking-widest shadow-2xl transition-all active:scale-95 bg-white text-black hover:bg-white/90">
+          Շարունակել
+        </button>
+      </motion.div>
+    </div>
   );
 }

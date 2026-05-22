@@ -1,85 +1,136 @@
-# 🍎 NUR Lingo v4
+# 🇦🇲 NUR Lingo
 
-AI-native multilingual language learning platform.
-Armenian · English · Russian — all 6 directions.
-
----
-
-## What's New in v4
-
-| Feature | Description |
-|---------|-------------|
-| 🌍 **6 Language Directions** | HY↔EN, HY↔RU, EN↔RU — full bidirectional support |
-| 🍎 **Pomegranate World Map** | Living world with lesson seeds, journey path |
-| 🎭 **Nurik Mascot v2** | 7 emotional states — reacts to every answer |
-| 🪙 **Dual Rewards** | HAYQ Points (frequent) + Pomegranate Seeds (rare) |
-| 🏆 **Journey Tab** | Achievements, seed collection, progress tracking |
-| 🌱 **Garden Tab** | Pomegranate growth visualization |
-| 🔀 **All Exercise Types** | Translate, Multiple Choice, Word Order |
-| 🧠 **Semantic Engine** | 5-layer validation — meaning, not exact text |
+**AI-native Armenian ↔ English language learning platform**  
+Semantic understanding. Not just translation matching.
 
 ---
 
-## Language Pairs
+## What Makes NUR Lingo Different
+
+Most language apps compare exact text. NUR Lingo understands **meaning**.
 
 ```
-Armenian (HY) → English (EN)   ✅
-Armenian (HY) → Russian (RU)   ✅
-English (EN)  → Armenian (HY)  ✅
-English (EN)  → Russian (RU)   ✅
-Russian (RU)  → Armenian (HY)  ✅
-Russian (RU)  → English (EN)   ✅
+"I am going home" → correct Armenian answers:
+  ✅ Ես գնում եմ տուն      (SOV — standard)
+  ✅ Ես տուն եմ գնում      (SVO — equally valid)
+  ✅ Տուն եմ գնում          (subject dropped — natural speech)
+  ❌ Ես տնից եմ գնում      (wrong case — ablative ≠ directional)
 ```
+
+This is powered by a 5-layer semantic validation pipeline:
+1. Exact match
+2. Pattern registry (pre-mapped valid variants)
+3. Armenian morphological analysis (lemmatization + Jaccard)
+4. Synonym expansion
+5. AI semantic evaluation (Claude / Llama3 fallback)
+
+---
+
+## Tech Stack
+
+- **Next.js 14** (App Router, Edge Runtime)
+- **React 18** + **Framer Motion**
+- **TailwindCSS** + Noto Serif Armenian font
+- **Supabase** (PostgreSQL + Auth + RLS)
+- **OpenRouter / Groq / Gemini** for AI evaluation
 
 ---
 
 ## Quick Start
 
 ```bash
+# 1. Clone and install
+git clone <repo>
+cd nur-lingo
 npm install
+
+# 2. Configure environment
 cp .env.example .env.local
+# Fill in your Supabase and AI API keys
+
+# 3. Run database migrations
+npx supabase db push
+
+# 4. Seed the lexicon
+npx tsx scripts/seed-lexicon.ts
+
+# 5. Start development
 npm run dev
 ```
 
-Open http://localhost:3000
-→ Select your native language
-→ Select what you want to learn
-→ Start earning HAYQ! 🪙
+Open [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## App Flow
+## API Reference
 
+### `POST /api/validate`
+Validate an Armenian answer against the semantic engine.
+
+```json
+{
+  "userAnswer": "Ես տուն եմ գնում",
+  "expectedAnswer": "Ես գնում եմ տուն",
+  "englishOriginal": "I am going home",
+  "useAI": false
+}
 ```
-/ (root)
-  ↓ (no config)
-/onboarding       ← Choose native + learning language
-  ↓
-/world            ← Pomegranate World Map
-  ├── Home tab    ← Lesson journey path
-  ├── Journey tab ← Achievements + seed collection
-  └── Garden tab  ← Pomegranate growth visualization
-  ↓ (tap lesson)
-/learn?lesson=X&pair=en-hy  ← Exercise session
-  ↓ (complete)
-/world            ← Back with HAYQ earned
+
+**Response:**
+```json
+{
+  "accepted": true,
+  "score": 0.98,
+  "grade": "excellent",
+  "emoji": "✅",
+  "layer": "pattern_registry",
+  "feedback": "Ճիշտ է։ Ճշգրիտ ձևակերպում!"
+}
 ```
+
+### `GET /api/lexicon?word=տուն`
+Look up an Armenian word.
+
+### `GET /api/lexicon?lemma=գնացի`
+Lemmatize an Armenian word/form → get canonical root.
+
+### `GET /api/lexicon?tokens=Ես գնում եմ տուն`
+Tokenize + lemmatize an Armenian sentence.
+
+### `GET /api/lesson?id=lesson_2`
+Get lesson with full exercises.
+
+### `GET /api/lesson?all=1`
+Get all units and lessons (list view).
 
 ---
 
-## Reward System
+## Architecture
 
-**HAYQ Points** — earned every exercise
-- Correct answer: +hayqReward per exercise
-- Perfect lesson: bonus HAYQ
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for full system design, RA legislation compliance, NLP engine specification, and roadmap.
 
-**Pomegranate Seeds** 🍎 — rare, symbolic
-- First lesson: 🌱 Normal seed
-- Perfect lesson: ⭐ Golden seed
-- 7-day streak: 💎 Crystal seed
-- Unit complete: 🎯 Golden seed
-- 30-day streak: 🏆 Crystal seed
-- 100 words: 📚 Crystal seed
-- Polyglot: 🌍 Legendary seed
+---
+
+## RA Legislation
+
+This platform complies with:
+- RA Language Law (Eastern Armenian standard)
+- RA Personal Data Protection Law (2015)
+- RA Law on Education (CEFR alignment)
+- RA Electronic Communications Law
+
+---
+
+## Roadmap
+
+- [ ] 500+ lexicon entries
+- [ ] Full verb paradigm coverage (100+ verbs)
+- [ ] Audio/TTS integration
+- [ ] Spaced repetition (SM-2)
+- [ ] Mobile app (Expo)
+- [ ] Open-source `nur-nlp` npm package
+- [ ] Armenian NLP corpus publication
+
+---
 
 *NUR Lingo · Yerevan, Armenia 🇦🇲*

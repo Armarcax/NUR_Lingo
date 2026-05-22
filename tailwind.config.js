@@ -15,21 +15,26 @@ module.exports = {
       },
       colors: {
         brand: {
-          red:    "#D90012",
-          blue:   "#0033A0",
-          orange: "#F2A800",
-          dark:   "#07080f",
-          card:   "#0e0f1c",
+          amber:  "#F59E0B",
+          orange: "#F97316",
+          dark:   "#0a0a0f",
+          card:   "#111118",
         },
       },
       animation: {
-        "fade-up":   "fadeUp 0.4s ease-out forwards",
-        "fade-in":   "fadeIn 0.3s ease-out forwards",
-        "spin-slow": "spin 2s linear infinite",
+        "fade-up":    "fadeUp 0.4s ease-out forwards",
+        "fade-in":    "fadeIn 0.3s ease-out forwards",
+        "pulse-slow": "pulse 3s ease-in-out infinite",
       },
       keyframes: {
-        fadeUp: { "0%": { opacity: 0, transform: "translateY(16px)" }, "100%": { opacity: 1, transform: "translateY(0)" } },
-        fadeIn: { "0%": { opacity: 0 }, "100%": { opacity: 1 } },
+        fadeUp: {
+          "0%":   { opacity: 0, transform: "translateY(16px)" },
+          "100%": { opacity: 1, transform: "translateY(0)" },
+        },
+        fadeIn: {
+          "0%":   { opacity: 0 },
+          "100%": { opacity: 1 },
+        },
       },
     },
   },
