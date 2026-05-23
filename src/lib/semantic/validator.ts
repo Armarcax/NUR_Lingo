@@ -84,7 +84,7 @@ export function patternRegistryMatch(
   sourceLanguage: "en" | "hy"
 ): ValidationResult | null {
   // Pattern registry currently mostly for English -> Armenian
-  if (sourceLanguage !== "en") return null;
+  if (sourceLanguage !== "en" && sourceLanguage !== "ru") return null;
 
   const validForms = getAllValidArmenianForms(sourceSentence);
   if (validForms.length === 0) return null;
@@ -186,8 +186,8 @@ export interface ValidationRequest {
   userAnswer: string;
   expectedAnswer: string;         // primary correct answer
   sourceSentence: string;         // original question
-  sourceLanguage: "en" | "hy";
-  targetLanguage: "en" | "hy";
+  sourceLanguage: "en" | "hy" | "ru";
+  targetLanguage: "en" | "hy" | "ru";
   allValidAnswers?: string[];     // additional valid forms
   strictMode?: boolean;           // if true, skip morphology and synonym expansion
 }
@@ -217,7 +217,7 @@ export async function validateAnswer(
 
   // All valid forms for this question
   let patternForms: string[] = [];
-  if (sourceLanguage === "en" && targetLanguage === "hy") {
+  if ((sourceLanguage === "en" || sourceLanguage === "ru") && targetLanguage === "hy") {
     patternForms = getAllValidArmenianForms(sourceSentence);
   }
 

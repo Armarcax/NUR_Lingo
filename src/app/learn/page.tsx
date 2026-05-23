@@ -4,11 +4,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Nuri, { NuriSpeech, getMoodFromScore, type NuriMood } from "@/components/Nuri";
 import {
-  LESSONS, UNITS,
-  type Exercise, type Lesson,
+  type Exercise, type Lesson, type HAYQLevel,
   HAYQ_REWARDS, SEED_REWARDS, hayqToLevel, scoreToGrade,
 } from "@/lib/lessons/engine";
 import { loadRewards, saveRewards, addRewards } from "@/lib/rewards/seeds";
+import { getLessonsForPair, Language } from "@/lib/i18n/multilingual";
 
 type AnswerState = "idle" | "submitting" | "correct" | "incorrect";
 
@@ -39,12 +39,15 @@ function randomLine(key: string) {
 
 export default function LearnPage() {
   const [lesson, setLesson]     = useState<Lesson | null>(null);
+  const [units, setUnits]       = useState<any[]>([]);
+  const [allLessons, setAllLessons] = useState<Lesson[]>([]);
   const [complete, setComplete] = useState(false);
   const [hearts, setHearts]     = useState(3);
   const [totalHAYQ, setTotal]   = useState(0);
   const [totalSeeds, setSeeds]  = useState(0);
   const [sessionHAYQ, setSessionHAYQ]   = useState(0);
   const [sessionSeeds, setSessionSeeds] = useState(0);
+  const [showLevelUp, setShowLevelUp]   = useState<HAYQLevel | null>(null);
   const [streak, setStreak]     = useState(0);
   const [selectedWords, setSW]  = useState<string[]>([]);
   const [availWords, setAW]     = useState<string[]>([]);
@@ -61,6 +64,12 @@ export default function LearnPage() {
     const rewards = loadRewards();
     setTotal(rewards.totalHAYQ);
     setSeeds(rewards.totalSeeds);
+
+    const source = (localStorage.getItem("nur_source_lang") || "en") as Language;
+    const target = (localStorage.getItem("nur_target_lang") || "hy") as Language;
+    const data = getLessonsForPair(source, target);
+    setUnits(data.units);
+    setAllLessons(data.lessons);
   }, []);
 
   useEffect(() => {
@@ -87,6 +96,8 @@ export default function LearnPage() {
           userAnswer: answer,
           lessonId: lesson.id,
           expectedAnswers: current.acceptableAnswers.length > 0 ? current.acceptableAnswers : [current.targetAnswer],
+          sourceLanguage: localStorage.getItem("nur_source_lang") || "en",
+          targetLanguage: localStorage.getItem("nur_target_lang") || "hy",
         }),
       });
       const data = await res.json();
@@ -106,7 +117,14 @@ export default function LearnPage() {
       if (!data.correct) setHearts(h => Math.max(0, h - 1));
 
       if (data.correct) {
+        const prevLevel = hayqToLevel(totalHAYQ);
         const updated = addRewards(hayq, seeds);
+        const nextLevel = hayqToLevel(updated.totalHAYQ);
+
+        if (nextLevel.level > prevLevel.level) {
+          setShowLevelUp(nextLevel);
+        }
+
         setTotal(updated.totalHAYQ);
         setSeeds(updated.totalSeeds);
         setSessionHAYQ(s => s + hayq);
@@ -163,7 +181,16 @@ export default function LearnPage() {
       onContinue={() => { setLesson(null); setComplete(false); setHearts(3); setSessionHAYQ(0); setSessionSeeds(0); setStreak(0); }} />;
 
   if (!lesson)
-    return <LessonSelector totalHAYQ={totalHAYQ} totalSeeds={totalSeeds} onSelect={l => { setLesson(l); setEx({ index:0, userAnswer:"", state:"idle", feedback:"", score:0, hayqEarned:0, nuriMood:"happy", nuriSpeech:"Եկեք սկսենք: 🍎" }); setHearts(3); setSessionHAYQ(0); setSessionSeeds(0); setStreak(0); }} />;
+    return (
+      <>
+        <LessonSelector totalHAYQ={totalHAYQ} totalSeeds={totalSeeds} units={units} allLessons={allLessons} onSelect={l => { setLesson(l); setEx({ index:0, userAnswer:"", state:"idle", feedback:"", score:0, hayqEarned:0, nuriMood:"happy", nuriSpeech:"Եկեք սկսենք: 🍎" }); setHearts(3); setSessionHAYQ(0); setSessionSeeds(0); setStreak(0); }} />
+        <AnimatePresence>
+          {showLevelUp && (
+            <LevelUpModal level={showLevelUp} onClose={() => setShowLevelUp(null)} />
+          )}
+        </AnimatePresence>
+      </>
+    );
 
   if (!current) return null;
   const progress = (ex.index / lesson.exercises.length) * 100;
@@ -327,6 +354,37 @@ export default function LearnPage() {
   );
 }
 
+function LevelUpModal({ level, onClose }: { level: HAYQLevel; onClose: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-black/90 backdrop-blur-lg">
+      <motion.div
+        initial={{ scale: 0.5, y: 100 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.5, y: 100 }}
+        className="bg-white/10 border border-white/20 rounded-[40px] p-10 max-w-sm w-full text-center shadow-2xl relative overflow-hidden">
+
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-transparent via-[#FFA500]/10 to-transparent animate-pulse" />
+
+        <Nuri mood="excited" size={180} className="mx-auto mb-6 drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]" />
+
+        <h2 className="text-4xl font-black text-white mb-2 leading-tight">Նոր Մակարդակ!</h2>
+        <p className="text-white/50 font-bold uppercase tracking-widest text-xs mb-8">Level Up Achievement</p>
+
+        <div className="inline-block px-8 py-4 rounded-3xl mb-8 border-2 shadow-xl"
+          style={{ borderColor: level.color, backgroundColor: `${level.color}20` }}>
+          <p className="text-sm font-black uppercase tracking-widest mb-1 opacity-50" style={{ color: level.color }}>Rank</p>
+          <p className="text-3xl font-black" style={{ color: level.color }}>{level.titleArmenian}</p>
+        </div>
+
+        <button onClick={onClose}
+          className="w-full py-5 rounded-2xl font-black text-xl uppercase tracking-widest transition-all active:scale-95 bg-white text-black shadow-lg hover:shadow-white/10">
+          Հիանալի է!
+        </button>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 function WordOrderInput({ selected, available, onSelect, onDeselect, disabled }:
   { selected:string[]; available:string[]; onSelect:(w:string)=>void; onDeselect:(w:string)=>void; disabled:boolean }) {
   return (
@@ -378,7 +436,8 @@ function MultiChoice({ options, selected, onSelect, disabled, correct, showResul
   );
 }
 
-function LessonSelector({ totalHAYQ, totalSeeds, onSelect }: { totalHAYQ:number; totalSeeds:number; onSelect:(l:Lesson)=>void }) {
+function LessonSelector({ totalHAYQ, totalSeeds, units, allLessons, onSelect }: { totalHAYQ:number; totalSeeds:number; units: any[]; allLessons: Lesson[]; onSelect:(l:Lesson)=>void }) {
+  const level = hayqToLevel(totalHAYQ);
   const [bgSeeds] = useState(() => Array.from({ length: 12 }).map((_, i) => ({
     id: i,
     x: Math.random() * 100,
@@ -419,12 +478,21 @@ function LessonSelector({ totalHAYQ, totalSeeds, onSelect }: { totalHAYQ:number;
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D90012] to-[#FFA500] flex items-center justify-center font-black text-xl shadow-lg border border-white/20">Ն</div>
             <span className="font-black tracking-tighter text-xl uppercase italic bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">NUR Lingo</span>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 font-bold text-[#FFA500] bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
-              <span className="text-xl">🪙</span> {totalHAYQ}
+          <div className="flex items-center gap-6">
+            {/* Level Info */}
+            <div className="hidden md:flex flex-col items-end">
+              <p className="text-[10px] font-black text-white/30 uppercase tracking-widest leading-none mb-1">Մակարդակ</p>
+              <p className="text-sm font-black" style={{ color: level.color }}>{level.titleArmenian}</p>
             </div>
-            <div className="flex items-center gap-2 font-bold text-red-400 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
-              <span className="text-xl">🍎</span> {totalSeeds}
+
+            {/* Rewards */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 font-bold text-[#FFA500] bg-white/5 px-4 py-2 rounded-2xl border border-white/10 shadow-lg">
+                <span className="text-xl">🪙</span> {totalHAYQ}
+              </div>
+              <div className="flex items-center gap-2 font-bold text-red-400 bg-white/5 px-4 py-2 rounded-2xl border border-white/10 shadow-lg">
+                <span className="text-xl">🍎</span> {totalSeeds}
+              </div>
             </div>
           </div>
         </nav>
@@ -437,7 +505,26 @@ function LessonSelector({ totalHAYQ, totalSeeds, onSelect }: { totalHAYQ:number;
           <h1 className="text-6xl md:text-8xl font-black leading-none mb-4 tracking-tighter italic">
             Seed <span className="text-[#D90012] drop-shadow-[0_0_15px_rgba(217,0,18,0.5)]">World</span>
           </h1>
-          <p className="text-white/40 font-bold uppercase tracking-[0.3em] text-sm">Organic learning path — Armenian Soul</p>
+          <p className="text-white/40 font-bold uppercase tracking-[0.3em] text-sm mb-8">Organic learning path — Armenian Soul</p>
+
+          {/* Global Progress Bar */}
+          <div className="max-w-md mx-auto bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur-xl shadow-2xl">
+            <div className="flex justify-between items-end mb-4">
+              <div className="text-left">
+                <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1">Ընդհանուր առաջընթաց</p>
+                <p className="text-xl font-black" style={{ color: level.color }}>{level.titleArmenian}</p>
+              </div>
+              <p className="text-xs font-bold text-white/40">{level.nextLevelHAYQ === Infinity ? "MAX" : `${totalHAYQ} / ${level.nextLevelHAYQ} ՀԱՅՔ`}</p>
+            </div>
+            {level.nextLevelHAYQ !== Infinity && (
+              <div className="h-3 rounded-full bg-white/5 overflow-hidden p-0.5 border border-white/10">
+                <motion.div className="h-full rounded-full bg-gradient-to-r from-[#D90012] via-[#0033A0] to-[#FFA500]"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${Math.min((totalHAYQ / level.nextLevelHAYQ) * 100, 100)}%` }}
+                  transition={{ duration: 1.5, ease: "easeOut" }} />
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="max-w-4xl mx-auto px-8 pb-32 relative flex-1">
@@ -463,8 +550,8 @@ function LessonSelector({ totalHAYQ, totalSeeds, onSelect }: { totalHAYQ:number;
               />
             </svg>
 
-            {UNITS.map((unit, uIdx) => {
-              const lessons = LESSONS.filter(l => l.unitId === unit.id);
+            {units.map((unit, uIdx) => {
+              const lessons = allLessons.filter(l => l.unitId === unit.id);
               return (
                 <div key={unit.id} className="w-full space-y-16">
                   <div className="flex flex-col items-center relative">
