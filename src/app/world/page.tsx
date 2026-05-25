@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import BottomNav from "@/components/BottomNav";
 import { loadRewards } from "@/lib/rewards/seeds";
+import { hayqToLevel } from "@/lib/lessons/engine";
 
 const LEAGUES = [
   { name: "Bronze", color: "#CD7F32", icon: "🥉" },

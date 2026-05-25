@@ -11,6 +11,7 @@ export interface UserRewards {
   streak: number;
   streakFreeze: number;
   lastActivityDate?: string; // YYYY-MM-DD
+  crowns: Record<string, number>; // lessonId -> level (0-3)
 }
 
 const DEFAULT_REWARDS: UserRewards = {
@@ -18,6 +19,7 @@ const DEFAULT_REWARDS: UserRewards = {
   totalSeeds: 0,
   streak: 0,
   streakFreeze: 0,
+  crowns: {},
 };
 
 export function loadRewards(): UserRewards {
@@ -27,7 +29,7 @@ export function loadRewards(): UserRewards {
     const data = localStorage.getItem(STORAGE_KEY);
     if (!data) return DEFAULT_REWARDS;
     const rewards = JSON.parse(data);
-    return { ...DEFAULT_REWARDS, ...rewards };
+    return { ...DEFAULT_REWARDS, ...rewards, crowns: rewards.crowns || {} };
   } catch (e) {
     console.error("Failed to load rewards:", e);
     return DEFAULT_REWARDS;
@@ -91,6 +93,19 @@ export function buyStreakFreeze(): { success: boolean; error?: string; rewards: 
   };
   saveRewards(updated);
   return { success: true, rewards: updated };
+}
+
+export function saveCrownLevel(lessonId: string, level: number): UserRewards {
+  const current = loadRewards();
+  const updated: UserRewards = {
+    ...current,
+    crowns: {
+      ...current.crowns,
+      [lessonId]: Math.min(3, Math.max(current.crowns[lessonId] || 0, level)),
+    },
+  };
+  saveRewards(updated);
+  return updated;
 }
 
 export function checkAndApplyFreeze(): UserRewards {

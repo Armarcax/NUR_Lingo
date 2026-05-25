@@ -8,7 +8,7 @@ import {
   type Exercise, type Lesson, type HAYQLevel,
   HAYQ_REWARDS, SEED_REWARDS, hayqToLevel, scoreToGrade,
 } from "@/lib/lessons/engine";
-import { loadRewards, saveRewards, addRewards, checkAndApplyFreeze } from "@/lib/rewards/seeds";
+import { loadRewards, saveRewards, addRewards, checkAndApplyFreeze, saveCrownLevel } from "@/lib/rewards/seeds";
 import { getLessonsForPair, Language } from "@/lib/i18n/multilingual";
 
 type AnswerState = "idle" | "submitting" | "correct" | "incorrect";
@@ -51,6 +51,8 @@ export default function LearnPage() {
   const [showLevelUp, setShowLevelUp]   = useState<HAYQLevel | null>(null);
   const [streak, setStreak]     = useState(0);
   const [hasFreeze, setHasFreeze] = useState(false);
+  const [sessionLevel, setSLevel] = useState(1);
+  const [crowns, setCrowns]     = useState<Record<string, number>>({});
   const [selectedWords, setSW]  = useState<string[]>([]);
   const [availWords, setAW]     = useState<string[]>([]);
 
@@ -68,6 +70,7 @@ export default function LearnPage() {
     setSeeds(rewards.totalSeeds);
     setStreak(rewards.streak);
     setHasFreeze(rewards.streakFreeze > 0);
+    setCrowns(rewards.crowns || {});
 
     const source = (localStorage.getItem("nur_source_lang") || "en") as Language;
     const target = (localStorage.getItem("nur_target_lang") || "hy") as Language;
@@ -156,8 +159,11 @@ export default function LearnPage() {
       let bonusSeeds = hearts === 3 ? SEED_REWARDS.PERFECT_LESSON : 0;
 
       const updated = addRewards(bonusHayq, bonusSeeds);
+      const withCrowns = saveCrownLevel(lesson.id, sessionLevel);
+
       setTotal(updated.totalHAYQ);
       setSeeds(updated.totalSeeds);
+      setCrowns(withCrowns.crowns);
       setSessionHAYQ(s => s + bonusHayq);
       setSessionSeeds(s => s + bonusSeeds);
 
@@ -181,7 +187,7 @@ export default function LearnPage() {
   if (!lesson)
     return (
       <>
-        <LessonSelector totalHAYQ={totalHAYQ} totalSeeds={totalSeeds} units={units} allLessons={allLessons} onSelect={l => { setLesson(l); setEx({ index:0, userAnswer:"", state:"idle", feedback:"", score:0, hayqEarned:0, nuriMood:"happy", nuriSpeech:"Եկեք սկսենք: 🍎" }); setHearts(3); setSessionHAYQ(0); setSessionSeeds(0); setStreak(0); }} />
+        <LessonSelector totalHAYQ={totalHAYQ} totalSeeds={totalSeeds} units={units} allLessons={allLessons} streak={streak} hasFreeze={hasFreeze} crowns={crowns} onSelect={(l, lvl) => { setLesson(l); setSLevel(lvl); setEx({ index:0, userAnswer:"", state:"idle", feedback:"", score:0, hayqEarned:0, nuriMood:"happy", nuriSpeech:"Եկեք սկսենք: 🍎" }); setHearts(3); setSessionHAYQ(0); setSessionSeeds(0); }} />
         <AnimatePresence>
           {showLevelUp && (
             <LevelUpModal level={showLevelUp} onClose={() => setShowLevelUp(null)} />
@@ -266,7 +272,7 @@ export default function LearnPage() {
               <h2 className="text-2xl lg:text-3xl font-medium leading-tight">{current.prompt}</h2>
 
               {/* Hint */}
-              {current.hint && (
+              {current.hint && sessionLevel === 1 && (
                 <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/20 flex gap-3 italic text-sm text-blue-200/70">
                   <span>💡</span>
                   <p>{current.hint}</p>
@@ -275,12 +281,12 @@ export default function LearnPage() {
 
               {/* Input */}
               <div className="mt-8">
-                {current.type === "word_order" ? (
+                {current.type === "word_order" && sessionLevel < 3 ? (
                   <WordOrderInput selected={selectedWords} available={availWords}
                     onSelect={w => { setSW(p=>[...p,w]); setAW(p=>{const i=p.indexOf(w);return[...p.slice(0,i),...p.slice(i+1)]}); }}
                     onDeselect={w => { setAW(p=>[...p,w]); setSW(p=>{const i=p.lastIndexOf(w);return[...p.slice(0,i),...p.slice(i+1)]}); }}
                     disabled={ex.state!=="idle"} />
-                ) : current.type === "multiple_choice" && current.options ? (
+                ) : current.type === "multiple_choice" && current.options && sessionLevel < 3 ? (
                   <MultiChoice options={current.options} selected={ex.userAnswer}
                     onSelect={v => setEx(s=>({...s,userAnswer:v}))}
                     disabled={ex.state!=="idle"} correct={current.targetAnswer} showResult={ex.state!=="idle"} />
@@ -435,7 +441,7 @@ function MultiChoice({ options, selected, onSelect, disabled, correct, showResul
   );
 }
 
-function LessonSelector({ totalHAYQ, totalSeeds, units, allLessons, onSelect }: { totalHAYQ:number; totalSeeds:number; units: any[]; allLessons: Lesson[]; onSelect:(l:Lesson)=>void }) {
+function LessonSelector({ totalHAYQ, totalSeeds, units, allLessons, onSelect, streak, hasFreeze, crowns }: { totalHAYQ:number; totalSeeds:number; units: any[]; allLessons: Lesson[]; onSelect:(l:Lesson, level:number)=>void; streak:number; hasFreeze:boolean; crowns: Record<string, number> }) {
   const level = hayqToLevel(totalHAYQ);
   const [bgSeeds] = useState(() => Array.from({ length: 12 }).map((_, i) => ({
     id: i,
@@ -576,10 +582,24 @@ function LessonSelector({ totalHAYQ, totalSeeds, units, allLessons, onSelect }: 
                           whileInView={{ scale: 1, opacity: 1 }}
                           whileHover={{ scale: 1.15, rotate: [0, -5, 5, 0] }}
                           whileTap={{ scale: 0.9 }}
-                          onClick={() => onSelect(l)}
+                          onClick={() => onSelect(l, Math.min(3, (crowns[l.id] || 0) + 1))}
                           className="relative group z-20"
                           style={{ x: xOffset }}
                         >
+                          {/* Crown Badges */}
+                          <div className="absolute -top-4 -right-4 flex flex-col gap-1 z-30">
+                            {[1, 2, 3].map(crownLvl => (
+                              <motion.div
+                                key={crownLvl}
+                                initial={{ scale: 0 }}
+                                animate={{ scale: (crowns[l.id] || 0) >= crownLvl ? 1 : 0 }}
+                                className="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center text-[10px] shadow-lg border border-yellow-600"
+                              >
+                                ⭐
+                              </motion.div>
+                            ))}
+                          </div>
+
                           {/* Animated Glow */}
                           <motion.div
                             animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
@@ -590,7 +610,7 @@ function LessonSelector({ totalHAYQ, totalSeeds, units, allLessons, onSelect }: 
 
                           {/* Lesson Seed (Pomegranate Seed) */}
                           <div className={`w-24 h-24 rounded-[35%_65%_70%_30%/30%_30%_70%_70%] flex items-center justify-center text-4xl shadow-2xl transition-all border-4 relative overflow-hidden
-                            ${i === 0 && uIdx === 0 ? 'border-yellow-400 shadow-[0_0_30px_rgba(250,204,21,0.6)]' : 'border-white/20'}`}
+                            ${(crowns[l.id] || 0) > 0 ? 'border-yellow-400' : 'border-white/20'}`}
                             style={{ background: `linear-gradient(135deg, ${unit.colorFrom}, ${unit.colorTo})` }}>
 
                             {/* Inner shine */}
