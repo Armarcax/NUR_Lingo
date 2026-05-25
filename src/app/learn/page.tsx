@@ -3,11 +3,12 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Nuri, { NuriSpeech, getMoodFromScore, type NuriMood } from "@/components/Nuri";
+import BottomNav from "@/components/BottomNav";
 import {
   type Exercise, type Lesson, type HAYQLevel,
   HAYQ_REWARDS, SEED_REWARDS, hayqToLevel, scoreToGrade,
 } from "@/lib/lessons/engine";
-import { loadRewards, saveRewards, addRewards } from "@/lib/rewards/seeds";
+import { loadRewards, saveRewards, addRewards, checkAndApplyFreeze } from "@/lib/rewards/seeds";
 import { getLessonsForPair, Language } from "@/lib/i18n/multilingual";
 
 type AnswerState = "idle" | "submitting" | "correct" | "incorrect";
@@ -49,6 +50,7 @@ export default function LearnPage() {
   const [sessionSeeds, setSessionSeeds] = useState(0);
   const [showLevelUp, setShowLevelUp]   = useState<HAYQLevel | null>(null);
   const [streak, setStreak]     = useState(0);
+  const [hasFreeze, setHasFreeze] = useState(false);
   const [selectedWords, setSW]  = useState<string[]>([]);
   const [availWords, setAW]     = useState<string[]>([]);
 
@@ -61,9 +63,11 @@ export default function LearnPage() {
   const current = lesson?.exercises[ex.index];
 
   useEffect(() => {
-    const rewards = loadRewards();
+    const rewards = checkAndApplyFreeze();
     setTotal(rewards.totalHAYQ);
     setSeeds(rewards.totalSeeds);
+    setStreak(rewards.streak);
+    setHasFreeze(rewards.streakFreeze > 0);
 
     const source = (localStorage.getItem("nur_source_lang") || "en") as Language;
     const target = (localStorage.getItem("nur_target_lang") || "hy") as Language;
@@ -104,15 +108,7 @@ export default function LearnPage() {
       const hayq = data.correct ? data.hayq : 0;
       const seeds = data.correct ? data.seeds : 0;
 
-      let nextStreak = streak;
-      if (data.correct) {
-        nextStreak += 1;
-      } else {
-        nextStreak = 0;
-      }
-      setStreak(nextStreak);
-
-      const mood = getMoodFromScore(data.score, data.correct, nextStreak);
+      const mood = getMoodFromScore(data.score, data.correct, streak + (data.correct ? 1 : 0));
 
       if (!data.correct) setHearts(h => Math.max(0, h - 1));
 
@@ -127,6 +123,8 @@ export default function LearnPage() {
 
         setTotal(updated.totalHAYQ);
         setSeeds(updated.totalSeeds);
+        setStreak(updated.streak);
+        setHasFreeze(updated.streakFreeze > 0);
         setSessionHAYQ(s => s + hayq);
         setSessionSeeds(s => s + seeds);
       }
@@ -189,6 +187,7 @@ export default function LearnPage() {
             <LevelUpModal level={showLevelUp} onClose={() => setShowLevelUp(null)} />
           )}
         </AnimatePresence>
+        <BottomNav />
       </>
     );
 
@@ -490,8 +489,11 @@ function LessonSelector({ totalHAYQ, totalSeeds, units, allLessons, onSelect }: 
               <div className="flex items-center gap-2 font-bold text-[#FFA500] bg-white/5 px-4 py-2 rounded-2xl border border-white/10 shadow-lg">
                 <span className="text-xl">🪙</span> {totalHAYQ}
               </div>
-              <div className="flex items-center gap-2 font-bold text-red-400 bg-white/5 px-4 py-2 rounded-2xl border border-white/10 shadow-lg">
+          <div className="bg-white/5 border border-white/10 px-4 py-2 rounded-2xl shadow-lg">
                 <span className="text-xl">🍎</span> {totalSeeds}
+          </div>
+          <div className="bg-white/5 border border-white/10 px-4 py-2 rounded-2xl shadow-lg flex items-center gap-1">
+            <span className="text-xl">🔥</span> {streak} {hasFreeze && "🛡️"}
               </div>
             </div>
           </div>
