@@ -4,15 +4,20 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Nuri, { NuriSpeech } from "@/components/Nuri";
 import { Language } from "@/lib/i18n/multilingual";
+import { requestNotificationPermission } from "@/lib/notifications";
 
 export default function Onboarding() {
   const router = useRouter();
   const [source, setSource] = useState<Language>("en");
   const [target, setTarget] = useState<Language>("hy");
+  const [notifications, setNotifications] = useState(false);
 
-  const save = () => {
+  const save = async () => {
     localStorage.setItem("nur_source_lang", source);
     localStorage.setItem("nur_target_lang", target);
+    if (notifications) {
+      await requestNotificationPermission();
+    }
     router.push("/learn");
   };
 
@@ -55,6 +60,15 @@ export default function Onboarding() {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div>
+            <p className="text-white/40 uppercase tracking-widest text-xs font-bold mb-4">Retention</p>
+            <button onClick={() => setNotifications(!notifications)}
+              className={`w-full px-6 py-4 rounded-2xl border-2 transition-all font-bold flex items-center justify-center gap-3 ${notifications ? 'border-[#FFA500] bg-[#FFA500]/10' : 'border-white/10 bg-white/5 opacity-50'}`}>
+              <span className="text-xl">🔔</span>
+              {notifications ? "Reminders Enabled" : "Enable Daily Reminders"}
+            </button>
           </div>
         </div>
 

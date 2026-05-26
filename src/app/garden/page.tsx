@@ -4,13 +4,18 @@ import { motion } from "framer-motion";
 import BottomNav from "@/components/BottomNav";
 import { loadRewards, buyStreakFreeze, type UserRewards } from "@/lib/rewards/seeds";
 import Nuri, { NuriSpeech } from "@/components/Nuri";
+import { getNotificationTime, saveNotificationTime, requestNotificationPermission, getNotificationPermissionState } from "@/lib/notifications";
 
 export default function GardenPage() {
   const [rewards, setRewards] = useState<UserRewards | null>(null);
   const [message, setMessage] = useState("");
+  const [notifTime, setNotifTime] = useState("09:00");
+  const [notifState, setNotifState] = useState<NotificationPermission>("default");
 
   useEffect(() => {
     setRewards(loadRewards());
+    setNotifTime(getNotificationTime());
+    setNotifState(getNotificationPermissionState());
   }, []);
 
   const handleBuy = () => {
@@ -22,6 +27,16 @@ export default function GardenPage() {
       setMessage(res.error || "Failed to purchase");
     }
     setTimeout(() => setMessage(""), 3000);
+  };
+
+  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNotifTime(e.target.value);
+    saveNotificationTime(e.target.value);
+  };
+
+  const handleEnableNotifications = async () => {
+    const granted = await requestNotificationPermission();
+    setNotifState(granted ? "granted" : "denied");
   };
 
   if (!rewards) return null;
@@ -80,6 +95,37 @@ export default function GardenPage() {
                   50 🪙
                 </button>
               </div>
+            </div>
+          </div>
+
+          {/* Notifications Setting */}
+          <div className="bg-white/5 border border-white/10 rounded-[32px] p-8 text-left space-y-6">
+            <div className="flex items-center gap-3">
+              <span className="text-4xl">🔔</span>
+              <div>
+                <h3 className="text-2xl font-black">Daily Reminders</h3>
+                <p className="text-white/40 text-sm">Stay consistent with your learning!</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {notifState !== "granted" ? (
+                <button
+                  onClick={handleEnableNotifications}
+                  className="w-full py-4 rounded-2xl border-2 border-[#FFA500] text-[#FFA500] font-black uppercase tracking-widest active:scale-95 transition-all">
+                  Enable Notifications
+                </button>
+              ) : (
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-sm font-bold uppercase tracking-widest text-white/30">Notification Time</p>
+                  <input
+                    type="time"
+                    value={notifTime}
+                    onChange={handleTimeChange}
+                    className="bg-white/10 border border-white/20 rounded-xl px-4 py-2 font-bold outline-none focus:border-[#FFA500] transition-colors text-white"
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
