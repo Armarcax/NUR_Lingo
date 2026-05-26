@@ -14,6 +14,7 @@ export interface UserRewards {
   crowns: Record<string, number>; // lessonId -> level (0-3)
   hearts: number;
   lastHeartUpdate: string; // ISO string
+  milestones: number[]; // e.g. [7, 30, 100]
 }
 
 const DEFAULT_REWARDS: UserRewards = {
@@ -24,6 +25,7 @@ const DEFAULT_REWARDS: UserRewards = {
   crowns: {},
   hearts: 3,
   lastHeartUpdate: new Date().toISOString(),
+  milestones: [],
 };
 
 export function loadRewards(): UserRewards {
@@ -38,7 +40,8 @@ export function loadRewards(): UserRewards {
       ...rewards,
       crowns: rewards.crowns || {},
       hearts: rewards.hearts ?? 3,
-      lastHeartUpdate: rewards.lastHeartUpdate || new Date().toISOString()
+      lastHeartUpdate: rewards.lastHeartUpdate || new Date().toISOString(),
+      milestones: rewards.milestones || []
     };
   } catch (e) {
     console.error("Failed to load rewards:", e);
@@ -171,6 +174,25 @@ export function getNextHeartCountdown(current: UserRewards): number {
   const lastUpdate = new Date(current.lastHeartUpdate);
   const nextHeartTime = lastUpdate.getTime() + (5 * 60 * 60 * 1000);
   return Math.max(0, nextHeartTime - new Date().getTime());
+}
+
+export function checkStreakMilestones(): { milestone: number | null; rewards: UserRewards } {
+  const current = loadRewards();
+  const milestones = [7, 30, 100];
+  const newMilestone = milestones.find(m => current.streak >= m && !current.milestones.includes(m));
+
+  if (newMilestone) {
+    const updated: UserRewards = {
+      ...current,
+      totalSeeds: current.totalSeeds + 1,
+      totalHAYQ: current.totalHAYQ + (newMilestone * 2), // Bonus HAYQ
+      milestones: [...current.milestones, newMilestone],
+    };
+    saveRewards(updated);
+    return { milestone: newMilestone, rewards: updated };
+  }
+
+  return { milestone: null, rewards: current };
 }
 
 export function saveCrownLevel(lessonId: string, level: number): UserRewards {

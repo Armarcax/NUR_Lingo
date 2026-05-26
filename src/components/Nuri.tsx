@@ -10,6 +10,8 @@ interface NuriProps {
   size?: number;
   animate?: boolean;
   className?: string;
+  glow?: boolean;
+  tear?: boolean;
 }
 
 export type NuriMood = "happy" | "thinking" | "celebrating" | "sad" | "idle" | "encouraging" | "excited" | "surprised";
@@ -19,6 +21,8 @@ export default function Nuri({
   size = 120,
   animate = true,
   className = "",
+  glow = false,
+  tear = false,
 }: NuriProps) {
 
   // Mapping moods to our PNG assets
@@ -106,6 +110,15 @@ export default function Nuri({
       transition={getTransition()}
       style={{ width: size, height: size }}
     >
+      {/* Golden Glow Effect */}
+      {glow && (
+        <motion.div
+          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.7, 0.3] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className="absolute inset-0 bg-yellow-400/40 blur-2xl rounded-full -z-10"
+        />
+      )}
+
       {(mood === "celebrating" || mood === "excited") && (
         <>
           <motion.div
@@ -155,6 +168,18 @@ export default function Nuri({
         height={size}
         priority={mood === "happy" || mood === "idle"}
       />
+
+      {/* Sad Tear Effect */}
+      {tear && mood === "sad" && (
+        <motion.div
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 20, opacity: [0, 1, 0] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+          className="absolute top-1/2 left-[60%] text-xl pointer-events-none"
+        >
+          💧
+        </motion.div>
+      )}
     </motion.div>
   );
 }

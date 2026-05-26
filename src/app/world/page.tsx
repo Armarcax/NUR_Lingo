@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
 import {
   loadRewards, syncHearts, checkAndApplyFreeze,
+  checkStreakMilestones,
   type UserRewards
 } from "@/lib/rewards/seeds";
 import { getLessonsForPair, Language } from "@/lib/i18n/multilingual";
 import { Lesson, hayqToLevel } from "@/lib/lessons/engine";
-import Nuri, { NuriSpeech } from "@/components/Nuri";
+import Nuri, { NuriSpeech, type NuriMood } from "@/components/Nuri";
 
 function Confetti({ color }: { color: string }) {
   return (
@@ -54,11 +55,14 @@ export default function WorldPage() {
   const [rewards, setRewards] = useState<UserRewards | null>(null);
   const [units, setUnits] = useState<any[]>([]);
   const [allLessons, setAllLessons] = useState<Lesson[]>([]);
+  const [milestone, setMilestone] = useState<number | null>(null);
 
   useEffect(() => {
     const r = syncHearts();
     const withFreeze = checkAndApplyFreeze();
-    setRewards({ ...r, ...withFreeze });
+    const res = checkStreakMilestones();
+    setRewards({ ...r, ...withFreeze, ...res.rewards });
+    if (res.milestone) setMilestone(res.milestone);
 
     const source = (localStorage.getItem("nur_source_lang") || "en") as Language;
     const target = (localStorage.getItem("nur_target_lang") || "hy") as Language;
@@ -131,7 +135,28 @@ export default function WorldPage() {
           </div>
         </nav>
 
-        <div className="px-8 pt-16 pb-8 max-w-4xl mx-auto text-center relative">
+        <div className="px-8 pt-16 pb-8 max-w-4xl mx-auto text-center relative flex flex-col items-center">
+          <div className="mb-8 flex flex-col items-center gap-4">
+            <Nuri
+              mood={rewards.streak >= 7 ? "excited" : rewards.streak >= 3 ? "happy" : rewards.streak === 0 ? "sad" : "idle"}
+              glow={rewards.streak >= 7}
+              tear={rewards.streak === 0}
+              size={120}
+            />
+            {rewards.streak >= 3 && (
+              <NuriSpeech
+                text={`Շնորհավոր! ${rewards.streak} օր անընդմեջ! 🔥`}
+                mood={rewards.streak >= 7 ? "excited" : "happy"}
+              />
+            )}
+            {rewards.streak === 0 && (
+              <NuriSpeech
+                text="Ես տխուր եմ... Արի սովորենք միասին: 🍎"
+                mood="sad"
+              />
+            )}
+          </div>
+
           <h1 className="text-6xl md:text-8xl font-black leading-none mb-4 tracking-tighter italic">
             Seed <span className="text-[#D90012] drop-shadow-[0_0_15px_rgba(217,0,18,0.5)]">World</span>
           </h1>
@@ -270,6 +295,51 @@ export default function WorldPage() {
         </div>
       </div>
       <BottomNav />
+
+      <AnimatePresence>
+        {milestone && (
+          <StreakMilestoneModal
+            milestone={milestone}
+            onClose={() => setMilestone(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
+  );
+}
+
+function StreakMilestoneModal({ milestone, onClose }: { milestone: number; onClose: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-black/90 backdrop-blur-lg">
+      <motion.div
+        initial={{ scale: 0.5, y: 100 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.5, y: 100 }}
+        className="bg-white/10 border border-white/20 rounded-[40px] p-10 max-w-sm w-full text-center shadow-2xl relative overflow-hidden">
+
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-transparent via-yellow-500/10 to-transparent animate-pulse" />
+
+        <Nuri mood="excited" glow size={180} className="mx-auto mb-6" />
+
+        <h2 className="text-4xl font-black text-white mb-2 leading-tight">{milestone} Օր!</h2>
+        <p className="text-white/50 font-bold uppercase tracking-widest text-xs mb-8">Streak Milestone</p>
+
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 mb-8 flex items-center justify-between">
+          <div className="flex items-center gap-3 text-left">
+            <span className="text-3xl">🍎</span>
+            <div>
+              <p className="text-xs font-black text-red-400 uppercase tracking-widest">Reward</p>
+              <p className="font-bold text-white">Նոր Սերմ</p>
+            </div>
+          </div>
+          <div className="text-2xl font-black text-red-400">+1</div>
+        </div>
+
+        <button onClick={onClose}
+          className="w-full py-5 rounded-2xl font-black text-xl uppercase tracking-widest transition-all active:scale-95 bg-white text-black shadow-lg">
+          Հիանալի է!
+        </button>
+      </motion.div>
+    </motion.div>
   );
 }
