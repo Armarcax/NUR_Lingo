@@ -50,6 +50,8 @@ export default function LearnPage() {
   const [complete, setComplete] = useState(false);
   const [hearts, setHearts]     = useState(3);
   const [countdown, setCountdown] = useState<number>(0);
+  const [startTime] = useState(() => Date.now());
+  const [stats, setStats] = useState({ correct: 0, total: 0 });
   const [totalHAYQ, setTotal]   = useState(0);
   const [totalSeeds, setSeeds]  = useState(0);
   const [sessionHAYQ, setSessionHAYQ]   = useState(0);
@@ -127,6 +129,8 @@ export default function LearnPage() {
       const seeds = data.correct ? data.seeds : 0;
 
       const mood = getMoodFromScore(data.score, data.correct, streak + (data.correct ? 1 : 0));
+
+      setStats(prev => ({ correct: prev.correct + (data.correct ? 1 : 0), total: prev.total + 1 }));
 
       if (!data.correct) {
         const updated = deductHeart();
@@ -212,7 +216,13 @@ export default function LearnPage() {
   }, [allLessons, crowns, lesson, router]);
 
   if (complete && lesson)
-    return <CompletionScreen lesson={lesson} totalHAYQ={sessionHAYQ} totalSeeds={sessionSeeds} hearts={hearts}
+    return <CompletionScreen
+      lesson={lesson}
+      totalHAYQ={sessionHAYQ}
+      totalSeeds={sessionSeeds}
+      hearts={hearts}
+      stats={stats}
+      duration={Date.now() - startTime}
       onContinue={() => { localStorage.removeItem("nur_current_lesson"); router.push("/world"); }} />;
 
   if (hearts <= 0)
@@ -452,11 +462,51 @@ function NoHeartsScreen({ countdown, totalHAYQ, onRefill, onBack }: { countdown:
   );
 }
 
-function CompletionScreen({ lesson, totalHAYQ, totalSeeds, hearts, onContinue }:
-  { lesson:Lesson; totalHAYQ:number; totalSeeds:number; hearts:number; onContinue:()=>void }) {
+function CompletionScreen({ lesson, totalHAYQ, totalSeeds, hearts, stats, duration, onContinue }:
+  { lesson:Lesson; totalHAYQ:number; totalSeeds:number; hearts:number; stats: { correct:number; total:number }; duration:number; onContinue:()=>void }) {
   const level = hayqToLevel(loadRewards().totalHAYQ);
+  const accuracy = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
+  const timeStr = `${Math.floor(duration / 60000)}ր ${Math.floor((duration % 60000) / 1000)}վ`;
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'NUR Lingo',
+        text: `Ես ավարտեցի "${lesson.titleArmenian}" դասը ${accuracy}% ճշտությամբ NUR Lingo-ում! 🍎`,
+        url: window.location.origin
+      });
+    }
+  };
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center relative text-white">
+    <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center relative text-white overflow-hidden">
+      {/* CSS Confetti */}
+      <div className="absolute inset-0 pointer-events-none">
+        {Array.from({ length: 50 }).map((_, i) => (
+          <div key={i} className="confetti" style={{
+            left: `${Math.random() * 100}%`,
+            backgroundColor: ['#D90012', '#0033A0', '#FFA500'][i % 3],
+            animationDelay: `${Math.random() * 3}s`,
+            animationDuration: `${2 + Math.random() * 3}s`
+          }} />
+        ))}
+      </div>
+
+      <style jsx>{`
+        .confetti {
+          position: absolute;
+          width: 8px;
+          height: 8px;
+          top: -10px;
+          opacity: 0;
+          animation: fall linear infinite;
+        }
+        @keyframes fall {
+          0% { transform: translateY(0) rotate(0); opacity: 1; }
+          100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+      `}</style>
+
       <div className="h-1.5 w-full flex fixed top-0 left-0 right-0">
         <div className="h-full flex-1" style={{ background: "#D90012" }} />
         <div className="h-full flex-1" style={{ background: "#0033A0" }} />
@@ -473,24 +523,44 @@ function CompletionScreen({ lesson, totalHAYQ, totalSeeds, hearts, onContinue }:
           <p className="text-xl text-white/50 font-medium italic">Դասն ավարտված է:</p>
         </div>
 
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
           {[
+            { label:"Ճշտություն", value:`${accuracy}%`, color:"text-green-400" },
+            { label:"Ժամանակ", value:timeStr, color:"text-blue-400" },
             { label:"ՀԱՅՔ", value:`+${totalHAYQ}`, color:"text-[#FFA500]" },
             { label:"Սերմեր", value:`+${totalSeeds}`, color:"text-red-400" },
-            { label:"Սիրտ", value:hearts > 0 ? "❤️".repeat(hearts) : "💔", color:"text-[#D90012]" },
-            { label:"Մակարդակ", value:level.titleArmenian, color:level.color },
           ].map(s => (
             <div key={s.label} className="bg-white/5 border border-white/10 rounded-3xl p-5 shadow-lg">
-              <div className={`text-sm font-black mb-1 ${s.color}`}>{s.value}</div>
+              <div className={`text-lg font-black mb-1 ${s.color}`}>{s.value}</div>
               <div className="text-[8px] font-black uppercase tracking-widest text-white/30">{s.label}</div>
             </div>
           ))}
         </div>
 
-        <button onClick={onContinue}
-          className="w-full py-5 rounded-2xl font-black text-xl uppercase tracking-widest shadow-2xl transition-all active:scale-95 bg-white text-black hover:bg-white/90">
-          Շարունակել
-        </button>
+        {totalSeeds > 0 && (
+          <motion.div initial={{ y:20, opacity:0 }} animate={{ y:0, opacity:1 }} transition={{ delay:0.5 }}
+            className="bg-red-500/10 border border-red-500/30 rounded-3xl p-6 flex items-center justify-between">
+            <div className="flex items-center gap-4 text-left">
+              <span className="text-4xl">🍎</span>
+              <div>
+                <p className="text-sm font-black text-red-400 uppercase tracking-widest">Նոր Սերմ!</p>
+                <p className="text-xs text-white/60">Դուք վաստակեցիք նոր սերմ կատարյալ դասի համար:</p>
+              </div>
+            </div>
+            <div className="text-2xl font-black text-red-400">+1</div>
+          </motion.div>
+        )}
+
+        <div className="flex gap-4">
+          <button onClick={handleShare}
+            className="flex-1 py-5 rounded-2xl font-black text-xl border-2 border-white/20 hover:bg-white/5 transition-all">
+            📤 Կիսվել
+          </button>
+          <button onClick={onContinue}
+            className="flex-[2] py-5 rounded-2xl font-black text-xl uppercase tracking-widest shadow-2xl transition-all active:scale-95 bg-white text-black hover:bg-white/90">
+            Շարունակել
+          </button>
+        </div>
       </motion.div>
     </div>
   );
