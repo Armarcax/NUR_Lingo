@@ -8,7 +8,11 @@ import {
   type Exercise, type Lesson, type HAYQLevel,
   HAYQ_REWARDS, SEED_REWARDS, hayqToLevel, scoreToGrade,
 } from "@/lib/lessons/engine";
-import { loadRewards, saveRewards, addRewards, checkAndApplyFreeze, saveCrownLevel } from "@/lib/rewards/seeds";
+import {
+  loadRewards, saveRewards, addRewards, checkAndApplyFreeze,
+  saveCrownLevel, syncHearts, deductHeart, buyHeartRefill, getNextHeartCountdown,
+  type UserRewards
+} from "@/lib/rewards/seeds";
 import { getLessonsForPair, Language } from "@/lib/i18n/multilingual";
 
 type AnswerState = "idle" | "submitting" | "correct" | "incorrect";
@@ -44,6 +48,7 @@ export default function LearnPage() {
   const [allLessons, setAllLessons] = useState<Lesson[]>([]);
   const [complete, setComplete] = useState(false);
   const [hearts, setHearts]     = useState(3);
+  const [countdown, setCountdown] = useState<number>(0);
   const [totalHAYQ, setTotal]   = useState(0);
   const [totalSeeds, setSeeds]  = useState(0);
   const [sessionHAYQ, setSessionHAYQ]   = useState(0);
@@ -65,12 +70,16 @@ export default function LearnPage() {
   const current = lesson?.exercises[ex.index];
 
   useEffect(() => {
-    const rewards = checkAndApplyFreeze();
-    setTotal(rewards.totalHAYQ);
-    setSeeds(rewards.totalSeeds);
-    setStreak(rewards.streak);
-    setHasFreeze(rewards.streakFreeze > 0);
-    setCrowns(rewards.crowns || {});
+    const rewards = syncHearts();
+    const withFreeze = checkAndApplyFreeze();
+    const finalRewards = { ...rewards, ...withFreeze };
+
+    setTotal(finalRewards.totalHAYQ);
+    setSeeds(finalRewards.totalSeeds);
+    setStreak(finalRewards.streak);
+    setHasFreeze(finalRewards.streakFreeze > 0);
+    setCrowns(finalRewards.crowns || {});
+    setHearts(finalRewards.hearts);
 
     const source = (localStorage.getItem("nur_source_lang") || "en") as Language;
     const target = (localStorage.getItem("nur_target_lang") || "hy") as Language;
@@ -85,6 +94,16 @@ export default function LearnPage() {
       setSW([]);
     }
   }, [current]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const currentRewards = loadRewards();
+      const nextH = syncHearts();
+      if (nextH.hearts !== hearts) setHearts(nextH.hearts);
+      setCountdown(getNextHeartCountdown(nextH));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [hearts]);
 
   const submit = useCallback(async () => {
     if (!current || ex.state === "submitting") return;
@@ -113,7 +132,10 @@ export default function LearnPage() {
 
       const mood = getMoodFromScore(data.score, data.correct, streak + (data.correct ? 1 : 0));
 
-      if (!data.correct) setHearts(h => Math.max(0, h - 1));
+      if (!data.correct) {
+        const updated = deductHeart();
+        setHearts(updated.hearts);
+      }
 
       if (data.correct) {
         const prevLevel = hayqToLevel(totalHAYQ);
@@ -180,9 +202,20 @@ export default function LearnPage() {
     else if (ex.state !== "submitting") next();
   }, [ex.state, submit, next]);
 
+  const refill = () => {
+    const res = buyHeartRefill();
+    if (res.success) {
+      setTotal(res.rewards.totalHAYQ);
+      setHearts(res.rewards.hearts);
+    }
+  };
+
   if (complete && lesson)
     return <CompletionScreen lesson={lesson} totalHAYQ={sessionHAYQ} totalSeeds={sessionSeeds} hearts={hearts}
-      onContinue={() => { setLesson(null); setComplete(false); setHearts(3); setSessionHAYQ(0); setSessionSeeds(0); setStreak(0); }} />;
+      onContinue={() => { setLesson(null); setComplete(false); setSessionHAYQ(0); setSessionSeeds(0); }} />;
+
+  if (hearts <= 0)
+    return <NoHeartsScreen countdown={countdown} totalHAYQ={totalHAYQ} onRefill={refill} onBack={() => { setLesson(null); setComplete(false); }} />;
 
   if (!lesson)
     return (
@@ -221,10 +254,17 @@ export default function LearnPage() {
         </div>
 
         {/* Hearts */}
-        <div className="flex gap-1 mr-4">
-          {[0,1,2].map(i => (
-            <motion.span key={i} animate={{ scale: i < hearts ? 1 : 0.8, opacity: i < hearts ? 1 : 0.3 }} className="text-xl">❤️</motion.span>
-          ))}
+        <div className="flex flex-col items-end mr-4">
+          <div className="flex gap-1">
+            {[0,1,2].map(i => (
+              <motion.span key={i} animate={{ scale: i < hearts ? 1 : 0.8, opacity: i < hearts ? 1 : 0.3 }} className="text-xl">❤️</motion.span>
+            ))}
+          </div>
+          {hearts < 3 && countdown > 0 && (
+            <p className="text-[10px] font-bold text-white/40 mt-1 tabular-nums">
+              {Math.floor(countdown / 3600000)}h {Math.floor((countdown % 3600000) / 60000)}m
+            </p>
+          )}
         </div>
 
         {/* HAYQ & Seeds */}
@@ -645,6 +685,43 @@ function LessonSelector({ totalHAYQ, totalSeeds, units, allLessons, onSelect, st
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function NoHeartsScreen({ countdown, totalHAYQ, onRefill, onBack }: { countdown: number; totalHAYQ: number; onRefill: () => void; onBack: () => void }) {
+  const h = Math.floor(countdown / 3600000);
+  const m = Math.floor((countdown % 3600000) / 60000);
+  const s = Math.floor((countdown % 60000) / 1000);
+
+  return (
+    <div className="min-h-screen bg-[#1a0a0a] text-white flex flex-col items-center justify-center p-8 text-center">
+      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="space-y-8 max-w-sm">
+        <Nuri mood="sad" size={180} />
+        <div>
+          <h1 className="text-4xl font-black mb-2">Սրտեր չկան</h1>
+          <p className="text-white/40 font-bold uppercase tracking-widest text-xs">No hearts left</p>
+        </div>
+
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
+          <p className="text-sm font-bold text-white/60 mb-2">Հաջորդ սիրտը`</p>
+          <p className="text-3xl font-black text-[#D90012] tabular-nums">
+            {h}ժ {m}ր {s}վ
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <button
+            onClick={onRefill}
+            disabled={totalHAYQ < 100}
+            className="w-full py-5 rounded-2xl bg-white text-black font-black text-xl uppercase tracking-widest shadow-2xl active:scale-95 transition-all disabled:opacity-20">
+            Վերականգնել (100 🪙)
+          </button>
+          <button onClick={onBack} className="w-full py-4 text-white/40 font-bold uppercase tracking-widest text-sm hover:text-white transition-colors">
+            Վերադառնալ
+          </button>
+        </div>
+      </motion.div>
     </div>
   );
 }

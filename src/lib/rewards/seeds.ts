@@ -12,6 +12,8 @@ export interface UserRewards {
   streakFreeze: number;
   lastActivityDate?: string; // YYYY-MM-DD
   crowns: Record<string, number>; // lessonId -> level (0-3)
+  hearts: number;
+  lastHeartUpdate: string; // ISO string
 }
 
 const DEFAULT_REWARDS: UserRewards = {
@@ -20,6 +22,8 @@ const DEFAULT_REWARDS: UserRewards = {
   streak: 0,
   streakFreeze: 0,
   crowns: {},
+  hearts: 3,
+  lastHeartUpdate: new Date().toISOString(),
 };
 
 export function loadRewards(): UserRewards {
@@ -29,7 +33,13 @@ export function loadRewards(): UserRewards {
     const data = localStorage.getItem(STORAGE_KEY);
     if (!data) return DEFAULT_REWARDS;
     const rewards = JSON.parse(data);
-    return { ...DEFAULT_REWARDS, ...rewards, crowns: rewards.crowns || {} };
+    return {
+      ...DEFAULT_REWARDS,
+      ...rewards,
+      crowns: rewards.crowns || {},
+      hearts: rewards.hearts ?? 3,
+      lastHeartUpdate: rewards.lastHeartUpdate || new Date().toISOString()
+    };
   } catch (e) {
     console.error("Failed to load rewards:", e);
     return DEFAULT_REWARDS;
@@ -93,6 +103,74 @@ export function buyStreakFreeze(): { success: boolean; error?: string; rewards: 
   };
   saveRewards(updated);
   return { success: true, rewards: updated };
+}
+
+export function buyHeartRefill(): { success: boolean; error?: string; rewards: UserRewards } {
+  const current = syncHearts();
+  if (current.hearts >= 3) {
+    return { success: false, error: "Hearts already full", rewards: current };
+  }
+  if (current.totalHAYQ < 100) {
+    return { success: false, error: "Not enough HAYQ (needs 100)", rewards: current };
+  }
+
+  const updated: UserRewards = {
+    ...current,
+    totalHAYQ: current.totalHAYQ - 100,
+    hearts: 3,
+    lastHeartUpdate: new Date().toISOString(),
+  };
+  saveRewards(updated);
+  return { success: true, rewards: updated };
+}
+
+export function deductHeart(): UserRewards {
+  const current = syncHearts();
+  if (current.hearts <= 0) return current;
+
+  const updated: UserRewards = {
+    ...current,
+    hearts: current.hearts - 1,
+    lastHeartUpdate: current.hearts === 3 ? new Date().toISOString() : current.lastHeartUpdate,
+  };
+  saveRewards(updated);
+  return updated;
+}
+
+export function syncHearts(): UserRewards {
+  const current = loadRewards();
+  if (current.hearts >= 3) return current;
+
+  const now = new Date();
+  const lastUpdate = new Date(current.lastHeartUpdate);
+  const diffMs = now.getTime() - lastUpdate.getTime();
+  const fiveHoursInMs = 5 * 60 * 60 * 1000;
+
+  if (diffMs >= fiveHoursInMs) {
+    const heartsToAdd = Math.floor(diffMs / fiveHoursInMs);
+    const newHearts = Math.min(3, current.hearts + heartsToAdd);
+
+    // Calculate remainder time to preserve partial progress
+    const remainingTime = diffMs % fiveHoursInMs;
+    const newUpdateDate = new Date(now.getTime() - remainingTime);
+
+    const updated: UserRewards = {
+      ...current,
+      hearts: newHearts,
+      lastHeartUpdate: newHearts === 3 ? now.toISOString() : newUpdateDate.toISOString(),
+    };
+    saveRewards(updated);
+    return updated;
+  }
+
+  return current;
+}
+
+export function getNextHeartCountdown(current: UserRewards): number {
+  if (current.hearts >= 3) return 0;
+  const lastUpdate = new Date(current.lastHeartUpdate);
+  const nextHeartTime = lastUpdate.getTime() + (5 * 60 * 60 * 1000);
+  return Math.max(0, nextHeartTime - new Date().getTime());
 }
 
 export function saveCrownLevel(lessonId: string, level: number): UserRewards {
