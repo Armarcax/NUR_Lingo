@@ -1,145 +1,274 @@
 "use client";
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
-import { loadRewards } from "@/lib/rewards/seeds";
-import { hayqToLevel } from "@/lib/lessons/engine";
+import {
+  loadRewards, syncHearts, checkAndApplyFreeze,
+  type UserRewards
+} from "@/lib/rewards/seeds";
+import { getLessonsForPair, Language } from "@/lib/i18n/multilingual";
+import { Lesson, hayqToLevel } from "@/lib/lessons/engine";
+import Nuri, { NuriSpeech } from "@/components/Nuri";
 
-const LEAGUES = [
-  { name: "Bronze", color: "#CD7F32", icon: "🥉" },
-  { name: "Silver", color: "#C0C0C0", icon: "🥈" },
-  { name: "Gold", color: "#FFD700", icon: "🥇" },
-  { name: "Sapphire", color: "#0F52BA", icon: "💎" },
-  { name: "Ruby", color: "#E0115F", icon: "🔻" },
-  { name: "Emerald", color: "#50C878", icon: "🌲" },
-  { name: "Amethyst", color: "#9966CC", icon: "🔮" },
-  { name: "Pearl", color: "#F0EAD6", icon: "⚪" },
-  { name: "Obsidian", color: "#3B2F2F", icon: "🌑" },
-  { name: "Diamond", color: "#B9F2FF", icon: "✨" },
-];
+function Confetti({ color }: { color: string }) {
+  return (
+    <div className="absolute inset-0 pointer-events-none z-0 overflow-visible">
+      {Array.from({ length: 20 }).map((_, i) => (
+        <motion.div
+          key={i}
+          initial={{
+            opacity: 1,
+            x: 0,
+            y: 0,
+            scale: Math.random() * 0.5 + 0.5,
+            rotate: 0
+          }}
+          animate={{
+            opacity: 0,
+            x: (Math.random() - 0.5) * 400,
+            y: (Math.random() - 0.5) * 400,
+            rotate: Math.random() * 360,
+            scale: 0
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            repeatDelay: Math.random() * 5,
+            ease: "easeOut"
+          }}
+          className="absolute w-2 h-2 rounded-sm"
+          style={{
+            backgroundColor: color,
+            left: "50%",
+            top: "50%"
+          }}
+        />
+      ))}
+    </div>
+  );
+}
 
 export default function WorldPage() {
-  const [totalHAYQ, setTotalHAYQ] = useState(0);
-  const [currentLeague] = useState(LEAGUES[0]);
+  const router = useRouter();
+  const [rewards, setRewards] = useState<UserRewards | null>(null);
+  const [units, setUnits] = useState<any[]>([]);
+  const [allLessons, setAllLessons] = useState<Lesson[]>([]);
 
   useEffect(() => {
-    const rewards = loadRewards();
-    setTotalHAYQ(rewards.totalHAYQ);
+    const r = syncHearts();
+    const withFreeze = checkAndApplyFreeze();
+    setRewards({ ...r, ...withFreeze });
+
+    const source = (localStorage.getItem("nur_source_lang") || "en") as Language;
+    const target = (localStorage.getItem("nur_target_lang") || "hy") as Language;
+    const data = getLessonsForPair(source, target);
+    setUnits(data.units);
+    setAllLessons(data.lessons);
   }, []);
 
-  const mockLeaderboard = [
-    { name: "Aram", hayq: 1250, avatar: "🦁" },
-    { name: "Anahit", hayq: 1100, avatar: "👸" },
-    { name: "Gevorg", hayq: 950, avatar: "⚔️" },
-    { name: "Gayane", hayq: 920, avatar: "💃" },
-    { name: "Tigran", hayq: 850, avatar: "👑" },
-    { name: "Narek", hayq: 820, avatar: "🏔️" },
-    { name: "Sona", hayq: 780, avatar: "🎻" },
-    { name: "You", hayq: totalHAYQ, avatar: "🍎", isUser: true },
-    { name: "Hasmik", hayq: 650, avatar: "🌸" },
-    { name: "Armen", hayq: 600, avatar: "🍷" },
-    { name: "Lilit", hayq: 550, avatar: "🌙" },
-    { name: "Karen", hayq: 520, avatar: "♟️" },
-    { name: "Mariam", hayq: 480, avatar: "💒" },
-    { name: "Vardan", hayq: 450, avatar: "🐎" },
-    { name: "Ani", hayq: 420, avatar: "👗" },
-  ].sort((a, b) => b.hayq - a.hayq);
+  if (!rewards) return null;
+
+  const level = hayqToLevel(rewards.totalHAYQ);
+  const bgSeeds = Array.from({ length: 12 }).map((_, i) => ({
+    id: i,
+    x: Math.random() * 100,
+    y: Math.random() * 100,
+    size: Math.random() * 20 + 10,
+    duration: Math.random() * 20 + 20,
+  }));
+
+  const startLesson = (l: Lesson) => {
+    localStorage.setItem("nur_current_lesson", l.id);
+    router.push("/learn");
+  };
 
   return (
-    <div className="min-h-screen bg-[#1a0a0a] text-white pb-32">
-      {/* Header */}
-      <div className="sticky top-0 z-40 bg-black/40 backdrop-blur-xl border-b border-white/10 px-8 py-6 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <span className="text-3xl">{currentLeague.icon}</span>
-          <div>
-            <h1 className="text-xl font-black uppercase tracking-tighter" style={{ color: currentLeague.color }}>
-              {currentLeague.name} League
-            </h1>
-            <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Weekly Competition</p>
+    <div className="min-h-screen relative text-white overflow-hidden bg-[#1a0a0a]">
+      {/* Pomegranate Texture Background */}
+      <div className="absolute inset-0 opacity-10 pointer-events-none"
+        style={{ backgroundImage: "radial-gradient(circle at 2px 2px, #D90012 1px, transparent 0)", backgroundSize: "40px 40px" }} />
+
+      {/* Floating Seeds */}
+      {bgSeeds.map(s => (
+        <motion.div
+          key={s.id}
+          className="absolute rounded-full opacity-20 blur-sm"
+          style={{
+            left: `${s.x}%`, top: `${s.y}%`,
+            width: s.size, height: s.size,
+            background: "radial-gradient(circle, #ff4d4d, #800000)"
+          }}
+          animate={{
+            y: [0, -100, 0],
+            x: [0, Math.random() * 50 - 25, 0],
+            rotate: [0, 360],
+            opacity: [0.1, 0.3, 0.1]
+          }}
+          transition={{ duration: s.duration, repeat: Infinity, ease: "linear" }}
+        />
+      ))}
+
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <nav className="flex items-center justify-between px-8 py-5 border-b border-white/10 bg-black/40 backdrop-blur-xl sticky top-0 z-30">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D90012] to-[#FFA500] flex items-center justify-center font-black text-xl shadow-lg border border-white/20">Ն</div>
+            <span className="font-black tracking-tighter text-xl uppercase italic bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">NUR Lingo</span>
+          </div>
+          <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 font-bold text-[#FFA500] bg-white/5 px-4 py-2 rounded-2xl border border-white/10 shadow-lg">
+                <span className="text-xl">🪙</span> {rewards.totalHAYQ}
+              </div>
+              <div className="bg-white/5 border border-white/10 px-4 py-2 rounded-2xl shadow-lg">
+                <span className="text-xl">🍎</span> {rewards.totalSeeds}
+              </div>
+              <div className="bg-white/5 border border-white/10 px-4 py-2 rounded-2xl shadow-lg flex items-center gap-1">
+                <span className="text-xl">🔥</span> {rewards.streak} {rewards.streakFreeze > 0 && "🛡️"}
+              </div>
+              <div className="bg-white/5 border border-white/10 px-4 py-2 rounded-2xl shadow-lg flex items-center gap-1">
+                <span className="text-xl">❤️</span> {rewards.hearts}
+              </div>
+          </div>
+        </nav>
+
+        <div className="px-8 pt-16 pb-8 max-w-4xl mx-auto text-center relative">
+          <h1 className="text-6xl md:text-8xl font-black leading-none mb-4 tracking-tighter italic">
+            Seed <span className="text-[#D90012] drop-shadow-[0_0_15px_rgba(217,0,18,0.5)]">World</span>
+          </h1>
+          <p className="text-white/40 font-bold uppercase tracking-[0.3em] text-sm mb-8">Organic learning path — Armenian Soul</p>
+        </div>
+
+        <div className="max-w-4xl mx-auto px-8 pb-32 relative flex-1">
+          <div className="flex flex-col items-center gap-20 mt-20 relative">
+
+            <svg className="absolute inset-0 w-full h-full pointer-events-none -z-10 overflow-visible">
+              <defs>
+                <linearGradient id="pathGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#D90012" stopOpacity="0.2" />
+                  <stop offset="100%" stopColor="#FFA500" stopOpacity="0.2" />
+                </linearGradient>
+              </defs>
+              <motion.path
+                d="M 400 0 Q 450 200 400 400 T 400 800 T 400 1200 T 400 1600"
+                fill="none"
+                stroke="url(#pathGradient)"
+                strokeWidth="8"
+                strokeLinecap="round"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 3, ease: "easeInOut" }}
+              />
+            </svg>
+
+            {units.map((unit, uIdx) => {
+              const lessons = allLessons.filter(l => l.unitId === unit.id);
+              const completedCount = lessons.filter(l => (rewards.crowns[l.id] || 0) > 0).length;
+              const progressPercent = (completedCount / lessons.length) * 100;
+
+              return (
+                <div key={unit.id} className="w-full space-y-16">
+                  <div className="flex flex-col items-center relative gap-4">
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      className="px-8 py-3 rounded-2xl bg-gradient-to-b from-white/10 to-white/5 border border-white/20 backdrop-blur-md shadow-2xl relative z-10">
+                      <div className="flex items-center gap-3">
+                        <h2 className="text-2xl font-black text-[#FFA500] tracking-tight">{unit.titleArmenian}</h2>
+                        {progressPercent === 100 && (
+                          <motion.span
+                            initial={{ scale: 0, rotate: -20 }}
+                            animate={{ scale: 1, rotate: 0 }}
+                            className="text-2xl filter drop-shadow-[0_0_8px_rgba(255,215,0,0.8)]"
+                          >
+                            🌟
+                          </motion.span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-center text-white/40 font-bold uppercase mt-1">{unit.title}</p>
+                    </motion.div>
+
+                    {progressPercent === 100 && <Confetti color={unit.colorFrom} />}
+
+                    {/* Unit Progress Bar */}
+                    <div className="w-48 space-y-2 relative z-10">
+                      <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-white/40">
+                        <span>Առաջընթաց</span>
+                        <span>{completedCount} / {lessons.length}</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-white/5 overflow-hidden border border-white/10">
+                        <motion.div
+                          className="h-full rounded-full"
+                          style={{ background: unit.colorFrom }}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${progressPercent}%` }}
+                          transition={{ duration: 1, delay: uIdx * 0.2 }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="relative flex flex-col items-center gap-12">
+                    {lessons.map((l, i) => {
+                      const xOffset = (i % 2 === 0 ? 60 : -60) * (Math.sin(i + uIdx + 1));
+                      const crownLevel = rewards.crowns[l.id] || 0;
+                      return (
+                        <motion.button
+                          key={l.id}
+                          initial={{ scale: 0.8, opacity: 0 }}
+                          whileInView={{ scale: 1, opacity: 1 }}
+                          whileHover={{ scale: 1.15, rotate: [0, -5, 5, 0] }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => startLesson(l)}
+                          className="relative group z-20"
+                          style={{ x: xOffset }}
+                        >
+                          <div className="absolute -top-4 -right-4 flex flex-col gap-1 z-30">
+                            {[1, 2, 3].map(crownLvl => (
+                              <motion.div
+                                key={crownLvl}
+                                initial={{ scale: 0 }}
+                                animate={{ scale: crownLevel >= crownLvl ? 1 : 0 }}
+                                className="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center text-[10px] shadow-lg border border-yellow-600"
+                              >
+                                ⭐
+                              </motion.div>
+                            ))}
+                          </div>
+
+                          <motion.div
+                            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+                            transition={{ duration: 3, repeat: Infinity }}
+                            className="absolute inset-0 blur-2xl rounded-full -z-10"
+                            style={{ background: `linear-gradient(135deg, ${unit.colorFrom}, ${unit.colorTo})` }}
+                          />
+
+                          <div className={`w-24 h-24 rounded-[35%_65%_70%_30%/30%_30%_70%_70%] flex items-center justify-center text-4xl shadow-2xl transition-all border-4 relative overflow-hidden
+                            ${crownLevel > 0 ? 'border-yellow-400' : 'border-white/20'}`}
+                            style={{ background: `linear-gradient(135deg, ${unit.colorFrom}, ${unit.colorTo})` }}>
+                            <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent opacity-50" />
+                            <span className="relative z-10 drop-shadow-lg">{unit.iconEmoji}</span>
+                          </div>
+
+                          <div className="absolute top-1/2 left-full ml-6 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0 pointer-events-none z-30">
+                            <div className="bg-black/90 border border-white/20 backdrop-blur-xl p-5 rounded-3xl whitespace-nowrap shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                              <div className="flex items-center gap-3 mb-2">
+                                <div className="w-2 h-8 rounded-full" style={{ background: unit.colorFrom }} />
+                                <div>
+                                  <p className="font-black text-lg leading-none">{l.titleArmenian}</p>
+                                  <p className="text-[10px] text-white/40 font-bold uppercase mt-1">{l.title}</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
-        <div className="text-right">
-          <p className="text-[10px] font-black text-white/30 uppercase tracking-widest leading-none mb-1">Ends in</p>
-          <p className="text-sm font-black text-[#FFA500]">4d 12h</p>
-        </div>
       </div>
-
-      {/* League Progress */}
-      <div className="px-8 py-12 text-center">
-        <div className="max-w-md mx-auto space-y-8">
-          <div className="flex justify-between items-center px-4">
-            {LEAGUES.slice(0, 5).map((l) => (
-              <div key={l.name} className={`flex flex-col items-center gap-2 ${l.name === currentLeague.name ? 'opacity-100 scale-125' : 'opacity-20'}`}>
-                <span className="text-xl">{l.icon}</span>
-                <div className="w-1.5 h-1.5 rounded-full" style={{ background: l.color }} />
-              </div>
-            ))}
-          </div>
-
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur-xl shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 opacity-10">
-              <span className="text-6xl">{currentLeague.icon}</span>
-            </div>
-            <p className="text-white/40 font-bold uppercase tracking-[0.2em] text-[10px] mb-2">Promotion Zone</p>
-            <h2 className="text-2xl font-black mb-1">Top 10 players</h2>
-            <p className="text-white/60 text-sm italic">Finish in the top 10 to advance to Silver!</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Leaderboard */}
-      <div className="px-6 max-w-2xl mx-auto space-y-2">
-        {mockLeaderboard.map((player, i) => {
-          const rank = i + 1;
-          const isPromotion = rank <= 10;
-          const isDemotion = rank > mockLeaderboard.length - 5;
-
-          return (
-            <motion.div
-              key={player.name}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.05 }}
-              className={`flex items-center gap-4 p-4 rounded-2xl border transition-all ${
-                player.isUser
-                  ? 'bg-[#D90012]/10 border-[#D90012]/40 shadow-[0_0_20px_rgba(217,0,18,0.1)]'
-                  : 'bg-white/5 border-white/5'
-              }`}
-            >
-              <div className={`w-8 font-black text-center ${
-                rank === 1 ? 'text-[#FFD700]' :
-                rank === 2 ? 'text-[#C0C0C0]' :
-                rank === 3 ? 'text-[#CD7F32]' :
-                'text-white/30'
-              }`}>
-                {rank}
-              </div>
-
-              <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-xl">
-                {player.avatar}
-              </div>
-
-              <div className="flex-1">
-                <p className={`font-black tracking-tight ${player.isUser ? 'text-white' : 'text-white/80'}`}>
-                  {player.name}
-                </p>
-                {isPromotion && rank <= 10 && (
-                  <p className="text-[8px] font-black uppercase text-green-400 tracking-widest">Promotion</p>
-                )}
-                {isDemotion && (
-                  <p className="text-[8px] font-black uppercase text-red-400 tracking-widest">Demotion Zone</p>
-                )}
-              </div>
-
-              <div className="text-right">
-                <p className="font-black text-[#FFA500]">{player.hayq}</p>
-                <p className="text-[8px] font-black uppercase text-white/20 tracking-widest">HAYQ</p>
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
-
       <BottomNav />
     </div>
   );
