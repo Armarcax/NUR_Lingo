@@ -109,7 +109,7 @@ Return ONLY the JSON object described in the system prompt.`;
 const evalCache = new Map<string, AIEvalResponse>();
 
 function cacheKey(req: AIEvalRequest): string {
-  return `${req.sourceSentence}|||${req.userAnswer}|||${req.targetLanguage}`;
+  return `${req.sourceSentence}|||${req.userAnswer}|||${req.expectedAnswer}|||${req.targetLanguage}`;
 }
 
 // ─── OpenRouter / compatible API call ───────────────────────────────────────

@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error) {
-    console.error("Check answer error:", error);
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error("[NUR Lingo API Error]:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
