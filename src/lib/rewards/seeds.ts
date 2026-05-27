@@ -15,6 +15,9 @@ export interface UserRewards {
   hearts: number;
   lastHeartUpdate: string; // ISO string
   milestones: number[]; // e.g. [7, 30, 100]
+  dailyGoal: number; // minutes
+  dailyActivity: Record<string, number>; // date -> minutes
+  goalClaimed: string[]; // dates
 }
 
 const DEFAULT_REWARDS: UserRewards = {
@@ -26,6 +29,9 @@ const DEFAULT_REWARDS: UserRewards = {
   hearts: 3,
   lastHeartUpdate: new Date().toISOString(),
   milestones: [],
+  dailyGoal: 10,
+  dailyActivity: {},
+  goalClaimed: [],
 };
 
 export function loadRewards(): UserRewards {
@@ -41,7 +47,10 @@ export function loadRewards(): UserRewards {
       crowns: rewards.crowns || {},
       hearts: rewards.hearts ?? 3,
       lastHeartUpdate: rewards.lastHeartUpdate || new Date().toISOString(),
-      milestones: rewards.milestones || []
+      milestones: rewards.milestones || [],
+      dailyGoal: rewards.dailyGoal || 10,
+      dailyActivity: rewards.dailyActivity || {},
+      goalClaimed: rewards.goalClaimed || []
     };
   } catch (e) {
     console.error("Failed to load rewards:", e);
@@ -59,7 +68,7 @@ export function saveRewards(rewards: UserRewards) {
   }
 }
 
-export function addRewards(hayq: number, seeds: number) {
+export function addRewards(hayq: number, seeds: number, minutes: number = 0) {
   const current = loadRewards();
   const today = new Date().toISOString().split("T")[0];
 
@@ -79,12 +88,17 @@ export function addRewards(hayq: number, seeds: number) {
     }
   }
 
+  const currentActivity = current.dailyActivity[today] || 0;
   const updated: UserRewards = {
     ...current,
     totalHAYQ: current.totalHAYQ + hayq,
     totalSeeds: current.totalSeeds + seeds,
     streak: nextStreak,
     lastActivityDate: today,
+    dailyActivity: {
+      ...current.dailyActivity,
+      [today]: currentActivity + minutes
+    }
   };
   saveRewards(updated);
   return updated;
@@ -193,6 +207,29 @@ export function checkStreakMilestones(): { milestone: number | null; rewards: Us
   }
 
   return { milestone: null, rewards: current };
+}
+
+export function checkDailyGoalBonus(): { achieved: boolean; rewards: UserRewards } {
+  const current = loadRewards();
+  const today = new Date().toISOString().split("T")[0];
+  const minutes = current.dailyActivity[today] || 0;
+
+  if (minutes >= current.dailyGoal && !current.goalClaimed.includes(today)) {
+    const updated: UserRewards = {
+      ...current,
+      totalHAYQ: current.totalHAYQ + 20, // 20 HAYQ bonus for goal
+      goalClaimed: [...current.goalClaimed, today],
+    };
+    saveRewards(updated);
+    return { achieved: true, rewards: updated };
+  }
+
+  return { achieved: false, rewards: current };
+}
+
+export function setDailyGoal(minutes: number) {
+  const current = loadRewards();
+  saveRewards({ ...current, dailyGoal: minutes });
 }
 
 export function saveCrownLevel(lessonId: string, level: number): UserRewards {

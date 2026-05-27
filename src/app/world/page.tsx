@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
 import {
   loadRewards, syncHearts, checkAndApplyFreeze,
-  checkStreakMilestones,
+  checkStreakMilestones, checkDailyGoalBonus,
   type UserRewards
 } from "@/lib/rewards/seeds";
 import { getLessonsForPair, Language } from "@/lib/i18n/multilingual";
@@ -56,13 +56,20 @@ export default function WorldPage() {
   const [units, setUnits] = useState<any[]>([]);
   const [allLessons, setAllLessons] = useState<Lesson[]>([]);
   const [milestone, setMilestone] = useState<number | null>(null);
+  const [goalAchieved, setGoalAchieved] = useState(false);
 
   useEffect(() => {
     const r = syncHearts();
     const withFreeze = checkAndApplyFreeze();
     const res = checkStreakMilestones();
-    setRewards({ ...r, ...withFreeze, ...res.rewards });
+    const goalRes = checkDailyGoalBonus();
+    setRewards({ ...r, ...withFreeze, ...res.rewards, ...goalRes.rewards });
     if (res.milestone) setMilestone(res.milestone);
+
+    const today = new Date().toISOString().split("T")[0];
+    if ((goalRes.rewards.dailyActivity[today] || 0) >= goalRes.rewards.dailyGoal) {
+      setGoalAchieved(true);
+    }
 
     const source = (localStorage.getItem("nur_source_lang") || "en") as Language;
     const target = (localStorage.getItem("nur_target_lang") || "hy") as Language;
@@ -132,18 +139,32 @@ export default function WorldPage() {
               <div className="bg-white/5 border border-white/10 px-4 py-2 rounded-2xl shadow-lg flex items-center gap-1">
                 <span className="text-xl">❤️</span> {rewards.hearts}
               </div>
+
+              {/* Daily Goal Indicator */}
+              <div className="bg-white/5 border border-white/10 px-4 py-2 rounded-2xl shadow-lg flex flex-col items-center">
+                <div className="flex items-center gap-1">
+                  <span className="text-xl">🎯</span>
+                  <span className="font-bold text-white">{rewards.dailyActivity[new Date().toISOString().split("T")[0]] || 0} / {rewards.dailyGoal}</span>
+                </div>
+              </div>
           </div>
         </nav>
 
         <div className="px-8 pt-16 pb-8 max-w-4xl mx-auto text-center relative flex flex-col items-center">
           <div className="mb-8 flex flex-col items-center gap-4">
             <Nuri
-              mood={rewards.streak >= 7 ? "excited" : rewards.streak >= 3 ? "happy" : rewards.streak === 0 ? "sad" : "idle"}
-              glow={rewards.streak >= 7}
+              mood={goalAchieved ? "excited" : rewards.streak >= 7 ? "excited" : rewards.streak >= 3 ? "happy" : rewards.streak === 0 ? "sad" : "idle"}
+              glow={goalAchieved || rewards.streak >= 7}
               tear={rewards.streak === 0}
               size={120}
             />
-            {rewards.streak >= 3 && (
+            {goalAchieved && (
+              <NuriSpeech
+                text="Նպատակին հասանք! Հիանալի է! 🏆"
+                mood="excited"
+              />
+            )}
+            {!goalAchieved && rewards.streak >= 3 && (
               <NuriSpeech
                 text={`Շնորհավոր! ${rewards.streak} օր անընդմեջ! 🔥`}
                 mood={rewards.streak >= 7 ? "excited" : "happy"}

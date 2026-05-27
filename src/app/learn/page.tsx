@@ -171,7 +171,7 @@ export default function LearnPage() {
       let bonusHayq = HAYQ_REWARDS.LESSON_COMPLETE;
       let bonusSeeds = hearts === 3 ? SEED_REWARDS.PERFECT_LESSON : 0;
 
-      addRewards(bonusHayq, bonusSeeds);
+      addRewards(bonusHayq, bonusSeeds, lesson.estimatedMinutes);
       saveCrownLevel(lesson.id, sessionLevel);
 
       setComplete(true);

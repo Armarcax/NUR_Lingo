@@ -5,20 +5,23 @@ import { motion } from "framer-motion";
 import Nuri, { NuriSpeech } from "@/components/Nuri";
 import { Language } from "@/lib/i18n/multilingual";
 import { requestNotificationPermission } from "@/lib/notifications";
+import { setDailyGoal } from "@/lib/rewards/seeds";
 
 export default function Onboarding() {
   const router = useRouter();
   const [source, setSource] = useState<Language>("en");
   const [target, setTarget] = useState<Language>("hy");
   const [notifications, setNotifications] = useState(false);
+  const [goal, setGoal] = useState(10);
 
   const save = async () => {
     localStorage.setItem("nur_source_lang", source);
     localStorage.setItem("nur_target_lang", target);
+    setDailyGoal(goal);
     if (notifications) {
       await requestNotificationPermission();
     }
-    router.push("/learn");
+    router.push("/world");
   };
 
   const languages = [
@@ -57,6 +60,18 @@ export default function Onboarding() {
                 <button key={l.code} onClick={() => setTarget(l.code as Language)}
                   className={`px-6 py-3 rounded-2xl border-2 transition-all font-bold ${target === l.code ? 'border-[#0033A0] bg-[#0033A0]/10' : 'border-white/10 bg-white/5 opacity-50'}`}>
                   {l.flag} {l.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-white/40 uppercase tracking-widest text-xs font-bold mb-4">Ուսումնական նպատակ</p>
+            <div className="grid grid-cols-2 gap-3">
+              {[5, 10, 15, 20].map(m => (
+                <button key={m} onClick={() => setGoal(m)}
+                  className={`px-4 py-3 rounded-xl border-2 transition-all font-bold ${goal === m ? 'border-[#FFA500] bg-[#FFA500]/10' : 'border-white/10 bg-white/5 opacity-50'}`}>
+                  {m} րոպե / օր
                 </button>
               ))}
             </div>
