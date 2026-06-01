@@ -1,5 +1,4 @@
 import { normalizeText, areMorphologicallyEquivalent } from "../nlp/morphology";
-import { Language } from "../i18n/multilingual";
 import { getAllValidArmenianForms, lookupArmenian } from "../lexicon/dictionary";
 
 export interface ValidationResult {
@@ -12,8 +11,22 @@ export interface ValidationResult {
   debug?: any;
 }
 
-export function exactMatch(userAnswer: string, expectedAnswer: string): ValidationResult | null {
-  if (normalizeText(userAnswer) === normalizeText(expectedAnswer)) {
+function normalizeAnswer(text: string, lang: string): string {
+  const base = text.trim().toLowerCase()
+    .replace(/[.,!?;:()[\]"'«»]/g, "")
+    .replace(/\s+/g, " ");
+
+  // Armenian-specific
+  if (lang === "hy") return base.replace(/[։՝՞՛]/g, "");
+
+  // Russian: normalize ё→е for loose matching
+  if (lang === "ru") return base.replace(/ё/g, "е");
+
+  return base;
+}
+
+export function exactMatch(userAnswer: string, expectedAnswer: string, lang: string): ValidationResult | null {
+  if (normalizeAnswer(userAnswer, lang) === normalizeAnswer(expectedAnswer, lang)) {
     return { accepted: true, score: 1.0, layer: "exact", confidence: 1.0 };
   }
   return null;
@@ -56,12 +69,12 @@ export async function validateAnswer(
     options?: { strictMode?: boolean; allValidAnswers?: string[] }
   }
 ): Promise<ValidationResult> {
-  const { userAnswer, expectedAnswer, sourceLanguage, options } = req;
+  const { userAnswer, expectedAnswer, sourceLanguage, targetLanguage, options } = req;
   const expectedArray = Array.isArray(expectedAnswer) ? expectedAnswer : [expectedAnswer];
 
   // Layer 1: Exact Match (Normalized)
   for (const exp of expectedArray) {
-    const res = exactMatch(userAnswer, exp);
+    const res = exactMatch(userAnswer, exp, targetLanguage);
     if (res) return res;
   }
 

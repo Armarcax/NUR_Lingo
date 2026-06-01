@@ -3,9 +3,9 @@
  * Handles web push registration and localized notification content.
  */
 
-import { Language } from "./i18n/multilingual";
+import { LangCode } from "./i18n/index";
 
-export const NOTIFICATION_CONTENT: Record<Language, { title: string; body: string }> = {
+export const NOTIFICATION_CONTENT: Record<LangCode, { title: string; body: string }> = {
   hy: {
     title: "Նուռիկ 🍎",
     body: "Նուռիկը սպասում է քեզ: Սովորե՞նք հայերեն:",

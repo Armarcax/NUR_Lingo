@@ -8,9 +8,10 @@ import {
   checkStreakMilestones, checkDailyGoalBonus,
   type UserRewards
 } from "@/lib/rewards/seeds";
-import { getLessonsForPair, Language } from "@/lib/i18n/multilingual";
-import { Lesson, hayqToLevel } from "@/lib/lessons/engine";
+import { getLessonsForPair, LangPair, MultiLesson, MULTI_UNITS } from "@/lib/i18n/multilingual";
+import { hayqToLevel } from "@/lib/lessons/engine";
 import Nuri, { NuriSpeech, type NuriMood } from "@/components/Nuri";
+import { loadLangConfig, LangCode } from "@/lib/i18n/index";
 
 function Confetti({ color }: { color: string }) {
   return (
@@ -54,11 +55,19 @@ export default function WorldPage() {
   const router = useRouter();
   const [rewards, setRewards] = useState<UserRewards | null>(null);
   const [units, setUnits] = useState<any[]>([]);
-  const [allLessons, setAllLessons] = useState<Lesson[]>([]);
+  const [allLessons, setAllLessons] = useState<MultiLesson[]>([]);
   const [milestone, setMilestone] = useState<number | null>(null);
   const [goalAchieved, setGoalAchieved] = useState(false);
+  const [native, setNative] = useState<LangCode>("en");
+  const [pair, setPair] = useState<LangPair>("en-hy");
 
   useEffect(() => {
+    const config = loadLangConfig();
+    const p = config?.pair || "en-hy";
+    const nat = config?.native || "en";
+    setNative(nat);
+    setPair(p);
+
     const r = syncHearts();
     const withFreeze = checkAndApplyFreeze();
     const res = checkStreakMilestones();
@@ -71,9 +80,7 @@ export default function WorldPage() {
       setGoalAchieved(true);
     }
 
-    const source = (localStorage.getItem("nur_source_lang") || "en") as Language;
-    const target = (localStorage.getItem("nur_target_lang") || "hy") as Language;
-    const data = getLessonsForPair(source, target);
+    const data = getLessonsForPair(p);
     setUnits(data.units);
     setAllLessons(data.lessons);
   }, []);
@@ -89,9 +96,8 @@ export default function WorldPage() {
     duration: Math.random() * 20 + 20,
   }));
 
-  const startLesson = (l: Lesson) => {
-    localStorage.setItem("nur_current_lesson", l.id);
-    router.push("/learn");
+  const startLesson = (l: MultiLesson) => {
+    router.push(`/learn?lesson=${l.id}&pair=${pair}`);
   };
 
   return (
@@ -209,7 +215,7 @@ export default function WorldPage() {
             {units.map((unit, uIdx) => {
               const lessons = allLessons.filter(l => l.unitId === unit.id);
               const completedCount = lessons.filter(l => (rewards.crowns[l.id] || 0) > 0).length;
-              const progressPercent = (completedCount / lessons.length) * 100;
+              const progressPercent = lessons.length > 0 ? (completedCount / lessons.length) * 100 : 0;
 
               return (
                 <div key={unit.id} className="w-full space-y-16">
@@ -218,7 +224,7 @@ export default function WorldPage() {
                       whileHover={{ scale: 1.05 }}
                       className="px-8 py-3 rounded-2xl bg-gradient-to-b from-white/10 to-white/5 border border-white/20 backdrop-blur-md shadow-2xl relative z-10">
                       <div className="flex items-center gap-3">
-                        <h2 className="text-2xl font-black text-[#FFA500] tracking-tight">{unit.titleArmenian}</h2>
+                        <h2 className="text-2xl font-black text-[#FFA500] tracking-tight">{unit.title[native]}</h2>
                         {progressPercent === 100 && (
                           <motion.span
                             initial={{ scale: 0, rotate: -20 }}
@@ -229,7 +235,7 @@ export default function WorldPage() {
                           </motion.span>
                         )}
                       </div>
-                      <p className="text-[10px] text-center text-white/40 font-bold uppercase mt-1">{unit.title}</p>
+                      <p className="text-[10px] text-center text-white/40 font-bold uppercase mt-1">{unit.description[native]}</p>
                     </motion.div>
 
                     {progressPercent === 100 && <Confetti color={unit.colorFrom} />}
@@ -299,8 +305,8 @@ export default function WorldPage() {
                               <div className="flex items-center gap-3 mb-2">
                                 <div className="w-2 h-8 rounded-full" style={{ background: unit.colorFrom }} />
                                 <div>
-                                  <p className="font-black text-lg leading-none">{l.titleArmenian}</p>
-                                  <p className="text-[10px] text-white/40 font-bold uppercase mt-1">{l.title}</p>
+                                  <p className="font-black text-lg leading-none">{l.title[native]}</p>
+                                  <p className="text-[10px] text-white/40 font-bold uppercase mt-1">{l.description[native]}</p>
                                 </div>
                               </div>
                             </div>
