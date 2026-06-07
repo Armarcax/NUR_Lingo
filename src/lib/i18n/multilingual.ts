@@ -436,7 +436,7 @@ const EN_RU_LESSONS: MultiLesson[] = [
     id: "enru_l2", unitId: "u1", cefr: "A1", difficulty: 1,
     title: { en: "I am...", ru: "Я есть...", hy: "Ես եմ..." },
     description: { en: "Self introduction in Russian", hy: "Ինքնաներկայացում ռուսերենով", ru: "Представление себя" },
-    estimatedMinutes: 8, hayqTotal: 90,
+    hayqTotal: 90, estimatedMinutes: 8,
     exercises: [
       { id: "e1", type: "translate",
         prompt: { en: "Translate to Russian: «I am Armenian»", ru: "Переведи на русский", hy: "Թարգմանել" },
@@ -463,7 +463,7 @@ const EN_RU_LESSONS: MultiLesson[] = [
     id: "enru_l3", unitId: "u1", cefr: "A1", difficulty: 1,
     title: { en: "Food & Drink", ru: "Еда и напитки", hy: "Սնունդ" },
     description: { en: "Food words in Russian", hy: "Ուտելիքի բառեր ռուսերենով", ru: "Слова о еде" },
-    estimatedMinutes: 8, hayqTotal: 90,
+    hayqTotal: 90, estimatedMinutes: 8,
     exercises: [
       { id: "e1", type: "multiple_choice",
         prompt: { en: "«Bread» in Russian:", ru: "«Хлеб» по-английски?", hy: "Ռուսերեն" },
@@ -489,7 +489,7 @@ const EN_RU_LESSONS: MultiLesson[] = [
     id: "enru_l4", unitId: "u1", cefr: "A1", difficulty: 1,
     title: { en: "Family", ru: "Семья", hy: "Ընտանիք" },
     description: { en: "Relatives", hy: "Հարազատներ", ru: "Родственники" },
-    estimatedMinutes: 9, hayqTotal: 95,
+    hayqTotal: 95, estimatedMinutes: 9,
     exercises: [
       { id: "e1", type: "multiple_choice",
         prompt: { en: "«Mother» in Russian:", ru: "«Мама» по-английски?", hy: "Ռուսերեն" },
@@ -504,8 +504,7 @@ const EN_RU_LESSONS: MultiLesson[] = [
         prompt: { en: "«I have a sister» in Russian:", ru: "«У меня есть сестра» по-английски?", hy: "Ռուսերեն" },
         targetAnswer: "У меня есть сестра",
         acceptableAnswers: ["У меня есть сестра"],
-        options: ["У меня есть сестра", "У меня есть брат", "Моя сестра дома", "Я люблю сестру"],
-        hayqReward: 10 },
+        options: ["У меня есть сестра", "У меня есть брат", "Моя сестра дома", "Я люблю сестру"], hayqReward: 10 },
       { id: "e4", type: "word_order",
         prompt: { en: "Arrange Russian: «We are a friendly family»", ru: "Составь", hy: "Դասավորել" },
         targetAnswer: "Мы дружная семья",
@@ -516,8 +515,8 @@ const EN_RU_LESSONS: MultiLesson[] = [
   {
     id: "enru_l5", unitId: "u1", cefr: "A1", difficulty: 1,
     title: { en: "Numbers 1-10", ru: "Числа 1-10", hy: "Թվեր" },
-    description: { en: "Places", hy: "Վայրեր", ru: "Места" },
-    estimatedMinutes: 7, hayqTotal: 80,
+    description: { en: "Learn to count to ten in Russian", hy: "Սովորել հաշվել մինչև տասը ռուսերենով", ru: "Учимся считать до десяти на русском" },
+    hayqTotal: 80, estimatedMinutes: 7,
     exercises: [
       { id: "e1", type: "multiple_choice",
         prompt: { en: "«One» in Russian:", ru: "«Один» по-английски?", hy: "Ռուսերեն" },
@@ -538,7 +537,7 @@ const EN_RU_LESSONS: MultiLesson[] = [
         acceptableAnswers: ["У меня три книги", "У меня есть три книги"],
         words: ["У", "меня", "три", "книги"], hayqReward: 10 },
     ]
-  }
+  },
 ];
 
 // ─── RU→EN (Russian speaker learns English) ────────────────────────────────
@@ -618,7 +617,7 @@ export function getLessonsForPair(pair: LangPair): { units: MultiUnit[]; lessons
     "en-ru": EN_RU_LESSONS,
     "ru-en": RU_EN_LESSONS,
   };
-  
+
   const lessons = map[pair] || [];
   return {
     units: MULTI_UNITS.filter(u => lessons.some(l => l.unitId === u.id)),
