@@ -42,7 +42,7 @@ export const LANGUAGES: Record<LangCode, LanguageInfo> = {
   },
 };
 
-export type LangPair = `${LangCode}-${LangCode}`;
+export type LangPair = "hy-en" | "hy-ru" | "en-hy" | "en-ru" | "ru-hy" | "ru-en";
 
 export interface UserLangConfig {
   native: LangCode;
