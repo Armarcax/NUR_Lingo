@@ -6,20 +6,20 @@ import { validateAnswer, exactMatch, patternRegistryMatch, scoreToGrade } from "
 
 describe("exactMatch()", () => {
   it("matches identical strings", () => {
-    const r = exactMatch("Ես գնում եմ տուն", "Ես գնում եմ տուն");
+    const r = exactMatch("Ես գնում եմ տուն", "Ես գնում եմ տուն", "hy");
     expect(r).not.toBeNull();
     expect(r?.accepted).toBe(true);
     expect(r?.score).toBe(1.0);
   });
 
   it("matches after normalization (punctuation/case)", () => {
-    const r = exactMatch("ԵՍ ԳՆՈՒՄ ԵՄ ՏՈՒՆ։", "Ես գնում եմ տուն");
+    const r = exactMatch("ԵՍ ԳՆՈՒՄ ԵՄ ՏՈՒՆ։", "Ես գնում եմ տուն", "hy");
     expect(r).not.toBeNull();
     expect(r?.accepted).toBe(true);
   });
 
   it("returns null for mismatched strings", () => {
-    const r = exactMatch("Ես տուն եմ գնում", "Ես գնում եմ տուն");
+    const r = exactMatch("Ես տուն եմ գնում", "Ես գնում եմ տուն", "hy");
     expect(r).toBeNull();
   });
 });

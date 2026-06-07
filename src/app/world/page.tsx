@@ -1,491 +1,381 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  loadLangConfig, LANGUAGES, type UserLangConfig,
-} from "@/lib/i18n/index";
-import {
-  getUnitsForPair, getLessonsForPair,
-  type MultiLessonUnit, type MultiLesson,
-} from "@/lib/i18n/multilingual";
-import { loadRewards, getPomGrowth, type RewardState } from "@/lib/rewards/seeds";
-import Nurik from "@/components/nurik/Nurik";
+import { useRouter } from "next/navigation";
+import BottomNav from "@/components/BottomNav";
+import { 
+  loadRewards, syncHearts, checkAndApplyFreeze, 
+  checkStreakMilestones, checkDailyGoalBonus,
+  type UserRewards 
+} from "@/lib/rewards/seeds";
+import { getLessonsForPair, LangPair, MultiLesson, MULTI_UNITS } from "@/lib/i18n/multilingual";
+import { hayqToLevel } from "@/lib/lessons/engine";
+import Nuri, { NuriSpeech, type NuriMood } from "@/components/Nuri";
+import { loadLangConfig, LangCode } from "@/lib/i18n/index";
 
-// ── Pomegranate SVG World ─────────────────────────────────────────────────────
-function PomWorld({ growth, seeds }: { growth: number; seeds: number }) {
-  const segments = 12;
+function Confetti({ color }: { color: string }) {
   return (
-    <svg viewBox="0 0 200 200" className="w-full h-full">
-      <defs>
-        <radialGradient id="pomGrad" cx="50%" cy="50%">
-          <stop offset="0%" stopColor="#ff4466" stopOpacity="0.9" />
-          <stop offset="100%" stopColor="#8b0000" stopOpacity="0.6" />
-        </radialGradient>
-        <radialGradient id="seedGrad" cx="30%" cy="30%">
-          <stop offset="0%" stopColor="#F2A800" />
-          <stop offset="100%" stopColor="#c07800" />
-        </radialGradient>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="3" result="blur" />
-          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-      </defs>
-
-      {/* Outer pomegranate body */}
-      <circle cx="100" cy="105" r="72" fill="url(#pomGrad)" opacity="0.85" />
-      <circle cx="100" cy="105" r="72" fill="none" stroke="#D90012" strokeWidth="2" opacity="0.5" />
-
-      {/* Inner seed grid — grows with progress */}
-      {Array.from({ length: segments }).map((_, i) => {
-        const angle = (i / segments) * Math.PI * 2 - Math.PI / 2;
-        const r = 38;
-        const x = 100 + r * Math.cos(angle);
-        const y = 105 + r * Math.sin(angle);
-        const filled = i < Math.round((growth / 100) * segments);
-        return (
-          <motion.ellipse key={i}
-            cx={x} cy={y} rx="7" ry="9"
-            fill={filled ? "url(#seedGrad)" : "rgba(255,255,255,0.08)"}
-            stroke={filled ? "#F2A800" : "rgba(255,255,255,0.1)"}
-            strokeWidth="0.5"
-            transform={`rotate(${(i / segments) * 360}, ${x}, ${y})`}
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: i * 0.05, type: "spring" }}
-            filter={filled ? "url(#glow)" : undefined}
-          />
-        );
-      })}
-
-      {/* Inner ring seeds */}
-      {Array.from({ length: 6 }).map((_, i) => {
-        const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
-        const r = 18;
-        const x = 100 + r * Math.cos(angle);
-        const y = 105 + r * Math.sin(angle);
-        const filled = seeds > i * 2;
-        return (
-          <motion.circle key={`inner-${i}`}
-            cx={x} cy={y} r="4.5"
-            fill={filled ? "#F2A800" : "rgba(255,255,255,0.06)"}
-            stroke={filled ? "#fff" : "transparent"}
-            strokeWidth="0.5"
-            initial={{ scale: 0 }} animate={{ scale: 1 }}
-            transition={{ delay: 0.3 + i * 0.06 }}
-          />
-        );
-      })}
-
-      {/* Center seed count */}
-      <circle cx="100" cy="105" r="11" fill="rgba(0,0,0,0.5)" />
-      <text x="100" y="109" textAnchor="middle" fontSize="9" fill="#F2A800" fontWeight="bold" fontFamily="monospace">
-        {seeds}
-      </text>
-
-      {/* Crown */}
-      <path d="M 82 34 L 88 22 L 94 30 L 100 18 L 106 30 L 112 22 L 118 34 Z"
-        fill="#2d8a4e" opacity="0.9" />
-      <circle cx="100" cy="20" r="4" fill="#F2A800" />
-
-      {/* Growth ring */}
-      <circle cx="100" cy="105" r="72" fill="none"
-        stroke="#F2A800" strokeWidth="2.5" opacity="0.3"
-        strokeDasharray={`${growth * 4.52} 452`}
-        strokeLinecap="round"
-        transform="rotate(-90 100 105)" />
-    </svg>
+    <div className="absolute inset-0 pointer-events-none z-0 overflow-visible">
+      {Array.from({ length: 20 }).map((_, i) => (
+        <motion.div
+          key={i}
+          initial={{ 
+            opacity: 1, 
+            x: 0, 
+            y: 0, 
+            scale: Math.random() * 0.5 + 0.5,
+            rotate: 0 
+          }}
+          animate={{ 
+            opacity: 0,
+            x: (Math.random() - 0.5) * 400,
+            y: (Math.random() - 0.5) * 400,
+            rotate: Math.random() * 360,
+            scale: 0
+          }}
+          transition={{ 
+            duration: 2, 
+            repeat: Infinity,
+            repeatDelay: Math.random() * 5,
+            ease: "easeOut" 
+          }}
+          className="absolute w-2 h-2 rounded-sm"
+          style={{ 
+            backgroundColor: color,
+            left: "50%",
+            top: "50%"
+          }}
+        />
+      ))}
+    </div>
   );
 }
 
-// ── Lesson node on world map ─────────────────────────────────────────────────
-function LessonNode({
-  lesson, unit, index, unlocked, completed,
-  native, onClick,
-}: {
-  lesson: MultiLesson; unit: MultiLessonUnit; index: number;
-  unlocked: boolean; completed: boolean; native: string;
-  onClick: () => void;
-}) {
-  const x = 50 + Math.sin(index * 1.4) * 35;
-  const y = index * 80 + 40;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.5 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: index * 0.08, type: "spring", damping: 14 }}
-      className="absolute"
-      style={{ left: `${x}%`, top: y, transform: "translate(-50%, 0)" }}
-    >
-      {/* Connector line */}
-      {index > 0 && (
-        <div className="absolute bottom-full left-1/2 w-0.5 h-10 -translate-x-1/2"
-          style={{ background: completed ? "var(--hy-orange)" : "rgba(255,255,255,0.1)" }} />
-      )}
-
-      <button onClick={onClick} disabled={!unlocked}
-        className="relative flex flex-col items-center gap-1 group"
-        title={lesson.title[native] ?? lesson.title["en"]}>
-
-        {/* Node circle */}
-        <div className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl border-4 transition-all
-          ${completed
-            ? "border-yellow-400 shadow-lg"
-            : unlocked
-            ? "border-white/30 hover:border-white/60 hover:scale-110"
-            : "border-white/10 opacity-40 cursor-not-allowed"}`}
-          style={{
-            background: completed
-              ? `linear-gradient(135deg, ${unit.colorFrom}, ${unit.colorTo})`
-              : unlocked
-              ? "rgba(255,255,255,0.08)"
-              : "rgba(0,0,0,0.3)",
-            boxShadow: completed ? `0 0 20px ${unit.colorFrom}66` : undefined,
-          }}>
-          {completed ? "⭐" : unlocked ? unit.emoji : "🔒"}
-        </div>
-
-        {/* Label */}
-        <span className={`text-xs text-center font-medium max-w-[80px] leading-tight
-          ${unlocked ? "text-white/80" : "text-white/25"}`}>
-          {lesson.title[native] ?? lesson.title["en"]}
-        </span>
-
-        {/* HAYQ badge */}
-        {unlocked && !completed && (
-          <span className="text-[10px] px-2 py-0.5 rounded-full"
-            style={{ background:"rgba(242,168,0,0.15)", color:"var(--hy-orange)", border:"1px solid rgba(242,168,0,0.25)" }}>
-            🪙{lesson.hayqTotal}
-          </span>
-        )}
-        {completed && (
-          <span className="text-[10px] px-2 py-0.5 rounded-full"
-            style={{ background:"rgba(74,222,128,0.15)", color:"#4ade80" }}>✓ Done</span>
-        )}
-      </button>
-    </motion.div>
-  );
-}
-
-// ── Main World Page ───────────────────────────────────────────────────────────
 export default function WorldPage() {
   const router = useRouter();
-  const [config, setConfig]   = useState<UserLangConfig | null>(null);
-  const [rewards, setRewards] = useState<RewardState | null>(null);
-  const [units, setUnits]     = useState<MultiLessonUnit[]>([]);
-  const [lessons, setLessons] = useState<MultiLesson[]>([]);
-  const [tab, setTab]         = useState<"home" | "journey" | "garden">("home");
-  const [completedIds]        = useState<Set<string>>(new Set(
-    typeof window !== "undefined"
-      ? JSON.parse(localStorage.getItem("nur_completed") ?? "[]")
-      : []
-  ));
+  const [rewards, setRewards] = useState<UserRewards | null>(null);
+  const [units, setUnits] = useState<any[]>([]);
+  const [allLessons, setAllLessons] = useState<MultiLesson[]>([]);
+  const [milestone, setMilestone] = useState<number | null>(null);
+  const [goalAchieved, setGoalAchieved] = useState(false);
+  const [native, setNative] = useState<LangCode>("en");
+  const [pair, setPair] = useState<LangPair>("en-hy");
 
   useEffect(() => {
-    const cfg = loadLangConfig();
-    if (!cfg) { router.push("/onboarding"); return; }
-    setConfig(cfg);
-    setUnits(getUnitsForPair(cfg.pair));
-    setLessons(getLessonsForPair(cfg.pair));
-    setRewards(loadRewards());
-  }, [router]);
+    const config = loadLangConfig();
+    const p = config?.pair || "en-hy";
+    const nat = config?.native || "en";
+    setNative(nat);
+    setPair(p);
 
-  if (!config || !rewards) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background:"var(--color-bg)" }}>
-      <motion.div animate={{ rotate:360 }} transition={{ repeat:Infinity, duration:1, ease:"linear" }}
-        className="w-8 h-8 border-2 border-t-transparent rounded-full"
-        style={{ borderColor:"var(--hy-orange)" }} />
-    </div>
-  );
+    const r = syncHearts();
+    const withFreeze = checkAndApplyFreeze();
+    const res = checkStreakMilestones();
+    const goalRes = checkDailyGoalBonus();
+    setRewards({ ...r, ...withFreeze, ...res.rewards, ...goalRes.rewards });
+    if (res.milestone) setMilestone(res.milestone);
+    
+    const today = new Date().toISOString().split("T")[0];
+    if ((goalRes.rewards.dailyActivity[today] || 0) >= goalRes.rewards.dailyGoal) {
+      setGoalAchieved(true);
+    }
 
-  const native   = LANGUAGES[config.native];
-  const learning = LANGUAGES[config.learning];
-  const growth   = getPomGrowth(rewards.seeds);
-  const worldHeight = Math.max(lessons.length * 80 + 120, 600);
+    const data = getLessonsForPair(p);
+    setUnits(data.units);
+    setAllLessons(data.lessons);
+  }, []);
+
+  if (!rewards) return null;
+
+  const level = hayqToLevel(rewards.totalHAYQ);
+  const bgSeeds = Array.from({ length: 12 }).map((_, i) => ({
+    id: i,
+    x: Math.random() * 100,
+    y: Math.random() * 100,
+    size: Math.random() * 20 + 10,
+    duration: Math.random() * 20 + 20,
+  }));
+
+  const startLesson = (l: MultiLesson) => {
+    router.push(`/learn?lesson=${l.id}&pair=${pair}`);
+  };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background:"var(--color-bg)", color:"white" }}>
-      <div className="h-1 flag-stripe" />
+    <div className="min-h-screen relative text-white overflow-hidden bg-[#1a0a0a]">
+      {/* Pomegranate Texture Background */}
+      <div className="absolute inset-0 opacity-10 pointer-events-none" 
+        style={{ backgroundImage: "radial-gradient(circle at 2px 2px, #D90012 1px, transparent 0)", backgroundSize: "40px 40px" }} />
+      
+      {/* Floating Seeds */}
+      {bgSeeds.map(s => (
+        <motion.div
+          key={s.id}
+          className="absolute rounded-full opacity-20 blur-sm"
+          style={{ 
+            left: `${s.x}%`, top: `${s.y}%`, 
+            width: s.size, height: s.size, 
+            background: "radial-gradient(circle, #ff4d4d, #800000)" 
+          }}
+          animate={{ 
+            y: [0, -100, 0],
+            x: [0, Math.random() * 50 - 25, 0],
+            rotate: [0, 360],
+            opacity: [0.1, 0.3, 0.1]
+          }}
+          transition={{ duration: s.duration, repeat: Infinity, ease: "linear" }}
+        />
+      ))}
 
-      {/* ── Top Bar ── */}
-      <div className="flex items-center justify-between px-4 py-3 border-b sticky top-0 z-20"
-        style={{ borderColor:"var(--color-border)", background:"var(--color-bg)" }}>
-        <div className="flex items-center gap-2">
-          <Image src="/logo.png" alt="NUR Lingo" width={30} height={30} className="rounded-lg" />
-          <div>
-            <p className="font-bold text-xs uppercase tracking-widest" style={{ color:"var(--hy-orange)" }}>NUR Lingo</p>
-            <p className="text-white/30 text-[10px]">{native.flag} → {learning.flag} {learning.nativeName}</p>
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <nav className="flex items-center justify-between px-8 py-5 border-b border-white/10 bg-black/40 backdrop-blur-xl sticky top-0 z-30">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D90012] to-[#FFA500] flex items-center justify-center font-black text-xl shadow-lg border border-white/20">Ն</div>
+            <span className="font-black tracking-tighter text-xl uppercase italic bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">NUR Lingo</span>
           </div>
+          <div className="flex items-center gap-3">
+              {/* Level Info */}
+              <div className="hidden md:flex flex-col items-end mr-2">
+                <p className="text-[10px] font-black text-white/30 uppercase tracking-widest leading-none mb-1">Rank</p>
+                <p className="text-sm font-black" style={{ color: level.color }}>{level.title[native] ?? level.titleArmenian}</p>
+                <div className="w-24 h-1 bg-white/10 rounded-full mt-1 overflow-hidden">
+                  <div className="h-full bg-current transition-all" style={{ width: `${(rewards.totalHAYQ/level.nextLevelHAYQ)*100}%`, backgroundColor: level.color }} />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 font-bold text-[#FFA500] bg-white/5 px-4 py-2 rounded-2xl border border-white/10 shadow-lg">
+                <span className="text-xl">🪙</span> {rewards.totalHAYQ}
+              </div>
+              <div className="bg-white/5 border border-white/10 px-4 py-2 rounded-2xl shadow-lg">
+                <span className="text-xl">🍎</span> {rewards.totalSeeds}
+              </div>
+              <div className="bg-white/5 border border-white/10 px-4 py-2 rounded-2xl shadow-lg flex items-center gap-1">
+                <span className="text-xl">🔥</span> {rewards.streak} {rewards.streakFreeze > 0 && "🛡️"}
+              </div>
+              <div className="bg-white/5 border border-white/10 px-4 py-2 rounded-2xl shadow-lg flex items-center gap-1">
+                <span className="text-xl">❤️</span> {rewards.hearts}
+              </div>
+              
+              {/* Daily Goal Indicator */}
+              <div className="bg-white/5 border border-white/10 px-4 py-2 rounded-2xl shadow-lg flex flex-col items-center">
+                <div className="flex items-center gap-1">
+                  <span className="text-xl">🎯</span>
+                  <span className="font-bold text-white">{rewards.dailyActivity[new Date().toISOString().split("T")[0]] || 0} / {rewards.dailyGoal}</span>
+                </div>
+              </div>
+          </div>
+        </nav>
+
+        <div className="px-8 pt-16 pb-8 max-w-4xl mx-auto text-center relative flex flex-col items-center">
+          <div className="mb-8 flex flex-col items-center gap-4">
+            <Nuri 
+              mood={goalAchieved ? "excited" : rewards.streak >= 7 ? "excited" : rewards.streak >= 3 ? "happy" : rewards.streak === 0 ? "sad" : "idle"} 
+              glow={goalAchieved || rewards.streak >= 7}
+              tear={rewards.streak === 0}
+              size={120}
+            />
+            {goalAchieved && (
+              <NuriSpeech 
+                text="Նպատակին հասանք! Հիանալի է! 🏆" 
+                mood="excited" 
+              />
+            )}
+            {!goalAchieved && rewards.streak >= 3 && (
+              <NuriSpeech 
+                text={`Շնորհավոր! ${rewards.streak} օր անընդմեջ! 🔥`} 
+                mood={rewards.streak >= 7 ? "excited" : "happy"} 
+              />
+            )}
+            {rewards.streak === 0 && (
+              <NuriSpeech 
+                text="Ես տխուր եմ... Արի սովորենք միասին: 🍎" 
+                mood="sad" 
+              />
+            )}
+          </div>
+
+          <h1 className="text-6xl md:text-8xl font-black leading-none mb-4 tracking-tighter italic">
+            Seed <span className="text-[#D90012] drop-shadow-[0_0_15px_rgba(217,0,18,0.5)]">World</span>
+          </h1>
+          <p className="text-white/40 font-bold uppercase tracking-[0.3em] text-sm mb-8">Organic learning path — Armenian Soul</p>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* Streak */}
-          <div className="flex items-center gap-1 text-sm">
-            <span>🔥</span>
-            <span className="font-bold">{rewards.streak}</span>
-          </div>
-          {/* HAYQ */}
-          <div className="hayq-chip text-xs">🪙 {rewards.hayq}</div>
-          {/* Seeds */}
-          <div className="flex items-center gap-1 text-sm"
-            style={{ color:"var(--hy-orange)" }}>
-            <span>🍎</span>
-            <span className="font-bold">{rewards.seeds.length}</span>
-          </div>
-          {/* Change lang */}
-          <button onClick={() => router.push("/onboarding")}
-            className="text-white/30 hover:text-white text-sm transition-colors">⚙️</button>
-        </div>
-      </div>
+        <div className="max-w-4xl mx-auto px-8 pb-32 relative flex-1">
+          <div className="flex flex-col items-center gap-20 mt-20 relative">
+            
+            <svg className="absolute inset-0 w-full h-full pointer-events-none -z-10 overflow-visible">
+              <defs>
+                <linearGradient id="pathGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#D90012" stopOpacity="0.2" />
+                  <stop offset="100%" stopColor="#FFA500" stopOpacity="0.2" />
+                </linearGradient>
+              </defs>
+              <motion.path
+                d="M 400 0 Q 450 200 400 400 T 400 800 T 400 1200 T 400 1600"
+                fill="none"
+                stroke="url(#pathGradient)"
+                strokeWidth="8"
+                strokeLinecap="round"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 3, ease: "easeInOut" }}
+              />
+            </svg>
 
-      {/* ── Tab Bar ── */}
-      <div className="flex border-b sticky top-[57px] z-10"
-        style={{ borderColor:"var(--color-border)", background:"var(--color-bg)" }}>
-        {([
-          { id:"home",    label:"🗺️ Journey", labelRu:"Путь",    labelHy:"Ushghman" },
-          { id:"journey", label:"🏆 Achievements", labelRu:"Достижения", labelHy:"Nashatakner" },
-          { id:"garden",  label:"🍎 Garden", labelRu:"Сад",    labelHy:"Aygi" },
-        ] as const).map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)}
-            className="flex-1 py-3 text-xs font-medium transition-all border-b-2"
-            style={{
-              borderColor: tab === t.id ? "var(--hy-orange)" : "transparent",
-              color: tab === t.id ? "var(--hy-orange)" : "rgba(255,255,255,0.4)",
-            }}>
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Content ── */}
-      <div className="flex-1 overflow-y-auto">
-
-        {/* HOME — World Map */}
-        {tab === "home" && (
-          <div className="flex gap-0 max-w-5xl mx-auto">
-
-            {/* Lesson path */}
-            <div className="flex-1 px-4 py-6">
-              {units.map(unit => {
-                const unitLessons = lessons.filter(l => l.unitId === unit.id);
-                return (
-                  <div key={unit.id} className="mb-12">
-                    {/* Unit header */}
-                    <div className="flex items-center gap-3 mb-6 px-2">
-                      <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-lg"
-                        style={{ background:`linear-gradient(135deg,${unit.colorFrom},${unit.colorTo})` }}>
-                        {unit.emoji}
+            {units.map((unit, uIdx) => {
+              const lessons = allLessons.filter(l => l.unitId === unit.id);
+              const completedCount = lessons.filter(l => (rewards.crowns[l.id] || 0) > 0).length;
+              const progressPercent = lessons.length > 0 ? (completedCount / lessons.length) * 100 : 0;
+              
+              return (
+                <div key={unit.id} className="w-full space-y-16">
+                  <div className="flex flex-col items-center relative gap-4">
+                    <motion.div 
+                      whileHover={{ scale: 1.05 }}
+                      className="px-8 py-3 rounded-2xl bg-gradient-to-b from-white/10 to-white/5 border border-white/20 backdrop-blur-md shadow-2xl relative z-10">
+                      <div className="flex items-center gap-3">
+                        <h2 className="text-2xl font-black text-[#FFA500] tracking-tight">{unit.title[native]}</h2>
+                        {progressPercent === 100 && (
+                          <motion.span 
+                            initial={{ scale: 0, rotate: -20 }}
+                            animate={{ scale: 1, rotate: 0 }}
+                            className="text-2xl filter drop-shadow-[0_0_8px_rgba(255,215,0,0.8)]"
+                          >
+                            🌟
+                          </motion.span>
+                        )}
                       </div>
-                      <div>
-                        <p className="font-semibold">{unit.title[config.native] ?? unit.title["en"]}</p>
-                        <p className="text-white/40 text-xs">{unit.description[config.native] ?? unit.description["en"]}</p>
+                      <p className="text-[10px] text-center text-white/40 font-bold uppercase mt-1">{unit.description[native]}</p>
+                    </motion.div>
+
+                    {progressPercent === 100 && <Confetti color={unit.colorFrom} />}
+
+                    {/* Unit Progress Bar */}
+                    <div className="w-48 space-y-2 relative z-10">
+                      <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-white/40">
+                        <span>Առաջընթաց</span>
+                        <span>{completedCount} / {lessons.length}</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-white/5 overflow-hidden border border-white/10">
+                        <motion.div 
+                          className="h-full rounded-full"
+                          style={{ background: unit.colorFrom }}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${progressPercent}%` }}
+                          transition={{ duration: 1, delay: uIdx * 0.2 }}
+                        />
                       </div>
                     </div>
+                  </div>
+                  
+                  <div className="relative flex flex-col items-center gap-12">
+                    {lessons.map((l, i) => {
+                      const xOffset = (i % 2 === 0 ? 60 : -60) * (Math.sin(i + uIdx + 1));
+                      const crownLevel = rewards.crowns[l.id] || 0;
+                      return (
+                        <motion.button
+                          key={l.id}
+                          initial={{ scale: 0.8, opacity: 0 }}
+                          whileInView={{ scale: 1, opacity: 1 }}
+                          whileHover={{ scale: 1.15, rotate: [0, -5, 5, 0] }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => startLesson(l)}
+                          className="relative group z-20"
+                          style={{ x: xOffset }}
+                        >
+                          <div className="absolute -top-4 -right-4 flex flex-col gap-1 z-30">
+                            {[1, 2, 3].map(crownLvl => (
+                              <motion.div
+                                key={crownLvl}
+                                initial={{ scale: 0 }}
+                                animate={{ scale: crownLevel >= crownLvl ? 1 : 0 }}
+                                className="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center text-[10px] shadow-lg border border-yellow-600"
+                              >
+                                ⭐
+                              </motion.div>
+                            ))}
+                          </div>
 
-                    {/* Lesson nodes */}
-                    <div className="space-y-4">
-                      {unitLessons.map((lesson, idx) => {
-                        const prevDone = idx === 0 || completedIds.has(unitLessons[idx-1].id);
-                        const unlocked = idx === 0 || prevDone;
-                        const completed = completedIds.has(lesson.id);
-                        return (
-                          <motion.button key={lesson.id}
-                            initial={{ opacity:0, x: idx % 2 === 0 ? -20 : 20 }}
-                            animate={{ opacity:1, x:0 }}
-                            transition={{ delay: idx * 0.1 }}
-                            whileHover={unlocked ? { scale:1.02 } : {}}
-                            whileTap={unlocked ? { scale:0.97 } : {}}
-                            disabled={!unlocked}
-                            onClick={() => unlocked && router.push(`/learn?lesson=${lesson.id}&pair=${config.pair}`)}
-                            className={`w-full p-4 rounded-2xl border-2 text-left transition-all
-                              ${idx % 2 === 0 ? "ml-0 mr-8" : "ml-8 mr-0"}
-                              ${completed ? "border-yellow-400/50" : unlocked ? "border-white/10 hover:border-white/30" : "border-white/5 opacity-40 cursor-not-allowed"}`}
-                            style={{
-                              background: completed
-                                ? `linear-gradient(135deg,${unit.colorFrom}22,${unit.colorTo}22)`
-                                : "var(--color-card)",
-                              boxShadow: completed ? `0 0 16px ${unit.colorFrom}33` : undefined,
-                            }}>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
-                                  style={{ background:`linear-gradient(135deg,${unit.colorFrom},${unit.colorTo})`, opacity: unlocked ? 1 : 0.5 }}>
-                                  {completed ? "⭐" : unlocked ? unit.emoji : "🔒"}
-                                </div>
+                          <motion.div 
+                            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+                            transition={{ duration: 3, repeat: Infinity }}
+                            className="absolute inset-0 blur-2xl rounded-full -z-10"
+                            style={{ background: `linear-gradient(135deg, ${unit.colorFrom}, ${unit.colorTo})` }}
+                          />
+
+                          <div className={`w-24 h-24 rounded-[35%_65%_70%_30%/30%_30%_70%_70%] flex items-center justify-center text-4xl shadow-2xl transition-all border-4 relative overflow-hidden
+                            ${crownLevel > 0 ? 'border-yellow-400' : 'border-white/20'}`}
+                            style={{ background: `linear-gradient(135deg, ${unit.colorFrom}, ${unit.colorTo})` }}>
+                            <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent opacity-50" />
+                            <span className="relative z-10 drop-shadow-lg">{unit.iconEmoji}</span>
+                          </div>
+                          
+                          <div className="absolute top-1/2 left-full ml-6 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0 pointer-events-none z-30">
+                            <div className="bg-black/90 border border-white/20 backdrop-blur-xl p-5 rounded-3xl whitespace-nowrap shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                              <div className="flex items-center gap-3 mb-2">
+                                <div className="w-2 h-8 rounded-full" style={{ background: unit.colorFrom }} />
                                 <div>
-                                  <p className="font-medium text-sm">{lesson.title[config.native] ?? lesson.title["en"]}</p>
-                                  <p className="text-white/40 text-xs">{lesson.cefr} · {lesson.estimatedMinutes}min</p>
+                                  <p className="font-black text-lg leading-none">{l.title[native]}</p>
+                                  <p className="text-[10px] text-white/40 font-bold uppercase mt-1">{l.description[native]}</p>
                                 </div>
-                              </div>
-                              <div className="flex flex-col items-end gap-1">
-                                <span className="hayq-chip text-xs">🪙 {lesson.hayqTotal}</span>
-                                {completed && <span className="text-[10px] text-green-400">✓ Complete</span>}
                               </div>
                             </div>
-                          </motion.button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-
-              {/* Nurik at bottom */}
-              <div className="flex flex-col items-center py-8 gap-3">
-                <Nurik mood="idle" size={80} />
-                <p className="text-white/30 text-sm text-center">
-                  {config.native === "hy" ? "Arlajin qayl katarum e mets ughi!" :
-                   config.native === "ru" ? "Первый шаг ведёт к великому пути!" :
-                   "The first step leads to a great journey!"}
-                </p>
-              </div>
-            </div>
-
-            {/* Pomegranate sidebar (desktop) */}
-            <div className="hidden lg:flex flex-col items-center w-64 py-8 px-4 border-l sticky top-[100px] h-fit"
-              style={{ borderColor:"var(--color-border)" }}>
-              <p className="text-white/40 text-xs uppercase tracking-widest mb-4">Your Pomegranate</p>
-              <div className="w-48 h-48">
-                <PomWorld growth={growth} seeds={rewards.seeds.length} />
-              </div>
-              <p className="text-white/40 text-xs mt-3">{growth.toFixed(0)}% full</p>
-
-              {/* Recent seeds */}
-              {rewards.seeds.length > 0 && (
-                <div className="mt-6 w-full">
-                  <p className="text-white/30 text-xs mb-3">Recent Seeds</p>
-                  <div className="space-y-2">
-                    {rewards.seeds.slice(-3).reverse().map(s => (
-                      <div key={s.id} className="flex items-center gap-2 text-xs">
-                        <span>{s.emoji}</span>
-                        <span className="text-white/60">{s.label}</span>
-                      </div>
-                    ))}
+                          </div>
+                        </motion.button>
+                      );
+                    })}
                   </div>
                 </div>
-              )}
-            </div>
+              );
+            })}
           </div>
-        )}
-
-        {/* JOURNEY — Achievements */}
-        {tab === "journey" && (
-          <div className="max-w-lg mx-auto px-4 py-8 space-y-6">
-            <h2 className="text-2xl font-light">
-              {config.native === "hy" ? "Nashataknerd" :
-               config.native === "ru" ? "Твои достижения" : "Your Achievements"}
-            </h2>
-
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { label: config.native === "ru" ? "HAYQ" : "HAYQ", value: rewards.hayq, color:"var(--hy-orange)", icon:"🪙" },
-                { label: config.native === "ru" ? "Серия" : "Streak", value: rewards.streak, color:"#f97316", icon:"🔥" },
-                { label: config.native === "ru" ? "Зёрна" : "Seeds", value: rewards.seeds.length, color:"#4ade80", icon:"🍎" },
-              ].map(s => (
-                <div key={s.label} className="rounded-2xl p-4 text-center border"
-                  style={{ background:"var(--color-card)", borderColor:"var(--color-border)" }}>
-                  <div className="text-2xl mb-1">{s.icon}</div>
-                  <div className="font-bold text-xl" style={{ color:s.color }}>{s.value}</div>
-                  <div className="text-xs text-white/40">{s.label}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Seeds collection */}
-            <div>
-              <p className="text-white/40 text-sm mb-3 uppercase tracking-widest">
-                {config.native === "ru" ? "Коллекция зёрен" : "Seed Collection"} ({rewards.seeds.length})
-              </p>
-              {rewards.seeds.length === 0 ? (
-                <div className="text-center py-12 text-white/20">
-                  <p className="text-4xl mb-2">🌱</p>
-                  <p className="text-sm">
-                    {config.native === "ru" ? "Пока нет зёрен. Учись, чтобы их получить!" :
-                     config.native === "hy" ? "Dеghum chunеn. Sovorel kаreli еs аvel!" :
-                     "No seeds yet. Keep learning to earn them!"}
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  {rewards.seeds.map(s => (
-                    <motion.div key={s.id} initial={{ scale:0 }} animate={{ scale:1 }}
-                      className="rounded-2xl p-4 border"
-                      style={{ background:"var(--color-card)", borderColor:s.color+"44",
-                        boxShadow:`0 0 12px ${s.glowColor}` }}>
-                      <div className="text-3xl mb-2">{s.emoji}</div>
-                      <p className="font-bold text-sm" style={{ color:s.color }}>{s.label}</p>
-                      <p className="text-white/40 text-xs">{s.description}</p>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* GARDEN — Pomegranate + profile */}
-        {tab === "garden" && (
-          <div className="max-w-sm mx-auto px-4 py-8 flex flex-col items-center gap-6">
-            <h2 className="text-2xl font-light self-start">
-              {config.native === "hy" ? "Qo Nury" : config.native === "ru" ? "Твой Гранат" : "Your Pomegranate"}
-            </h2>
-
-            <div className="w-64 h-64">
-              <PomWorld growth={growth} seeds={rewards.seeds.length} />
-            </div>
-
-            <div className="text-center">
-              <p className="text-3xl font-bold" style={{ color:"var(--hy-orange)" }}>{growth.toFixed(0)}%</p>
-              <p className="text-white/40 text-sm">
-                {config.native === "ru" ? "рост граната" : config.native === "hy" ? "nurim ashkhatum e" : "pomegranate growth"}
-              </p>
-            </div>
-
-            {/* Language pair change */}
-            <div className="w-full p-4 rounded-2xl border"
-              style={{ background:"var(--color-card)", borderColor:"var(--color-border)" }}>
-              <p className="text-white/40 text-xs uppercase tracking-widest mb-3">
-                {config.native === "ru" ? "Текущий курс" : "Current course"}
-              </p>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl">{native.flag}</span>
-                  <span className="text-white/40">→</span>
-                  <span className="text-3xl">{learning.flag}</span>
-                </div>
-                <button onClick={() => router.push("/onboarding")}
-                  className="text-xs px-4 py-2 rounded-xl transition-all"
-                  style={{ background:"rgba(242,168,0,0.1)", color:"var(--hy-orange)", border:"1px solid rgba(242,168,0,0.25)" }}>
-                  {config.native === "ru" ? "Сменить" : "Change"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ── Bottom Nav ── */}
-      <div className="border-t" style={{ borderColor:"var(--color-border)" }}>
-        <div className="flex">
-          {([
-            { id:"home",    icon:"🗺️", label:"Map" },
-            { id:"journey", icon:"🏆", label:"Journey" },
-            { id:"garden",  icon:"🍎", label:"Garden" },
-          ] as const).map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              className="flex-1 py-4 flex flex-col items-center gap-1 transition-all"
-              style={{ color: tab === t.id ? "var(--hy-orange)" : "rgba(255,255,255,0.3)" }}>
-              <span className="text-xl">{t.icon}</span>
-              <span className="text-[10px]">{t.label}</span>
-            </button>
-          ))}
         </div>
       </div>
+      <BottomNav />
 
-      <div className="h-1 flag-stripe" />
+      <AnimatePresence>
+        {milestone && (
+          <StreakMilestoneModal 
+            milestone={milestone} 
+            onClose={() => setMilestone(null)} 
+          />
+        )}
+      </AnimatePresence>
     </div>
+  );
+}
+
+function StreakMilestoneModal({ milestone, onClose }: { milestone: number; onClose: () => void }) {
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-black/90 backdrop-blur-lg">
+      <motion.div 
+        initial={{ scale: 0.5, y: 100 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.5, y: 100 }}
+        className="bg-white/10 border border-white/20 rounded-[40px] p-10 max-w-sm w-full text-center shadow-2xl relative overflow-hidden">
+        
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-transparent via-yellow-500/10 to-transparent animate-pulse" />
+        
+        <Nuri mood="excited" glow size={180} className="mx-auto mb-6" />
+        
+        <h2 className="text-4xl font-black text-white mb-2 leading-tight">{milestone} Օր!</h2>
+        <p className="text-white/50 font-bold uppercase tracking-widest text-xs mb-8">Streak Milestone</p>
+        
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 mb-8 flex items-center justify-between">
+          <div className="flex items-center gap-3 text-left">
+            <span className="text-3xl">🍎</span>
+            <div>
+              <p className="text-xs font-black text-red-400 uppercase tracking-widest">Reward</p>
+              <p className="font-bold text-white">Նոր Սերմ</p>
+            </div>
+          </div>
+          <div className="text-2xl font-black text-red-400">+1</div>
+        </div>
+
+        <button onClick={onClose}
+          className="w-full py-5 rounded-2xl font-black text-xl uppercase tracking-widest transition-all active:scale-95 bg-white text-black shadow-lg">
+          Հիանալի է!
+        </button>
+      </motion.div>
+    </motion.div>
   );
 }

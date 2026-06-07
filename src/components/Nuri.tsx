@@ -10,6 +10,8 @@ interface NuriProps {
   size?: number;
   animate?: boolean;
   className?: string;
+  glow?: boolean;
+  tear?: boolean;
 }
 
 export type NuriMood = "happy" | "thinking" | "celebrating" | "sad" | "idle" | "encouraging" | "excited" | "surprised";
@@ -19,8 +21,10 @@ export default function Nuri({
   size = 120,
   animate = true,
   className = "",
+  glow = false,
+  tear = false,
 }: NuriProps) {
-
+  
   // Mapping moods to our PNG assets
   const getPngPath = (m: NuriMood) => {
     switch (m) {
@@ -43,7 +47,7 @@ export default function Nuri({
   // Define animations based on mood
   const getAnimation = () => {
     if (!animate) return {};
-
+    
     switch (mood) {
       case "happy":
         return {
@@ -106,22 +110,31 @@ export default function Nuri({
       transition={getTransition()}
       style={{ width: size, height: size }}
     >
+      {/* Golden Glow Effect */}
+      {glow && (
+        <motion.div
+          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.7, 0.3] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className="absolute inset-0 bg-yellow-400/40 blur-2xl rounded-full -z-10"
+        />
+      )}
+
       {(mood === "celebrating" || mood === "excited") && (
         <>
-          <motion.div
-            className="absolute text-base"
+          <motion.div 
+            className="absolute text-base" 
             style={{ top: -12, right: -4 }}
             animate={{ scale: [1, 1.5, 1], opacity: [1, 0.5, 1] }}
             transition={{ duration: 0.8, repeat: Infinity }}
           >⭐</motion.div>
-          <motion.div
-            className="absolute text-sm"
+          <motion.div 
+            className="absolute text-sm" 
             style={{ top: 4, left: -10 }}
             animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 1, repeat: Infinity }}
           >✨</motion.div>
-          <motion.div
-            className="absolute text-xs"
+          <motion.div 
+            className="absolute text-xs" 
             style={{ bottom: 8, right: -8 }}
             animate={{ x: [-2, 2, -2], y: [-2, 2, -2] }}
             transition={{ duration: 0.5, repeat: Infinity }}
@@ -148,13 +161,25 @@ export default function Nuri({
         >💭</motion.div>
       )}
 
-      <Image
-        src={getPngPath(mood)}
-        alt={`Nuri mascot - ${mood}`}
-        width={size}
+      <Image 
+        src={getPngPath(mood)} 
+        alt={`Nuri mascot - ${mood}`} 
+        width={size} 
         height={size}
         priority={mood === "happy" || mood === "idle"}
       />
+
+      {/* Sad Tear Effect */}
+      {tear && mood === "sad" && (
+        <motion.div
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 20, opacity: [0, 1, 0] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+          className="absolute top-1/2 left-[60%] text-xl pointer-events-none"
+        >
+          💧
+        </motion.div>
+      )}
     </motion.div>
   );
 }

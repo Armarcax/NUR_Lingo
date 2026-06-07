@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 export const metadata: Metadata = {
   title: "NUR Lingo — Հայկական AI Լեզվի Հարթակ",
@@ -34,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         }}
       >
         {/* Global background with overlay */}
-        <div
+        <div 
           className="fixed inset-0 z-[-1] pointer-events-none"
           style={{
             background: "url('/images/pomegranate-bg.jpg') no-repeat center center fixed",
@@ -42,6 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
         <div className="fixed inset-0 z-[-1] bg-black/60 pointer-events-none" />
+        <ServiceWorkerRegister />
         {children}
       </body>
     </html>

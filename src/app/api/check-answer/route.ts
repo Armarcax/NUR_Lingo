@@ -6,8 +6,8 @@ export const runtime = "edge";
 
 export async function POST(req: NextRequest) {
   try {
-    const {
-      userAnswer,
+    const { 
+      userAnswer, 
       lessonId,
       expectedAnswers = [],
       sourceLanguage = "en",
@@ -27,8 +27,8 @@ export async function POST(req: NextRequest) {
     const primaryExpected = expectedAnswers[0] || "";
 
     // Find the exercise to get the correct prompt (source)
-    const exercise = lesson.exercises.find(e =>
-        e.targetAnswer === primaryExpected || e.acceptableAnswers.includes(primaryExpected)
+    const exercise = lesson.exercises.find(e => 
+        e.targetAnswer === primaryExpected || (e.acceptableAnswers && e.acceptableAnswers.includes(primaryExpected))
     );
 
     const sourceSentence = exercise ? exercise.prompt : primaryExpected;
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
         hayq = HAYQ_REWARDS.PARTIAL;
       }
     }
-
+    
     return NextResponse.json({
       correct: result.accepted,
       hayq,
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error) {
-    console.error("Check answer error:", error);
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error("[NUR Lingo API Error]:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

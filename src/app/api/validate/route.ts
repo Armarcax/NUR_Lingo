@@ -24,15 +24,15 @@ export async function POST(req: NextRequest) {
         userAnswer: body.userAnswer,
         expectedAnswer: body.expectedAnswer,
         sourceSentence: body.englishOriginal,
-        sourceLanguage: "en",
-        targetLanguage: "hy",
+        sourceLanguage: body.sourceLanguage || "en",
+        targetLanguage: body.targetLanguage || "hy",
         allValidForms: body.allValidAnswers,
       });
 
       return NextResponse.json(aiResult);
     }
   } catch (error) {
-    console.error("Validation error:", error);
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error("[NUR Lingo API Error]:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

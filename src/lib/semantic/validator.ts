@@ -1,326 +1,133 @@
-/**
- * NUR Lingo — Semantic Validation Engine
- *
- * Multi-layer answer checking pipeline:
- *   Layer 1: Exact match (fast path)
- *   Layer 2: Pattern registry match
- *   Layer 3: Morphological equivalence (Armenian only)
- *   Layer 4: Synonym expansion
- *   Layer 5: AI semantic evaluation (LLM fallback)
- *
- * Each layer increases computational cost; we short-circuit as early as possible.
- */
-
-import {
-  normalizeArmenian,
-  areMorphologicallyEquivalent,
-  extractSemanticTokens,
-  isArmenian,
-} from "../nlp/morphology";
-import {
-  lookupSentencePattern,
-  getAllValidArmenianForms,
-  getSynonyms,
-} from "../lexicon/dictionary";
-
-// ─── Validation Result ───────────────────────────────────────────────────────
-
-export type ValidationLayer =
-  | "exact_match"
-  | "pattern_registry"
-  | "morphological"
-  | "synonym_expansion"
-  | "ai_semantic";
+import { normalizeText, areMorphologicallyEquivalent } from "../nlp/morphology";
+import { getAllValidArmenianForms, lookupArmenian } from "../lexicon/dictionary";
 
 export interface ValidationResult {
   accepted: boolean;
-  score: number;                     // 0.0 – 1.0
-  layer: ValidationLayer;           // which layer accepted/rejected
-  feedback: string;                  // user-facing message
-  corrections?: string[];           // suggested improvements
-  alternatives?: string[];          // other valid answers
-  confidence: number;               // engine confidence 0.0 – 1.0
-  debug?: Record<string, unknown>;  // dev-mode details
+  score: number;
+  layer: "exact" | "pattern" | "morphology" | "synonym" | "ai";
+  feedback?: string;
+  corrections?: string[];
+  confidence: number;
+  debug?: any;
 }
 
-// ─── Scoring constants ───────────────────────────────────────────────────────
+function normalizeAnswer(text: string, lang: string): string {
+  const base = text.trim().toLowerCase()
+    .replace(/[.,!?;:()[\]"'«»]/g, "")
+    .replace(/\s+/g, " ");
+  
+  // Armenian-specific
+  if (lang === "hy") return base.replace(/[։՝՞՛]/g, "");
+  
+  // Russian: normalize ё→е for loose matching
+  if (lang === "ru") return base.replace(/ё/g, "е");
+  
+  return base;
+}
 
-const SCORE_EXACT          = 1.00;
-const SCORE_PATTERN        = 0.98;
-const SCORE_MORPHOLOGICAL  = 0.85;
-const SCORE_SYNONYM        = 0.80;
-const SCORE_AI_ACCEPT      = 0.75;
-const SCORE_REJECT         = 0.00;
-
-const ACCEPTANCE_THRESHOLD = 0.70;
-
-// ─── Layer 1: Exact Match ────────────────────────────────────────────────────
-
-export function exactMatch(
-  userAnswer: string,
-  expectedAnswer: string
-): ValidationResult | null {
-  const isHy = isArmenian(expectedAnswer);
-  const u = isHy ? normalizeArmenian(userAnswer) : userAnswer.trim().toLowerCase();
-  const e = isHy ? normalizeArmenian(expectedAnswer) : expectedAnswer.trim().toLowerCase();
-
-  if (u === e) {
-    return {
-      accepted: true,
-      score: SCORE_EXACT,
-      layer: "exact_match",
-      feedback: "Perfect answer!",
-      confidence: 1.0,
-    };
+export function exactMatch(userAnswer: string, expectedAnswer: string, lang: string): ValidationResult | null {
+  if (normalizeAnswer(userAnswer, lang) === normalizeAnswer(expectedAnswer, lang)) {
+    return { accepted: true, score: 1.0, layer: "exact", confidence: 1.0 };
   }
   return null;
 }
 
-// ─── Layer 2: Pattern Registry Match ────────────────────────────────────────
-
 export function patternRegistryMatch(
-  userAnswer: string,
+  userSentence: string,
   sourceSentence: string,
-  sourceLanguage: "en" | "hy"
+  sourceLanguage: string
 ): ValidationResult | null {
-  // Pattern registry currently mostly for English -> Armenian
-  if (sourceLanguage !== "en") return null;
+  if (sourceLanguage !== "en" && sourceLanguage !== "ru") return null;
 
   const validForms = getAllValidArmenianForms(sourceSentence);
   if (validForms.length === 0) return null;
 
-  const u = normalizeArmenian(userAnswer);
-  const match = validForms.find((v) => normalizeArmenian(v) === u);
-  if (match) {
-    return {
-      accepted: true,
-      score: SCORE_PATTERN,
-      layer: "pattern_registry",
-      feedback: "Correct — valid phrasing!",
-      alternatives: validForms.filter((v) => normalizeArmenian(v) !== u),
-      confidence: 0.99,
-    };
+  const normUser = normalizeText(userSentence);
+  for (const form of validForms) {
+    if (normUser === normalizeText(form)) {
+      return { accepted: true, score: 0.98, layer: "pattern", confidence: 1.0 };
+    }
   }
+
   return null;
 }
 
-// ─── Layer 3: Morphological Equivalence ─────────────────────────────────────
+export const scoreToGrade = (s: number) =>
+  s >= 0.98 ? "perfect" : s >= 0.85 ? "excellent" : s >= 0.75 ? "good" : s >= 0.5 ? "partial" : "incorrect";
 
-export function morphologicalMatch(
-  userAnswer: string,
-  referenceAnswer: string,
-  allValidForms: string[]
-): ValidationResult | null {
-  // Only for Armenian
-  if (!isArmenian(referenceAnswer)) return null;
+/**
+ * 5-LAYER SEMANTIC VALIDATION PIPELINE
+ * Short-circuits on first high-confidence match.
+ */
+export async function validateAnswer(
+  req: {
+    userAnswer: string,
+    expectedAnswer: string | string[],
+    sourceSentence: string,
+    sourceLanguage: string,
+    targetLanguage: string,
+    options?: { strictMode?: boolean; allValidAnswers?: string[] }
+  }
+): Promise<ValidationResult> {
+  const { userAnswer, expectedAnswer, sourceLanguage, targetLanguage, options } = req;
+  const expectedArray = Array.isArray(expectedAnswer) ? expectedAnswer : [expectedAnswer];
 
-  // Check against reference
-  const vsReference = areMorphologicallyEquivalent(userAnswer, referenceAnswer);
-  if (vsReference.equivalent) {
-    return {
-      accepted: true,
-      score: SCORE_MORPHOLOGICAL,
-      layer: "morphological",
-      feedback: "Correct meaning! Word order may vary.",
-      confidence: vsReference.overlap,
-      debug: { morphological_overlap: vsReference.details },
-    };
+  // Layer 1: Exact Match (Normalized)
+  for (const exp of expectedArray) {
+    const res = exactMatch(userAnswer, exp, targetLanguage);
+    if (res) return res;
   }
 
-  // Check against all registered valid forms
-  for (const validForm of allValidForms) {
-    const vsForm = areMorphologicallyEquivalent(userAnswer, validForm);
-    if (vsForm.equivalent) {
+  if (options?.strictMode) {
+    return { accepted: false, score: 0.2, layer: "exact", feedback: "Strict mode: Exact match required.", confidence: 1.0 };
+  }
+
+  // Layer 2: Pattern Registry (Pre-calculated common variants)
+  const patternMatch = patternRegistryMatch(userAnswer, req.sourceSentence, sourceLanguage);
+  if (patternMatch) return patternMatch;
+
+  // Layer 3: Morphological Analysis
+  for (const exp of expectedArray) {
+    const morphRes = areMorphologicallyEquivalent(userAnswer, exp);
+    if (morphRes.equivalent) {
       return {
         accepted: true,
-        score: SCORE_MORPHOLOGICAL,
-        layer: "morphological",
-        feedback: "Correct! Your answer has the same meaning.",
-        confidence: vsForm.overlap,
-        debug: { morphological_overlap: vsForm.details, matched_form: validForm },
+        score: Math.max(0.85, morphRes.overlap),
+        layer: "morphology",
+        confidence: morphRes.overlap,
+        debug: { jaccard: morphRes.overlap, details: morphRes.details }
       };
     }
   }
-  return null;
+
+  // Layer 4: Synonym Expansion
+  const synonymMatch = checkSynonyms(userAnswer, expectedArray);
+  if (synonymMatch) return synonymMatch;
+
+  return { accepted: false, score: 0, layer: "exact", corrections: expectedArray, confidence: 0.5 };
 }
 
-// ─── Layer 4: Synonym Expansion ──────────────────────────────────────────────
+function checkSynonyms(userAnswer: string, expectedAnswers: string[]): ValidationResult | null {
+  const userTokens = userAnswer.split(/\s+/).map(t => normalizeText(t)).filter(t => t.length > 0);
+  for (const exp of expectedAnswers) {
+    const expTokens = exp.split(/\s+/).map(t => normalizeText(t)).filter(t => t.length > 0);
+    if (userTokens.length !== expTokens.length) continue;
 
-export function synonymExpansionMatch(
-  userAnswer: string,
-  referenceAnswer: string
-): ValidationResult | null {
-  // Currently optimized for Armenian
-  if (!isArmenian(referenceAnswer)) return null;
+    let allMatch = true;
+    for (let i = 0; i < expTokens.length; i++) {
+      if (userTokens[i] === expTokens[i]) continue;
+      
+      const entry = lookupArmenian(expTokens[i]);
+      if (entry && entry.synonyms.map(s => normalizeText(s)).includes(userTokens[i])) {
+        continue;
+      }
+      allMatch = false;
+      break;
+    }
 
-  const { lemmas: userLemmas } = extractSemanticTokens(userAnswer);
-  const { lemmas: refLemmas } = extractSemanticTokens(referenceAnswer);
-
-  // Expand reference lemmas with synonyms
-  const expandedRef = new Set<string>(refLemmas);
-  for (const lemma of refLemmas) {
-    const syns = getSynonyms(lemma);
-    syns.forEach((s) => expandedRef.add(s));
-  }
-
-  const userSet = new Set(userLemmas.filter((l) => l.length > 1));
-  const intersection = [...userSet].filter((l) => expandedRef.has(l));
-  const overlap = userSet.size > 0 ? intersection.length / userSet.size : 0;
-
-  if (overlap >= 0.75) {
-    return {
-      accepted: true,
-      score: SCORE_SYNONYM,
-      layer: "synonym_expansion",
-      feedback: "Very good! Correct with synonyms.",
-      confidence: overlap,
-      debug: { synonym_overlap: overlap, matched: intersection },
-    };
+    if (allMatch) {
+      return { accepted: true, score: 0.8, layer: "synonym", confidence: 0.9 };
+    }
   }
   return null;
-}
-
-// ─── Main Validation Pipeline (without AI) ──────────────────────────────────
-
-export interface ValidationRequest {
-  userAnswer: string;
-  expectedAnswer: string;         // primary correct answer
-  sourceSentence: string;         // original question
-  sourceLanguage: "en" | "hy";
-  targetLanguage: "en" | "hy";
-  allValidAnswers?: string[];     // additional valid forms
-  strictMode?: boolean;           // if true, skip morphology and synonym expansion
-}
-
-export async function validateAnswer(
-  req: ValidationRequest
-): Promise<ValidationResult> {
-  const {
-    userAnswer,
-    expectedAnswer,
-    sourceSentence,
-    sourceLanguage,
-    targetLanguage,
-    allValidAnswers = [],
-    strictMode = false
-  } = req;
-
-  if (!userAnswer.trim()) {
-    return {
-      accepted: false,
-      score: SCORE_REJECT,
-      layer: "exact_match",
-      feedback: "Answer is empty.",
-      confidence: 1.0,
-    };
-  }
-
-  // All valid forms for this question
-  let patternForms: string[] = [];
-  if (sourceLanguage === "en" && targetLanguage === "hy") {
-    patternForms = getAllValidArmenianForms(sourceSentence);
-  }
-
-  const allForms = [
-    ...new Set([expectedAnswer, ...patternForms, ...allValidAnswers]),
-  ];
-
-  // Layer 1: Exact match
-  for (const form of allForms) {
-    const result = exactMatch(userAnswer, form);
-    if (result) return result;
-  }
-
-  // Layer 2: Pattern registry
-  const patternResult = patternRegistryMatch(userAnswer, sourceSentence, sourceLanguage);
-  if (patternResult) return patternResult;
-
-  // If in strict mode, we stop here (only exact or registered patterns allowed)
-  if (strictMode) {
-    return {
-      accepted: false,
-      score: SCORE_REJECT,
-      layer: "pattern_registry",
-      feedback: "Words are in wrong order or missing.",
-      corrections: allForms.slice(0, 1),
-      confidence: 1.0,
-    };
-  }
-
-  // Layer 3: Morphological (Armenian only)
-  if (targetLanguage === "hy") {
-    const morphResult = morphologicalMatch(userAnswer, expectedAnswer, allForms);
-    if (morphResult) return morphResult;
-  }
-
-  // Layer 4: Synonym expansion (Armenian only for now)
-  if (targetLanguage === "hy") {
-    const synonymResult = synonymExpansionMatch(userAnswer, expectedAnswer);
-    if (synonymResult) return synonymResult;
-  }
-
-  // Default reject — caller may optionally run AI layer
-  return {
-    accepted: false,
-    score: SCORE_REJECT,
-    layer: targetLanguage === "hy" ? "morphological" : "exact_match",
-    feedback: targetLanguage === "hy"
-        ? buildFeedback(userAnswer, expectedAnswer, allForms)
-        : `Incorrect. Expected: "${expectedAnswer}"`,
-    corrections: allForms.slice(0, 3),
-    confidence: 0.9,
-  };
-}
-
-// ─── Feedback builder ────────────────────────────────────────────────────────
-
-function buildFeedback(
-  userAnswer: string,
-  expected: string,
-  allValid: string[]
-): string {
-  const { lemmas: uLemmas } = extractSemanticTokens(userAnswer);
-  const { lemmas: eLemmas } = extractSemanticTokens(expected);
-
-  const uSet = new Set(uLemmas);
-  const eSet = new Set(eLemmas);
-  const missing = [...eSet].filter((l) => !uSet.has(l) && l.length > 1);
-  const extra = [...uSet].filter((l) => !eSet.has(l) && l.length > 1);
-
-  const parts: string[] = ["Not quite right."];
-
-  if (missing.length > 0) {
-    parts.push(`Missing concepts: [${missing.join(", ")}]`);
-  }
-  if (extra.length > 0) {
-    parts.push(`Extra words: [${extra.join(", ")}]`);
-  }
-  if (allValid.length > 0) {
-    parts.push(`Correct answer: "${allValid[0]}"`);
-  }
-
-  return parts.join(" | ");
-}
-
-// ─── Score → Grade mapping ───────────────────────────────────────────────────
-
-export type Grade = "perfect" | "excellent" | "good" | "partial" | "incorrect";
-
-export function scoreToGrade(score: number): Grade {
-  if (score >= 0.98) return "perfect";
-  if (score >= 0.85) return "excellent";
-  if (score >= 0.75) return "good";
-  if (score >= 0.50) return "partial";
-  return "incorrect";
-}
-
-export function gradeEmoji(grade: Grade): string {
-  const map: Record<Grade, string> = {
-    perfect: "🌟",
-    excellent: "✅",
-    good: "👍",
-    partial: "🔶",
-    incorrect: "❌",
-  };
-  return map[grade];
 }

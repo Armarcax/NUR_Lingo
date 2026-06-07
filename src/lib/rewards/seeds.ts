@@ -1,182 +1,300 @@
 /**
- * NUR Lingo v4 — Pomegranate Seed Reward System
- * Dual economy: HAYQ Points (frequent) + Pomegranate Seeds (rare, symbolic)
- *
- * Seeds are earned through:
- * - Perfect lesson streaks
- * - Milestone completions
- * - Special achievements
- *
- * The user's central pomegranate grows visually with each seed collected.
+ * NUR Lingo — Rewards Persistence
+ * Handles saving and loading HAYQ, Seeds, and Streaks from local storage.
  */
 
-export type SeedType = "normal" | "golden" | "crystal" | "legendary";
+const STORAGE_KEY = "nur_lingo_seeds_v4";
 
-export interface PomSeed {
-  id: string;
-  type: SeedType;
-  label: string;
-  labelRu: string;
-  labelHy: string;
-  description: string;
-  emoji: string;
-  color: string;
-  glowColor: string;
-  earnedAt?: number;  // timestamp
-  reason?: string;
-}
-
-export const SEED_DEFINITIONS: Record<string, Omit<PomSeed, "id" | "earnedAt" | "reason">> = {
-  first_lesson: {
-    type: "normal",
-    label: "First Lesson",
-    labelRu: "Первый урок",
-    labelHy: "Аrlajin das",
-    description: "Complete your very first lesson",
-    emoji: "🌱",
-    color: "#4ade80",
-    glowColor: "rgba(74,222,128,0.4)",
-  },
-  perfect_lesson: {
-    type: "golden",
-    label: "Perfect Lesson",
-    labelRu: "Идеальный урок",
-    labelHy: "Катаryаl das",
-    description: "Complete a lesson with 100% score",
-    emoji: "⭐",
-    color: "#F2A800",
-    glowColor: "rgba(242,168,0,0.4)",
-  },
-  streak_3: {
-    type: "normal",
-    label: "3-Day Streak",
-    labelRu: "3 дня подряд",
-    labelHy: "3 orvа shаrunаkvutʻyun",
-    description: "Learn 3 days in a row",
-    emoji: "🔥",
-    color: "#f97316",
-    glowColor: "rgba(249,115,22,0.4)",
-  },
-  streak_7: {
-    type: "golden",
-    label: "Week Warrior",
-    labelRu: "Неделя побед",
-    labelHy: "Shаbаtvy аrmаtаkаn",
-    description: "7-day learning streak",
-    emoji: "💎",
-    color: "#60a5fa",
-    glowColor: "rgba(96,165,250,0.4)",
-  },
-  streak_30: {
-    type: "crystal",
-    label: "Month Master",
-    labelRu: "Мастер месяца",
-    labelHy: "Amsvy vаrpаyet",
-    description: "30-day learning streak",
-    emoji: "🏆",
-    color: "#a855f7",
-    glowColor: "rgba(168,85,247,0.4)",
-  },
-  unit_complete: {
-    type: "golden",
-    label: "Unit Complete",
-    labelRu: "Раздел пройден",
-    labelHy: "Bаjiny аvelogh",
-    description: "Complete an entire unit",
-    emoji: "🎯",
-    color: "#D90012",
-    glowColor: "rgba(217,0,18,0.4)",
-  },
-  word_100: {
-    type: "crystal",
-    label: "100 Words",
-    labelRu: "100 слов",
-    labelHy: "100 bаrer",
-    description: "Learn 100 vocabulary words",
-    emoji: "📚",
-    color: "#0033A0",
-    glowColor: "rgba(0,51,160,0.4)",
-  },
-  multilingual: {
-    type: "legendary",
-    label: "Polyglot",
-    labelRu: "Полиглот",
-    labelHy: "Bаzаlezvi",
-    description: "Start learning a third language",
-    emoji: "🌍",
-    color: "#F2A800",
-    glowColor: "rgba(242,168,0,0.6)",
-  },
-};
-
-// ── Seed state (localStorage) ─────────────────────────────────────────────────
-export const SEEDS_KEY = "nur_lingo_seeds_v4";
-export const HAYQ_KEY  = "nur_lingo_hayq_v4";
-
-export interface RewardState {
-  hayq: number;
-  seeds: PomSeed[];
+export interface UserRewards {
+  totalHAYQ: number;
+  totalSeeds: number;
   streak: number;
-  lastStudyDate: string | null;  // ISO date string
-  totalLessons: number;
-  wordsLearned: number;
+  streakFreeze: number;
+  lastActivityDate?: string; // YYYY-MM-DD
+  crowns: Record<string, number>; // lessonId -> level (0-3)
+  hearts: number;
+  lastHeartUpdate: string; // ISO string
+  milestones: number[]; // e.g. [7, 30, 100]
+  dailyGoal: number; // minutes
+  dailyActivity: Record<string, number>; // date -> minutes
+  goalClaimed: string[]; // dates
 }
 
-export const DEFAULT_STATE: RewardState = {
-  hayq: 0,
-  seeds: [],
+const DEFAULT_REWARDS: UserRewards = {
+  totalHAYQ: 0,
+  totalSeeds: 0,
   streak: 0,
-  lastStudyDate: null,
-  totalLessons: 0,
-  wordsLearned: 0,
+  streakFreeze: 0,
+  crowns: {},
+  hearts: 3,
+  lastHeartUpdate: new Date().toISOString(),
+  milestones: [],
+  dailyGoal: 10,
+  dailyActivity: {},
+  goalClaimed: [],
 };
 
-export function loadRewards(): RewardState {
-  if (typeof window === "undefined") return DEFAULT_STATE;
+export function loadRewards(): UserRewards {
+  if (typeof window === "undefined") return DEFAULT_REWARDS;
+  
   try {
-    const raw = localStorage.getItem(SEEDS_KEY);
-    return raw ? { ...DEFAULT_STATE, ...JSON.parse(raw) } : { ...DEFAULT_STATE };
-  } catch {
-    return { ...DEFAULT_STATE };
+    const data = localStorage.getItem(STORAGE_KEY);
+    if (!data) return DEFAULT_REWARDS;
+    const rewards = JSON.parse(data);
+    return { 
+      ...DEFAULT_REWARDS, 
+      ...rewards, 
+      crowns: rewards.crowns || {},
+      hearts: rewards.hearts ?? 3,
+      lastHeartUpdate: rewards.lastHeartUpdate || new Date().toISOString(),
+      milestones: rewards.milestones || [],
+      dailyGoal: rewards.dailyGoal || 10,
+      dailyActivity: rewards.dailyActivity || {},
+      goalClaimed: rewards.goalClaimed || []
+    };
+  } catch (e) {
+    console.error("Failed to load rewards:", e);
+    return DEFAULT_REWARDS;
   }
 }
 
-export function saveRewards(state: RewardState): void {
+export function saveRewards(rewards: UserRewards) {
   if (typeof window === "undefined") return;
-  localStorage.setItem(SEEDS_KEY, JSON.stringify(state));
+  
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(rewards));
+  } catch (e) {
+    console.error("Failed to save rewards:", e);
+  }
 }
 
-export function addHAYQ(current: RewardState, amount: number): RewardState {
-  return { ...current, hayq: current.hayq + amount };
-}
-
-export function awardSeed(current: RewardState, seedKey: string, reason: string): RewardState {
-  const def = SEED_DEFINITIONS[seedKey];
-  if (!def) return current;
-  // Don't duplicate seeds of same type
-  if (current.seeds.some(s => s.label === def.label)) return current;
-  const seed: PomSeed = {
-    id: `${seedKey}_${Date.now()}`,
-    ...def,
-    earnedAt: Date.now(),
-    reason,
-  };
-  return { ...current, seeds: [...current.seeds, seed] };
-}
-
-export function updateStreak(current: RewardState): RewardState {
+export function updateStreak(rewards: UserRewards): UserRewards {
   const today = new Date().toISOString().split("T")[0];
-  if (current.lastStudyDate === today) return current;
-  const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
-  const newStreak = current.lastStudyDate === yesterday ? current.streak + 1 : 1;
-  return { ...current, streak: newStreak, lastStudyDate: today };
+  if (rewards.lastActivityDate === today) return rewards;
+
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split("T")[0];
+
+  let nextStreak = rewards.streak;
+  if (rewards.lastActivityDate === yesterdayStr) {
+    nextStreak += 1;
+  } else {
+    nextStreak = 1;
+  }
+
+  return { ...rewards, streak: nextStreak, lastActivityDate: today };
 }
 
-// Pomegranate visual growth: 0-100% fullness based on seed count + type
-export function getPomGrowth(seeds: PomSeed[]): number {
-  const weights: Record<SeedType, number> = {
-    normal: 3, golden: 7, crystal: 15, legendary: 30,
+export function addHAYQ(rewards: UserRewards, amount: number): UserRewards {
+  const today = new Date().toISOString().split("T")[0];
+  const currentActivity = rewards.dailyActivity[today] || 0;
+  
+  return { 
+    ...rewards, 
+    totalHAYQ: rewards.totalHAYQ + amount,
+    dailyActivity: {
+      ...rewards.dailyActivity,
+      [today]: currentActivity + 1 // Increment active minutes loosely
+    }
   };
-  const total = seeds.reduce((sum, s) => sum + weights[s.type], 0);
-  return Math.min(total, 100);
+}
+
+export function addRewards(hayq: number, seeds: number, minutes: number = 0) {
+  const current = loadRewards();
+  const withStreak = updateStreak(current);
+  
+  const today = new Date().toISOString().split("T")[0];
+  const currentActivity = withStreak.dailyActivity[today] || 0;
+
+  const updated: UserRewards = {
+    ...withStreak,
+    totalHAYQ: withStreak.totalHAYQ + hayq,
+    totalSeeds: withStreak.totalSeeds + seeds,
+    dailyActivity: {
+      ...withStreak.dailyActivity,
+      [today]: currentActivity + minutes
+    }
+  };
+  saveRewards(updated);
+  return updated;
+}
+
+export function buyStreakFreeze(): { success: boolean; error?: string; rewards: UserRewards } {
+  const current = loadRewards();
+  if (current.streakFreeze >= 2) {
+    return { success: false, error: "Maximum 2 freezes allowed", rewards: current };
+  }
+  if (current.totalHAYQ < 50) {
+    return { success: false, error: "Not enough HAYQ (needs 50)", rewards: current };
+  }
+  
+  const updated: UserRewards = {
+    ...current,
+    totalHAYQ: current.totalHAYQ - 50,
+    streakFreeze: current.streakFreeze + 1,
+  };
+  saveRewards(updated);
+  return { success: true, rewards: updated };
+}
+
+export function buyHeartRefill(): { success: boolean; error?: string; rewards: UserRewards } {
+  const current = syncHearts();
+  if (current.hearts >= 3) {
+    return { success: false, error: "Hearts already full", rewards: current };
+  }
+  if (current.totalHAYQ < 100) {
+    return { success: false, error: "Not enough HAYQ (needs 100)", rewards: current };
+  }
+  
+  const updated: UserRewards = {
+    ...current,
+    totalHAYQ: current.totalHAYQ - 100,
+    hearts: 3,
+    lastHeartUpdate: new Date().toISOString(),
+  };
+  saveRewards(updated);
+  return { success: true, rewards: updated };
+}
+
+export function deductHeart(): UserRewards {
+  const current = syncHearts();
+  if (current.hearts <= 0) return current;
+  
+  const updated: UserRewards = {
+    ...current,
+    hearts: current.hearts - 1,
+    lastHeartUpdate: current.hearts === 3 ? new Date().toISOString() : current.lastHeartUpdate,
+  };
+  saveRewards(updated);
+  return updated;
+}
+
+export function syncHearts(): UserRewards {
+  const current = loadRewards();
+  if (current.hearts >= 3) return current;
+  
+  const now = new Date();
+  const lastUpdate = new Date(current.lastHeartUpdate);
+  const diffMs = now.getTime() - lastUpdate.getTime();
+  const fiveHoursInMs = 5 * 60 * 60 * 1000;
+  
+  if (diffMs >= fiveHoursInMs) {
+    const heartsToAdd = Math.floor(diffMs / fiveHoursInMs);
+    const newHearts = Math.min(3, current.hearts + heartsToAdd);
+    
+    // Calculate remainder time to preserve partial progress
+    const remainingTime = diffMs % fiveHoursInMs;
+    const newUpdateDate = new Date(now.getTime() - remainingTime);
+
+    const updated: UserRewards = {
+      ...current,
+      hearts: newHearts,
+      lastHeartUpdate: newHearts === 3 ? now.toISOString() : newUpdateDate.toISOString(),
+    };
+    saveRewards(updated);
+    return updated;
+  }
+  
+  return current;
+}
+
+export function getNextHeartCountdown(current: UserRewards): number {
+  if (current.hearts >= 3) return 0;
+  const lastUpdate = new Date(current.lastHeartUpdate);
+  const nextHeartTime = lastUpdate.getTime() + (5 * 60 * 60 * 1000);
+  return Math.max(0, nextHeartTime - new Date().getTime());
+}
+
+export function checkStreakMilestones(): { milestone: number | null; rewards: UserRewards } {
+  const current = loadRewards();
+  const milestones = [7, 30, 100];
+  const newMilestone = milestones.find(m => current.streak >= m && !current.milestones.includes(m));
+  
+  if (newMilestone) {
+    const updated: UserRewards = {
+      ...current,
+      totalSeeds: current.totalSeeds + 1,
+      totalHAYQ: current.totalHAYQ + (newMilestone * 2), // Bonus HAYQ
+      milestones: [...current.milestones, newMilestone],
+    };
+    saveRewards(updated);
+    return { milestone: newMilestone, rewards: updated };
+  }
+  
+  return { milestone: null, rewards: current };
+}
+
+export function checkDailyGoalBonus(): { achieved: boolean; rewards: UserRewards } {
+  const current = loadRewards();
+  const today = new Date().toISOString().split("T")[0];
+  const minutes = current.dailyActivity[today] || 0;
+  
+  if (minutes >= current.dailyGoal && !current.goalClaimed.includes(today)) {
+    const updated: UserRewards = {
+      ...current,
+      totalHAYQ: current.totalHAYQ + 20, // 20 HAYQ bonus for goal
+      goalClaimed: [...current.goalClaimed, today],
+    };
+    saveRewards(updated);
+    return { achieved: true, rewards: updated };
+  }
+  
+  return { achieved: false, rewards: current };
+}
+
+export function setDailyGoal(minutes: number) {
+  const current = loadRewards();
+  saveRewards({ ...current, dailyGoal: minutes });
+}
+
+export function saveCrownLevel(lessonId: string, level: number): UserRewards {
+  const current = loadRewards();
+  const updated: UserRewards = {
+    ...current,
+    crowns: {
+      ...current.crowns,
+      [lessonId]: Math.min(3, Math.max(current.crowns[lessonId] || 0, level)),
+    },
+  };
+  saveRewards(updated);
+  return updated;
+}
+
+export function checkAndApplyFreeze(): UserRewards {
+  const current = loadRewards();
+  if (!current.lastActivityDate) return current;
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const lastDate = new Date(current.lastActivityDate);
+  lastDate.setHours(0, 0, 0, 0);
+  
+  const diffTime = Math.abs(today.getTime() - lastDate.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays > 1) {
+    // More than 1 day missed
+    if (current.streakFreeze > 0) {
+      // Use freeze
+      const updated: UserRewards = {
+        ...current,
+        streakFreeze: current.streakFreeze - 1,
+        lastActivityDate: new Date(today.getTime() - 86400000).toISOString().split("T")[0], // Set to "yesterday"
+      };
+      saveRewards(updated);
+      return updated;
+    } else {
+      // Streak lost
+      const updated: UserRewards = {
+        ...current,
+        streak: 0,
+      };
+      saveRewards(updated);
+      return updated;
+    }
+  }
+  
+  return current;
 }

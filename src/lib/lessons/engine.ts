@@ -90,7 +90,7 @@ export const SEED_REWARDS = {
 
 export interface HAYQLevel {
   level: number;
-  title: string;
+  title: Record<string, string>;
   titleArmenian: string;
   nextLevelHAYQ: number;
   color: string;
@@ -98,13 +98,13 @@ export interface HAYQLevel {
 
 export function hayqToLevel(hayq: number): HAYQLevel {
   const levels: HAYQLevel[] = [
-    { level:1, title:"Beginner",    titleArmenian:"Սկսնակ",      nextLevelHAYQ:150,  color:"#9ca3af" },
-    { level:2, title:"Student",     titleArmenian:"Ուսանող",     nextLevelHAYQ:400,  color:"#60a5fa" },
-    { level:3, title:"Learner",     titleArmenian:"Ճանաչող",     nextLevelHAYQ:800,  color:"#34d399" },
-    { level:4, title:"Speaker",     titleArmenian:"Խոսող",       nextLevelHAYQ:1500, color:"#F2A800" },
-    { level:5, title:"Proficient",  titleArmenian:"Հմուտ",       nextLevelHAYQ:2500, color:"#D90012" },
-    { level:6, title:"Fluent",      titleArmenian:"Ճկուն",       nextLevelHAYQ:4000, color:"#a855f7" },
-    { level:7, title:"Master",      titleArmenian:"Վարպետ",      nextLevelHAYQ:Infinity, color:"#F2A800" },
+    { level:1, title:{en:"Beginner", hy:"Սկսնակ", ru:"Новичок"},    titleArmenian:"Սկսնակ",      nextLevelHAYQ:150,  color:"#9ca3af" },
+    { level:2, title:{en:"Student", hy:"Ուսանող", ru:"Ученик"},     titleArmenian:"Ուսանող",     nextLevelHAYQ:400,  color:"#60a5fa" },
+    { level:3, title:{en:"Learner", hy:"Ճանաչող", ru:"Учащийся"},     titleArmenian:"Ճանաչող",     nextLevelHAYQ:800,  color:"#34d399" },
+    { level:4, title:{en:"Speaker", hy:"Խոսող", ru:"Говорящий"},       titleArmenian:"Խոսող",       nextLevelHAYQ:1500, color:"#F2A800" },
+    { level:5, title:{en:"Proficient", hy:"Հմուտ", ru:"Опытный"},  titleArmenian:"Հմուտ",       nextLevelHAYQ:2500, color:"#D90012" },
+    { level:6, title:{en:"Fluent", hy:"Ճկուն", ru:"Беглый"},       titleArmenian:"Ճկուն",       nextLevelHAYQ:4000, color:"#a855f7" },
+    { level:7, title:{en:"Master", hy:"Վարպետ", ru:"Мастер"},      titleArmenian:"Վարպետ",      nextLevelHAYQ:Infinity, color:"#F2A800" },
   ];
   for (let i = levels.length - 1; i >= 0; i--) {
     const threshold = i === 0 ? 0 : [0,150,400,800,1500,2500,4000][i];
@@ -358,3 +358,4 @@ export const getUnitById    = (id: string) => UNITS.find(u => u.id === id);
 export const getLessonsForUnit = (uid: string) => LESSONS.filter(l => l.unitId === uid);
 export const scoreToGrade = (s: number) =>
   s >= 0.98 ? "perfect" : s >= 0.85 ? "excellent" : s >= 0.75 ? "good" : s >= 0.5 ? "partial" : "incorrect";
+

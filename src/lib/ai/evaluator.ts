@@ -44,8 +44,8 @@ export interface AIEvalRequest {
   sourceSentence: string;
   expectedAnswer: string;
   userAnswer: string;
-  sourceLanguage: "en" | "hy";
-  targetLanguage: "en" | "hy";
+  sourceLanguage: "en" | "hy" | "ru";
+  targetLanguage: "en" | "hy" | "ru";
   allValidForms?: string[];
   context?: string;
 }
@@ -109,7 +109,7 @@ Return ONLY the JSON object described in the system prompt.`;
 const evalCache = new Map<string, AIEvalResponse>();
 
 function cacheKey(req: AIEvalRequest): string {
-  return `${req.sourceSentence}|||${req.userAnswer}|||${req.targetLanguage}`;
+  return `${req.sourceSentence}|||${req.userAnswer}|||${req.expectedAnswer}|||${req.targetLanguage}`;
 }
 
 // ─── OpenRouter / compatible API call ───────────────────────────────────────
@@ -231,7 +231,7 @@ export function aiResponseToValidation(
   return {
     accepted,
     score: aiResult.score,
-    layer: "ai_semantic",
+    layer: "ai",
     feedback: accepted
       ? `✅ ${aiResult.reasoning}`
       : `❌ ${aiResult.reasoning}${
@@ -265,7 +265,9 @@ export async function fullValidationWithAI(
     sourceSentence: req.sourceSentence,
     sourceLanguage: req.sourceLanguage,
     targetLanguage: req.targetLanguage,
-    allValidAnswers: req.allValidForms,
+    options: {
+      allValidAnswers: req.allValidForms,
+    }
   });
 
   // If rule-based engine is confident → return without AI

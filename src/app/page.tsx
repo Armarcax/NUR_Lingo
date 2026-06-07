@@ -17,7 +17,7 @@ export default function Home() {
             NUR Lingo
           </span>
         </div>
-        <Link href="/learn"
+        <Link href="/onboarding"
           className="px-5 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95"
           style={{ background: "var(--hy-red)", color: "white", boxShadow: "0 4px 16px rgba(217,0,18,0.3)" }}
         >
@@ -74,7 +74,7 @@ export default function Home() {
 
           <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.4 }}
             className="flex flex-wrap gap-3">
-            <Link href="/learn" className="btn-primary rounded-2xl">Սկսել ուսուցումը →</Link>
+            <Link href="/onboarding" className="btn-primary rounded-2xl">Սկսել ուսուցումը →</Link>
             <a href="#demo" className="px-8 py-4 rounded-2xl font-medium text-white/50 hover:text-white transition-colors border"
               style={{ borderColor:"var(--color-border)" }}>Demo ↓</a>
           </motion.div>
