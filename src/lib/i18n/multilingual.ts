@@ -623,18 +623,8 @@ export function getLessonsForPair(pair: LangPair): { units: MultiUnit[]; lessons
     "ru-en": RU_EN_LESSONS,
   };
   
-  const legacyLessons = map[pair] || [];
-  const generated = generateCurriculumForPair(pair);
-
-  const seen = new Set(generated.lessons.map(l => l.id));
-  const lessons = [...generated.lessons, ...legacyLessons.filter(l => !seen.has(l.id))];
-
-  const unitMap = new Map<string, MultiUnit>();
-  for (const u of [...generated.units, ...MULTI_UNITS]) {
-    if (!unitMap.has(u.id)) unitMap.set(u.id, u);
-  }
-  const units = Array.from(unitMap.values()).filter(u => lessons.some(l => l.unitId === u.id));
-
+  const lessons = map[pair] || [];
+  const units = MULTI_UNITS.filter(u => lessons.some(l => l.unitId === u.id));
   return { units, lessons };
 }
 
