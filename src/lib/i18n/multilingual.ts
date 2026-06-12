@@ -14,9 +14,9 @@ export interface MultiExercise {
   acceptableAnswers?: string[];
   options?: string[];
   words?: string[];
-  pairs?: Array<[string, string]>;
-  ttsText?: string;
-  ttsLang?: LangCode;
+  pairs?: Array<[string, string]>;      // for match_pairs
+  ttsText?: string;                     // for listening
+  ttsLang?: LangCode;                   // for listening
   hint?: Record<LangCode, string>;
   hayqReward?: number;
 }
