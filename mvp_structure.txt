@@ -1,0 +1,133 @@
+================================================================================
+📁 ՄՎՊ ԿԱՌՈՒՑՎԱԾՔԻ ՔԱՐՏԵԶ
+🗂️  Պրոեկտ: C:\Users\Armen\Documents\NurLingo\NUR_Lingo
+📅 Սկանավորված: 2026-06-12 01:41:21
+================================================================================
+
+📂 NUR_Lingo/ (ROOT)
+    📄 next-env.d.ts [.ts] (228 B)
+    📄 package-lock.json [.json] (341.1 KB)
+    📄 package.json [.json] (1.0 KB)
+    📄 tsconfig.json [.json] (623 B)
+    📂 data/
+        📂 dictionaries/
+            📄 Headers_dictionary.json [.json] (53.9 KB)
+            📄 dictionary.json [.json] (119.6 KB)
+    📂 public/
+        📄 sw.js [.js] (662 B)
+        📂 images/
+            📄 pomegranate-bg.jpg [.jpg] (106.0 KB)
+            📂 nuri/
+                📄 nuri-encouraging.png [.png] (202.0 KB)
+                📄 nuri-happy.png [.png] (187.5 KB)
+                📄 nuri-sad.png [.png] (177.1 KB)
+    📂 scripts/
+        📄 seed-lexicon.ts [.ts] (4.1 KB)
+    📂 src/
+        📂 app/
+            📄 globals.css [.css] (3.5 KB)
+            📄 layout.tsx [.tsx] (1.8 KB)
+            📄 page.tsx [.tsx] (8.2 KB)
+            📂 api/
+                📂 check-answer/
+                    📄 route.ts [.ts] (2.2 KB)
+                📂 lesson/
+                    📄 route.ts [.ts] (3.0 KB)
+                📂 lexicon/
+                    📄 route.ts [.ts] (5.0 KB)
+                📂 validate/
+                    📄 route.ts [.ts] (1.2 KB)
+            📂 garden/
+                📄 page.tsx [.tsx] (5.9 KB)
+            📂 learn/
+                📄 page.tsx [.tsx] (13.3 KB)
+            📂 onboarding/
+                📄 page.tsx [.tsx] (5.1 KB)
+            📂 world/
+                📄 page.tsx [.tsx] (17.8 KB)
+        📂 components/
+            📄 BottomNav.tsx [.tsx] (1.6 KB)
+            📄 Nuri.tsx [.tsx] (6.3 KB)
+            📄 ServiceWorkerRegister.tsx [.tsx] (237 B)
+        📂 lib/
+            📄 notifications.ts [.ts] (1.8 KB)
+            📂 ai/
+                📄 evaluator.ts [.ts] (10.2 KB)
+            📂 i18n/
+                📄 index.ts [.ts] (932 B)
+                📄 multilingual.ts [.ts] (40.9 KB)
+            📂 lessons/
+                📄 engine.ts [.ts] (13.9 KB)
+            📂 lexicon/
+                📄 dictionary.ts [.ts] (47.4 KB)
+            📂 nlp/
+                📄 morphology.test.ts [.ts] (3.0 KB)
+                📄 morphology.ts [.ts] (14.9 KB)
+            📂 rewards/
+                📄 seeds.ts [.ts] (8.7 KB)
+            📂 semantic/
+                📄 validator.test.ts [.ts] (3.7 KB)
+                📄 validator.ts [.ts] (4.3 KB)
+            📂 supabase/
+                📄 client.ts [.ts] (1.8 KB)
+                📄 server.ts [.ts] (1.1 KB)
+    📂 supabase/
+        📂 migrations/
+            📄 002_add_currency.sql [.sql] (1.3 KB)
+            📄 003_add_leaderboard.sql [.sql] (1.4 KB)
+
+================================================================================
+📊 ՍՏԱՏԻՍՏԻԿԱ
+================================================================================
+📁 Պանակներ: 30
+📄 Ֆայլեր: 41
+📍 Ճանապարհ: C:\Users\Armen\Documents\NurLingo\NUR_Lingo
+
+================================================================================
+📋 ՖԱՅԼԵՐԻ ՑՈՒՑԱԿ (հարաբերական ճանապարհներ)
+================================================================================
+  • next-env.d.ts (228 B)
+  • package-lock.json (341.1 KB)
+  • package.json (1.0 KB)
+  • tsconfig.json (623 B)
+  • data\dictionaries\Headers_dictionary.json (53.9 KB)
+  • data\dictionaries\dictionary.json (119.6 KB)
+  • public\sw.js (662 B)
+  • public\images\pomegranate-bg.jpg (106.0 KB)
+  • public\images\nuri\nuri-encouraging.png (202.0 KB)
+  • public\images\nuri\nuri-happy.png (187.5 KB)
+  • public\images\nuri\nuri-sad.png (177.1 KB)
+  • scripts\seed-lexicon.ts (4.1 KB)
+  • src\app\globals.css (3.5 KB)
+  • src\app\layout.tsx (1.8 KB)
+  • src\app\page.tsx (8.2 KB)
+  • src\app\api\check-answer\route.ts (2.2 KB)
+  • src\app\api\lesson\route.ts (3.0 KB)
+  • src\app\api\lexicon\route.ts (5.0 KB)
+  • src\app\api\validate\route.ts (1.2 KB)
+  • src\app\garden\page.tsx (5.9 KB)
+  • src\app\learn\page.tsx (13.3 KB)
+  • src\app\onboarding\page.tsx (5.1 KB)
+  • src\app\world\page.tsx (17.8 KB)
+  • src\components\BottomNav.tsx (1.6 KB)
+  • src\components\Nuri.tsx (6.3 KB)
+  • src\components\ServiceWorkerRegister.tsx (237 B)
+  • src\lib\notifications.ts (1.8 KB)
+  • src\lib\ai\evaluator.ts (10.2 KB)
+  • src\lib\i18n\index.ts (932 B)
+  • src\lib\i18n\multilingual.ts (40.9 KB)
+  • src\lib\lessons\engine.ts (13.9 KB)
+  • src\lib\lexicon\dictionary.ts (47.4 KB)
+  • src\lib\nlp\morphology.test.ts (3.0 KB)
+  • src\lib\nlp\morphology.ts (14.9 KB)
+  • src\lib\rewards\seeds.ts (8.7 KB)
+  • src\lib\semantic\validator.test.ts (3.7 KB)
+  • src\lib\semantic\validator.ts (4.3 KB)
+  • src\lib\supabase\client.ts (1.8 KB)
+  • src\lib\supabase\server.ts (1.1 KB)
+  • supabase\migrations\002_add_currency.sql (1.3 KB)
+  • supabase\migrations\003_add_leaderboard.sql (1.4 KB)
+
+================================================================================
+✅ Սկանավորում ավարտված
+================================================================================

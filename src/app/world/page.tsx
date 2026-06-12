@@ -126,13 +126,13 @@ export default function WorldPage() {
         />
       ))}
 
-      <div className="relative z-10 flex flex-col min-h-screen">
-        <nav className="flex items-center justify-between px-8 py-5 border-b border-white/10 bg-black/40 backdrop-blur-xl sticky top-0 z-30">
+      <div className="relative z-10 flex flex-col min-h-screen w-full overflow-x-hidden">
+        <nav className="flex items-center justify-between px-8 py-5 border-b border-white/10 bg-black/40 backdrop-blur-xl sticky top-0 z-30 flex-wrap gap-2">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D90012] to-[#FFA500] flex items-center justify-center font-black text-xl shadow-lg border border-white/20">Ն</div>
             <span className="font-black tracking-tighter text-xl uppercase italic bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">NUR Lingo</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
               {/* Level Info */}
               <div className="hidden md:flex flex-col items-end mr-2">
                 <p className="text-[10px] font-black text-white/30 uppercase tracking-widest leading-none mb-1">Rank</p>
@@ -199,7 +199,7 @@ export default function WorldPage() {
           <p className="text-white/40 font-bold uppercase tracking-[0.3em] text-sm mb-8">Organic learning path — Armenian Soul</p>
         </div>
 
-        <div className="max-w-4xl mx-auto px-8 pb-32 relative flex-1">
+        <div className="max-w-4xl mx-auto px-8 pb-32 relative flex-1 w-full">
           <div className="flex flex-col items-center gap-20 mt-20 relative">
             
             <svg className="absolute inset-0 w-full h-full pointer-events-none -z-10 overflow-visible">

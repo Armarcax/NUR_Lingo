@@ -43,8 +43,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
         <div className="fixed inset-0 z-[-1] bg-black/60 pointer-events-none" />
-        <ServiceWorkerRegister />
-        {children}
+        
+        {/* Centering container for all page content */}
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <ServiceWorkerRegister />
+          {children}
+        </div>
       </body>
     </html>
   );
