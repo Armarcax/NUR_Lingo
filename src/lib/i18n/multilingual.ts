@@ -611,7 +611,7 @@ const RU_EN_LESSONS: MultiLesson[] = [
   { id: "ruen_l5", unitId: "u2", title: { ru: "Спорт", hy: "Սպորտ", en: "Sport" }, description: { ru: "Игры", hy: "Խաղեր", en: "Games" }, estimatedMinutes: 5, hayqTotal: 50, exercises: [] }
 ];
 
-import { generateCurriculumForPair } from '../content/generator';
+// import { generateCurriculumForPair } from '../content/generator';
 
 export function getLessonsForPair(pair: LangPair): { units: MultiUnit[]; lessons: MultiLesson[] } {
   const map: Record<string, MultiLesson[]> = {
