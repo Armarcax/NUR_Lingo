@@ -14,44 +14,7 @@
     --color-card: #0e0f1c;
     --color-border:rgba(255,255,255,0.07);
   }
-  html {
-    background: var(--color-bg);
-    -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
-  }
-  body {
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    min-height: 100vh;
-    width: 100%;
-    overflow-x: hidden;
-    background-color: var(--color-bg);
-  }
-  /* Global container utility for centering content */
-  .page-container {
-    width: 100%;
-    max-width: 1280px;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-  @media (min-width: 640px) {
-    .page-container {
-      padding-left: 1.5rem;
-      padding-right: 1.5rem;
-    }
-  }
-  @media (min-width: 1024px) {
-    .page-container {
-      padding-left: 2rem;
-      padding-right: 2rem;
-    }
-  }
+  html { background: var(--color-bg); -webkit-font-smoothing: antialiased; }
   *:lang(hy), .font-armenian { font-family: "Noto Serif Armenian", serif; }
   textarea, input { unicode-bidi: plaintext; }
   ::-webkit-scrollbar { width: 5px; }
