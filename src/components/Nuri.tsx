@@ -2,9 +2,6 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 
-// ── Նուռ (Nuri) — NUR Lingo's redesigned pomegranate mascot ──────────────────
-// Uses the provided PNG designs for different emotions.
-
 interface NuriProps {
   mood?: NuriMood;
   size?: number;
@@ -24,8 +21,6 @@ export default function Nuri({
   glow = false,
   tear = false,
 }: NuriProps) {
-  
-  // Mapping moods to our PNG assets
   const getPngPath = (m: NuriMood) => {
     switch (m) {
       case "happy":
@@ -44,47 +39,23 @@ export default function Nuri({
     }
   };
 
-  // Define animations based on mood
   const getAnimation = () => {
     if (!animate) return {};
-    
     switch (mood) {
       case "happy":
-        return {
-          y: [0, -15, 0],
-          rotate: [0, 5, -5, 0],
-        };
+        return { y: [0, -15, 0], rotate: [0, 5, -5, 0] };
       case "excited":
-        return {
-          scale: [1, 1.2, 1],
-          y: [0, -20, 0, -20, 0],
-          rotate: [0, 10, -10, 10, -10, 0],
-        };
+        return { scale: [1, 1.2, 1], y: [0, -20, 0, -20, 0], rotate: [0, 10, -10, 10, -10, 0] };
       case "sad":
-        return {
-          x: [0, -2, 2, -2, 2, 0],
-          y: [0, 2, 0],
-          opacity: [1, 0.8, 1],
-        };
+        return { x: [0, -2, 2, -2, 2, 0], y: [0, 2, 0], opacity: [1, 0.8, 1] };
       case "encouraging":
-        return {
-          scale: [1, 1.05, 1],
-          rotate: [0, 2, -2, 0],
-        };
+        return { scale: [1, 1.05, 1], rotate: [0, 2, -2, 0] };
       case "thinking":
-        return {
-          rotate: [0, -5, 5, 0],
-          x: [0, 2, -2, 0],
-        };
+        return { rotate: [0, -5, 5, 0], x: [0, 2, -2, 0] };
       case "celebrating":
-        return {
-          scale: [1, 1.2, 1],
-          rotate: [0, 360],
-        };
+        return { scale: [1, 1.2, 1], rotate: [0, 360] };
       default:
-        return {
-          y: [0, -5, 0],
-        };
+        return { y: [0, -5, 0] };
     }
   };
 
@@ -110,7 +81,6 @@ export default function Nuri({
       transition={getTransition()}
       style={{ width: size, height: size }}
     >
-      {/* Golden Glow Effect */}
       {glow && (
         <motion.div
           animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.7, 0.3] }}
@@ -121,24 +91,30 @@ export default function Nuri({
 
       {(mood === "celebrating" || mood === "excited") && (
         <>
-          <motion.div 
-            className="absolute text-base" 
+          <motion.div
+            className="absolute text-base"
             style={{ top: -12, right: -4 }}
             animate={{ scale: [1, 1.5, 1], opacity: [1, 0.5, 1] }}
             transition={{ duration: 0.8, repeat: Infinity }}
-          >⭐</motion.div>
-          <motion.div 
-            className="absolute text-sm" 
+          >
+            ⭐
+          </motion.div>
+          <motion.div
+            className="absolute text-sm"
             style={{ top: 4, left: -10 }}
             animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 1, repeat: Infinity }}
-          >✨</motion.div>
-          <motion.div 
-            className="absolute text-xs" 
+          >
+            ✨
+          </motion.div>
+          <motion.div
+            className="absolute text-xs"
             style={{ bottom: 8, right: -8 }}
             animate={{ x: [-2, 2, -2], y: [-2, 2, -2] }}
             transition={{ duration: 0.5, repeat: Infinity }}
-          >💫</motion.div>
+          >
+            💫
+          </motion.div>
         </>
       )}
 
@@ -158,18 +134,19 @@ export default function Nuri({
           style={{ top: -10, right: -2 }}
           animate={{ opacity: [0, 1, 0], scale: [0.5, 1, 0.5] }}
           transition={{ duration: 2, repeat: Infinity }}
-        >💭</motion.div>
+        >
+          💭
+        </motion.div>
       )}
 
-      <Image 
-        src={getPngPath(mood)} 
-        alt={`Nuri mascot - ${mood}`} 
-        width={size} 
+      <Image
+        src={getPngPath(mood)}
+        alt={`Nuri mascot - ${mood}`}
+        width={size}
         height={size}
         priority={mood === "happy" || mood === "idle"}
       />
 
-      {/* Sad Tear Effect */}
       {tear && mood === "sad" && (
         <motion.div
           initial={{ y: -20, opacity: 0 }}
@@ -191,31 +168,22 @@ export function getMoodFromScore(score: number, accepted: boolean, streak: numbe
   return "encouraging";
 }
 
-// ── Speech bubble ────────────────────────────────────────────────────────────
-export function NuriSpeech({
-  text,
-  mood = "idle",
-}: {
-  text: string;
-  mood?: NuriMood;
-}) {
+// Speech bubble (fixed positioning)
+export function NuriSpeech({ text, mood = "idle" }: { text: string; mood?: NuriMood }) {
   const colors: Record<NuriMood, string> = {
     celebrating: "border-yellow-400/50 bg-yellow-950/40",
-    happy:       "border-emerald-400/50 bg-emerald-950/40",
-    sad:         "border-red-400/50 bg-red-950/40",
+    happy: "border-emerald-400/50 bg-emerald-950/40",
+    sad: "border-red-400/50 bg-red-950/40",
     encouraging: "border-orange-400/50 bg-orange-950/40",
-    thinking:    "border-blue-400/50 bg-blue-950/40",
-    idle:        "border-white/20 bg-white/5",
-    excited:     "border-pink-400/50 bg-pink-950/40",
-    surprised:   "border-purple-400/50 bg-purple-950/40",
+    thinking: "border-blue-400/50 bg-blue-950/40",
+    idle: "border-white/20 bg-white/5",
+    excited: "border-pink-400/50 bg-pink-950/40",
+    surprised: "border-purple-400/50 bg-purple-950/40",
   };
 
   return (
-    <div className={`rounded-2xl border px-4 py-3 text-sm text-white/90 relative ${colors[mood]}`}>
-      <div
-        className="absolute -top-2 left-8 w-3 h-3 rotate-45 border-l border-t"
-        style={{ background: "inherit", borderColor: "inherit" }}
-      />
+    <div className={`rounded-2xl border px-5 py-3 text-sm text-white/90 relative max-w-[200px] ${colors[mood]}`}>
+      <div className="absolute -top-2 left-5 w-3 h-3 rotate-45 border-l border-t bg-inherit border-inherit" />
       {text}
     </div>
   );

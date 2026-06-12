@@ -13,17 +13,25 @@ export default function BottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 px-6 pb-8 pt-4 bg-black/80 backdrop-blur-xl border-t border-white/10">
-      <div className="max-w-md mx-auto flex justify-around items-center">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-xl border-t border-white/10 py-3">
+      <div className="max-w-md mx-auto flex justify-around items-center px-4">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link key={item.href} href={item.href} className="relative group">
               <div className="flex flex-col items-center gap-1">
-                <span className={`text-2xl transition-transform ${isActive ? 'scale-125' : 'group-hover:scale-110 opacity-50'}`}>
+                <span
+                  className={`text-2xl transition-transform ${
+                    isActive ? "scale-125" : "group-hover:scale-110 opacity-50"
+                  }`}
+                >
                   {item.icon}
                 </span>
-                <span className={`text-[10px] font-black uppercase tracking-widest ${isActive ? 'text-white' : 'text-white/40'}`}>
+                <span
+                  className={`text-[10px] font-black uppercase tracking-widest ${
+                    isActive ? "text-white" : "text-white/40"
+                  }`}
+                >
                   {item.label}
                 </span>
                 {isActive && (

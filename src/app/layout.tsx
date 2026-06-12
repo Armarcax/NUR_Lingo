@@ -27,24 +27,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body
-        className="font-mono antialiased relative"
-        style={{
-          margin: 0,
-          padding: 0,
-        }}
-      >
-        {/* Global background with overlay */}
+      <body className="font-mono antialiased">
+        {/* Fixed background */}
         <div 
-          className="fixed inset-0 z-[-1] pointer-events-none"
+          className="fixed inset-0 -z-10 pointer-events-none"
           style={{
-            background: "url('/images/pomegranate-bg.jpg') no-repeat center center fixed",
+            backgroundImage: "url('/images/pomegranate-bg.jpg')",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
             backgroundSize: "cover",
           }}
         />
-        <div className="fixed inset-0 z-[-1] bg-black/60 pointer-events-none" />
-        <ServiceWorkerRegister />
-        {children}
+        <div className="fixed inset-0 -z-10 bg-black/70 pointer-events-none" />
+        
+        {/* Main container for centering */}
+        <div className="container-main">
+          <ServiceWorkerRegister />
+          {children}
+        </div>
       </body>
     </html>
   );
