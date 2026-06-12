@@ -107,11 +107,19 @@ function langName(inLang: LangCode, target: LangCode): string {
   return names[inLang][target];
 }
 
-// Disabled because 'match_pairs' type not yet supported in MultiExercise
-// function buildMatchPairs(...): MultiExercise | null { return null; }
+// ─── Disabled: match_pairs and listening (temporarily removed to fix type errors)
+// TODO: re-enable after extending MultiExercise type in multilingual.ts
+function buildMatchPairs(
+  lesson: ContentLesson, idx: number, source: LangCode, target: LangCode
+): MultiExercise | null {
+  return null;
+}
 
-// Disabled because 'listening' type not yet supported in MultiExercise
-// function buildListening(...): MultiExercise | null { return null; }
+function buildListening(
+  ph: PhraseItem, idx: number, lesson: ContentLesson, target: LangCode
+): MultiExercise | null {
+  return null;
+}
 
 // ─── Lesson generator ────────────────────────────────────────────────────────
 
@@ -136,8 +144,14 @@ function generateExercises(
     if (ex) out.push(ex);
   }
 
-  // match_pairs and listening are disabled for now to avoid build errors
-  // They can be enabled later by extending MultiExercise type.
+  // 4) Match pairs from vocabulary (disabled)
+  // const mp = buildMatchPairs(lesson, 0, source, target);
+  // if (mp) out.push(mp);
+
+  // 5) Listening on a phrase (disabled)
+  // if (lesson.phrases.length > 0) {
+  //   out.push(buildListening(lesson.phrases[0], 0, lesson, target));
+  // }
 
   return out;
 }
