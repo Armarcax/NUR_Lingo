@@ -3,19 +3,20 @@
  * Supports 6 learning directions between Armenian (HY), English (EN), and Russian (RU).
  */
 
-import { generateCurriculumForPair } from '../content/generator';
-
 export type LangCode = "en" | "hy" | "ru";
 export type LangPair = "en-hy" | "hy-en" | "ru-hy" | "hy-ru" | "en-ru" | "ru-en";
 
 export interface MultiExercise {
   id: string;
-  type: "multiple_choice" | "translate" | "word_order";
+  type: "multiple_choice" | "translate" | "word_order" | "match_pairs" | "listening";
   prompt: Record<LangCode, string>;
   targetAnswer: string;
   acceptableAnswers?: string[];
   options?: string[];
   words?: string[];
+  pairs?: Array<[string, string]>;
+  ttsText?: string;
+  ttsLang?: LangCode;
   hint?: Record<LangCode, string>;
   hayqReward?: number;
 }
@@ -610,7 +611,8 @@ const RU_EN_LESSONS: MultiLesson[] = [
   { id: "ruen_l5", unitId: "u2", title: { ru: "Спорт", hy: "Սպորտ", en: "Sport" }, description: { ru: "Игры", hy: "Խաղեր", en: "Games" }, estimatedMinutes: 5, hayqTotal: 50, exercises: [] }
 ];
 
-// Helper to get lessons for a pair — now merged with generated content
+import { generateCurriculumForPair } from '../content/generator';
+
 export function getLessonsForPair(pair: LangPair): { units: MultiUnit[]; lessons: MultiLesson[] } {
   const map: Record<string, MultiLesson[]> = {
     "hy-en": HY_EN_LESSONS,
