@@ -611,9 +611,13 @@ const RU_EN_LESSONS: MultiLesson[] = [
   { id: "ruen_l5", unitId: "u2", title: { ru: "Спорт", hy: "Սպորտ", en: "Sport" }, description: { ru: "Игры", hy: "Խաղեր", en: "Games" }, estimatedMinutes: 5, hayqTotal: 50, exercises: [] }
 ];
 
-// import { generateCurriculumForPair } from '../content/generator';
+import { generateCurriculumForPair } from '../content/generator';
 
 export function getLessonsForPair(pair: LangPair): { units: MultiUnit[]; lessons: MultiLesson[] } {
+  // 1. Generated lessons from content/database.ts (worlds + dynamic exercises)
+  const generated = generateCurriculumForPair(pair);
+  
+  // 2. Legacy manually written lessons (if any)
   const map: Record<string, MultiLesson[]> = {
     "hy-en": HY_EN_LESSONS,
     "ru-hy": RU_HY_LESSONS,
@@ -622,9 +626,19 @@ export function getLessonsForPair(pair: LangPair): { units: MultiUnit[]; lessons
     "en-ru": EN_RU_LESSONS,
     "ru-en": RU_EN_LESSONS,
   };
-  
-  const lessons = map[pair] || [];
-  const units = MULTI_UNITS.filter(u => lessons.some(l => l.unitId === u.id));
+  const legacyLessons = map[pair] || [];
+
+  // Merge: generated first, then legacy (avoid duplicates by id)
+  const seen = new Set(generated.lessons.map(l => l.id));
+  const lessons = [...generated.lessons, ...legacyLessons.filter(l => !seen.has(l.id))];
+
+  // Units: use generated units (which come from WORLDS) + fallback MULTI_UNITS
+  const unitMap = new Map<string, MultiUnit>();
+  for (const u of [...generated.units, ...MULTI_UNITS]) {
+    if (!unitMap.has(u.id)) unitMap.set(u.id, u);
+  }
+  const units = Array.from(unitMap.values()).filter(u => lessons.some(l => l.unitId === u.id));
+
   return { units, lessons };
 }
 
