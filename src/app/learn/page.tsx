@@ -10,7 +10,7 @@ import { getLessonById, type MultiLesson, type MultiExercise } from "@/lib/i18n/
 import { 
   loadRewards, saveRewards, addRewards, updateStreak, addHAYQ,
   syncHearts, deductHeart, buyHeartRefill, getNextHeartCountdown,
-  saveCrownLevel,
+  saveCrownLevel, earnHeartByPractice,
   type UserRewards
 } from "@/lib/rewards/seeds";
 
@@ -50,7 +50,7 @@ function LearnInner() {
   const [lesson, setLesson] = useState<MultiLesson | null>(null);
   const [native, setNative] = useState<LangCode>("en");
   const [complete, setComplete] = useState(false);
-  const [hearts, setHearts] = useState(3);
+  const [hearts, setHearts] = useState(5);
   const [countdown, setCountdown] = useState<number>(0);
   const [startTime] = useState(() => Date.now());
   const [stats, setStats] = useState({ correct: 0, total: 0 });
@@ -146,7 +146,6 @@ function LearnInner() {
       if (correct) {
         const rewards = loadRewards();
         const updated = addHAYQ(updateStreak(rewards), hayq);
-        // Also handle seeds and persistence
         if (seeds > 0) updated.totalSeeds += seeds;
         saveRewards(updated);
         
@@ -184,11 +183,36 @@ function LearnInner() {
     setSW([]); setAW([]);
   }, [lesson, ex.index, sessionLevel]);
 
+  const handleRefill = useCallback(() => {
+    const result = buyHeartRefill();
+    if (result.success) {
+      setHearts(result.rewards.hearts);
+      setTotal(result.rewards.totalHAYQ);
+    } else {
+      alert(result.error || "Refill failed");
+    }
+  }, []);
+
+  const handlePractice = useCallback(() => {
+    const result = earnHeartByPractice();
+    if (result.success) {
+      setHearts(result.rewards.hearts);
+    } else {
+      alert("You already have full hearts!");
+    }
+  }, []);
+
   if (complete && lesson)
     return <CompletionScreen lesson={lesson} totalHAYQ={sessionHAYQ} totalSeeds={sessionSeeds} hearts={hearts} stats={stats} duration={Date.now() - startTime} native={native} onContinue={() => { router.push("/world"); }} />;
 
   if (hearts <= 0)
-    return <NoHeartsScreen countdown={countdown} totalHAYQ={totalHAYQ} onRefill={() => { buyHeartRefill(); setHearts(3); }} onBack={() => { router.push("/world"); }} />;
+    return <NoHeartsScreen 
+      countdown={countdown} 
+      totalHAYQ={totalHAYQ} 
+      onRefill={handleRefill} 
+      onPractice={handlePractice}
+      onBack={() => { router.push("/world"); }} 
+    />;
 
   if (!lesson || !current) return null;
   const progress = (ex.index / lesson.exercises.length) * 100;
@@ -293,14 +317,18 @@ interface NoHeartsScreenProps {
   countdown: number;
   totalHAYQ: number;
   onRefill: () => void;
+  onPractice: () => void;
   onBack: () => void;
 }
 
-function NoHeartsScreen({ countdown, totalHAYQ, onRefill, onBack }: NoHeartsScreenProps) {
+function NoHeartsScreen({ countdown, totalHAYQ, onRefill, onPractice, onBack }: NoHeartsScreenProps) {
+  const minutesLeft = Math.ceil(countdown / 60000);
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center bg-black text-white">
       <h1 className="text-4xl font-bold mb-4">No Hearts Left</h1>
-      <p className="mb-8">Wait for regeneration or refill for 100 HAYQ (Current: {totalHAYQ} 🪙)</p>
+      <p className="mb-2">Next heart in: {minutesLeft} minute{minutesLeft !== 1 ? 's' : ''}</p>
+      <p className="mb-8">Refill for 100 HAYQ (Current: {totalHAYQ} 🪙)</p>
+      <button onClick={onPractice} className="w-full max-w-xs py-4 bg-green-600 text-white rounded-xl font-bold mb-4">Practice to earn 1 Heart (free)</button>
       <button onClick={onRefill} className="w-full max-w-xs py-4 bg-white text-black rounded-xl font-bold mb-4">Refill (100 HAYQ)</button>
       <button onClick={onBack} className="text-white/60">Go Back</button>
     </div>

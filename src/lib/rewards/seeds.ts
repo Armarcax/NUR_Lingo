@@ -26,7 +26,7 @@ const DEFAULT_REWARDS: UserRewards = {
   streak: 0,
   streakFreeze: 0,
   crowns: {},
-  hearts: 3,
+  hearts: 5,                     // changed from 3 to 5
   lastHeartUpdate: new Date().toISOString(),
   milestones: [],
   dailyGoal: 10,
@@ -45,7 +45,7 @@ export function loadRewards(): UserRewards {
       ...DEFAULT_REWARDS, 
       ...rewards, 
       crowns: rewards.crowns || {},
-      hearts: rewards.hearts ?? 3,
+      hearts: rewards.hearts ?? 5,   // default 5
       lastHeartUpdate: rewards.lastHeartUpdate || new Date().toISOString(),
       milestones: rewards.milestones || [],
       dailyGoal: rewards.dailyGoal || 10,
@@ -140,7 +140,7 @@ export function buyStreakFreeze(): { success: boolean; error?: string; rewards: 
 
 export function buyHeartRefill(): { success: boolean; error?: string; rewards: UserRewards } {
   const current = syncHearts();
-  if (current.hearts >= 3) {
+  if (current.hearts >= 5) {
     return { success: false, error: "Hearts already full", rewards: current };
   }
   if (current.totalHAYQ < 100) {
@@ -150,7 +150,7 @@ export function buyHeartRefill(): { success: boolean; error?: string; rewards: U
   const updated: UserRewards = {
     ...current,
     totalHAYQ: current.totalHAYQ - 100,
-    hearts: 3,
+    hearts: 5,
     lastHeartUpdate: new Date().toISOString(),
   };
   saveRewards(updated);
@@ -164,33 +164,37 @@ export function deductHeart(): UserRewards {
   const updated: UserRewards = {
     ...current,
     hearts: current.hearts - 1,
-    lastHeartUpdate: current.hearts === 3 ? new Date().toISOString() : current.lastHeartUpdate,
+    lastHeartUpdate: current.hearts === 5 ? new Date().toISOString() : current.lastHeartUpdate,
   };
   saveRewards(updated);
   return updated;
 }
 
+// Heart recovery: 5 minutes per heart (Duolingo style)
+const HEART_RECOVERY_MINUTES = 5;
+const HEART_RECOVERY_MS = HEART_RECOVERY_MINUTES * 60 * 1000;
+const MAX_HEARTS = 5;
+
 export function syncHearts(): UserRewards {
   const current = loadRewards();
-  if (current.hearts >= 3) return current;
+  if (current.hearts >= MAX_HEARTS) return current;
   
   const now = new Date();
   const lastUpdate = new Date(current.lastHeartUpdate);
   const diffMs = now.getTime() - lastUpdate.getTime();
-  const fiveHoursInMs = 5 * 60 * 60 * 1000;
   
-  if (diffMs >= fiveHoursInMs) {
-    const heartsToAdd = Math.floor(diffMs / fiveHoursInMs);
-    const newHearts = Math.min(3, current.hearts + heartsToAdd);
+  if (diffMs >= HEART_RECOVERY_MS) {
+    const heartsToAdd = Math.floor(diffMs / HEART_RECOVERY_MS);
+    const newHearts = Math.min(MAX_HEARTS, current.hearts + heartsToAdd);
     
     // Calculate remainder time to preserve partial progress
-    const remainingTime = diffMs % fiveHoursInMs;
+    const remainingTime = diffMs % HEART_RECOVERY_MS;
     const newUpdateDate = new Date(now.getTime() - remainingTime);
 
     const updated: UserRewards = {
       ...current,
       hearts: newHearts,
-      lastHeartUpdate: newHearts === 3 ? now.toISOString() : newUpdateDate.toISOString(),
+      lastHeartUpdate: newHearts === MAX_HEARTS ? now.toISOString() : newUpdateDate.toISOString(),
     };
     saveRewards(updated);
     return updated;
@@ -200,10 +204,24 @@ export function syncHearts(): UserRewards {
 }
 
 export function getNextHeartCountdown(current: UserRewards): number {
-  if (current.hearts >= 3) return 0;
+  if (current.hearts >= MAX_HEARTS) return 0;
   const lastUpdate = new Date(current.lastHeartUpdate);
-  const nextHeartTime = lastUpdate.getTime() + (5 * 60 * 60 * 1000);
+  const nextHeartTime = lastUpdate.getTime() + HEART_RECOVERY_MS;
   return Math.max(0, nextHeartTime - new Date().getTime());
+}
+
+export function earnHeartByPractice(): { success: boolean; rewards: UserRewards } {
+  const current = syncHearts();
+  if (current.hearts >= MAX_HEARTS) {
+    return { success: false, rewards: current };
+  }
+  const updated: UserRewards = {
+    ...current,
+    hearts: current.hearts + 1,
+    lastHeartUpdate: new Date().toISOString(),
+  };
+  saveRewards(updated);
+  return { success: true, rewards: updated };
 }
 
 export function checkStreakMilestones(): { milestone: number | null; rewards: UserRewards } {
@@ -215,7 +233,7 @@ export function checkStreakMilestones(): { milestone: number | null; rewards: Us
     const updated: UserRewards = {
       ...current,
       totalSeeds: current.totalSeeds + 1,
-      totalHAYQ: current.totalHAYQ + (newMilestone * 2), // Bonus HAYQ
+      totalHAYQ: current.totalHAYQ + (newMilestone * 2),
       milestones: [...current.milestones, newMilestone],
     };
     saveRewards(updated);
@@ -233,7 +251,7 @@ export function checkDailyGoalBonus(): { achieved: boolean; rewards: UserRewards
   if (minutes >= current.dailyGoal && !current.goalClaimed.includes(today)) {
     const updated: UserRewards = {
       ...current,
-      totalHAYQ: current.totalHAYQ + 20, // 20 HAYQ bonus for goal
+      totalHAYQ: current.totalHAYQ + 20,
       goalClaimed: [...current.goalClaimed, today],
     };
     saveRewards(updated);
@@ -275,18 +293,15 @@ export function checkAndApplyFreeze(): UserRewards {
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   
   if (diffDays > 1) {
-    // More than 1 day missed
     if (current.streakFreeze > 0) {
-      // Use freeze
       const updated: UserRewards = {
         ...current,
         streakFreeze: current.streakFreeze - 1,
-        lastActivityDate: new Date(today.getTime() - 86400000).toISOString().split("T")[0], // Set to "yesterday"
+        lastActivityDate: new Date(today.getTime() - 86400000).toISOString().split("T")[0],
       };
       saveRewards(updated);
       return updated;
     } else {
-      // Streak lost
       const updated: UserRewards = {
         ...current,
         streak: 0,
