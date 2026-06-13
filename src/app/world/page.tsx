@@ -85,48 +85,71 @@ export default function WorldPage() {
     setAllLessons(data.lessons);
   }, []);
 
-  // Generate a smooth sinusoidal path
+  // Generate path that aligns with actual lesson positions
   const pathD = useMemo(() => {
-    const lessonCount = allLessons.length;
-    if (lessonCount === 0) return "M 400 200";
+    if (!units.length || !allLessons.length) return "M 400 200";
     
-    const startX = 400;
-    const startY = 100;
-    const amplitude = 120;          // wave width
-    const verticalStep = 70;        // distance between consecutive nodes
-    const totalHeight = (lessonCount - 1) * verticalStep + 150;
+    // Constants matching the Tailwind classes
+    const BUTTON_SIZE = 96; // w-24 h-24 = 6rem = 96px
+    const GAP_BETWEEN_LESSONS = 48; // gap-12 = 3rem = 48px
+    const LESSON_SPACING = BUTTON_SIZE + GAP_BETWEEN_LESSONS; // 144px center-to-center
+    const UNIT_HEADER_HEIGHT = 120; // approximate: title block + progress bar etc.
+    const SPACE_BETWEEN_UNITS = 64; // space-y-16 = 4rem = 64px
     
-    let d = `M ${startX} ${startY}`;
-    let currentX = startX;
-    let currentY = startY;
+    let currentY = 280; // starting Y after the top title and Nuri (approx)
+    const points: { x: number; y: number }[] = [];
     
-    for (let i = 1; i <= lessonCount; i++) {
-      // target Y increases gradually
-      const targetY = startY + i * verticalStep;
-      // compute X using sine wave: oscillate around center 400
-      const t = i / Math.max(1, lessonCount - 1); // 0..1
-      const angle = t * Math.PI * 2; // one full cycle
-      const targetX = 400 + amplitude * Math.sin(angle);
+    // We need to generate points for each lesson in order
+    // Since we don't have the actual DOM, we simulate the layout
+    for (let unitIdx = 0; unitIdx < units.length; unitIdx++) {
+      const unit = units[unitIdx];
+      const lessonsInUnit = allLessons.filter(l => l.unitId === unit.id);
+      if (lessonsInUnit.length === 0) continue;
       
-      // Use cubic bezier for smooth transition
-      const cp1x = currentX + (targetX - currentX) * 0.3;
-      const cp1y = currentY + verticalStep * 0.3;
-      const cp2x = targetX - (targetX - currentX) * 0.3;
-      const cp2y = targetY - verticalStep * 0.3;
-      d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${targetX} ${targetY}`;
+      // Add unit header Y (the title block)
+      currentY += UNIT_HEADER_HEIGHT;
       
-      currentX = targetX;
-      currentY = targetY;
+      // For each lesson in this unit
+      for (let i = 0; i < lessonsInUnit.length; i++) {
+        // X offset: alternate left/right based on global lesson index
+        const globalIndex = points.length;
+        const xOffset = (globalIndex % 2 === 0) ? 60 : -60;
+        const x = 400 + xOffset;
+        points.push({ x, y: currentY });
+        // Move to next lesson Y
+        currentY += LESSON_SPACING;
+      }
+      // After unit, add space to next unit
+      currentY += SPACE_BETWEEN_UNITS;
+    }
+    
+    if (points.length === 0) return "M 400 200";
+    
+    // Build SVG path using smooth cubic beziers
+    let d = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 1; i < points.length; i++) {
+      const prev = points[i-1];
+      const curr = points[i];
+      // Control points for smooth curve
+      const cp1x = prev.x + (curr.x - prev.x) * 0.3;
+      const cp1y = prev.y + LESSON_SPACING * 0.3;
+      const cp2x = curr.x - (curr.x - prev.x) * 0.3;
+      const cp2y = curr.y - LESSON_SPACING * 0.3;
+      d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${curr.x} ${curr.y}`;
     }
     return d;
-  }, [allLessons.length]);
+  }, [units, allLessons]);
 
   const viewBoxHeight = useMemo(() => {
-    const lessonCount = allLessons.length;
-    const minHeight = 500;
-    const dynamicHeight = 100 + (lessonCount - 1) * 70 + 200;
-    return Math.max(minHeight, dynamicHeight);
-  }, [allLessons.length]);
+    if (!units.length || !allLessons.length) return 600;
+    // Rough estimate: last point Y + 200
+    const lastY = 280 + 
+      units.reduce((sum, unit) => {
+        const lessonCount = allLessons.filter(l => l.unitId === unit.id).length;
+        return sum + 120 + (lessonCount * 144) + 64;
+      }, 0);
+    return Math.max(600, lastY + 200);
+  }, [units, allLessons]);
 
   if (!rewards) return null;
 
