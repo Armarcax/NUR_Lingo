@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
@@ -84,6 +84,35 @@ export default function WorldPage() {
     setUnits(data.units);
     setAllLessons(data.lessons);
   }, []);
+
+  // Dynamic SVG path based on number of lessons
+  const pathD = useMemo(() => {
+    const lessonCount = allLessons.length;
+    if (lessonCount === 0) return "M 400 0 Q 450 200 400 400";
+    
+    // Each lesson occupies roughly 60px vertically
+    const stepY = 60;
+    const maxY = 400 + (lessonCount - 1) * stepY;
+    
+    let path = "M 400 0 Q 450 200 400 400";
+    let currentY = 400;
+    for (let i = 1; i < lessonCount; i++) {
+      const nextY = currentY + stepY;
+      // Alternate x offset to create a winding snake
+      const xOffset = (i % 2 === 0) ? 450 : 350;
+      path += ` T ${xOffset} ${nextY}`;
+      currentY = nextY;
+    }
+    return path;
+  }, [allLessons.length]);
+
+  // Dynamic viewBox height to ensure the entire path is visible
+  const viewBoxHeight = useMemo(() => {
+    const lessonCount = allLessons.length;
+    const minHeight = 600;
+    const dynamicHeight = 400 + (lessonCount - 1) * 60 + 200;
+    return Math.max(minHeight, dynamicHeight);
+  }, [allLessons.length]);
 
   if (!rewards) return null;
 
@@ -202,7 +231,12 @@ export default function WorldPage() {
         <div className="max-w-4xl mx-auto px-8 pb-32 relative flex-1 w-full">
           <div className="flex flex-col items-center gap-20 mt-20 relative">
             
-            <svg className="absolute inset-0 w-full h-full pointer-events-none -z-10 overflow-visible">
+            {/* Dynamic SVG path */}
+            <svg 
+              className="absolute inset-0 w-full h-full pointer-events-none -z-10 overflow-visible"
+              viewBox={`0 0 800 ${viewBoxHeight}`}
+              preserveAspectRatio="none"
+            >
               <defs>
                 <linearGradient id="pathGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                   <stop offset="0%" stopColor="#D90012" stopOpacity="0.2" />
@@ -210,7 +244,7 @@ export default function WorldPage() {
                 </linearGradient>
               </defs>
               <motion.path
-                d="M 400 0 Q 450 200 400 400 T 400 800 T 400 1200 T 400 1600"
+                d={pathD}
                 fill="none"
                 stroke="url(#pathGradient)"
                 strokeWidth="8"
