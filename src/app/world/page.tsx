@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
@@ -85,72 +85,6 @@ export default function WorldPage() {
     setAllLessons(data.lessons);
   }, []);
 
-  // Generate path that aligns with actual lesson positions
-  const pathD = useMemo(() => {
-    if (!units.length || !allLessons.length) return "M 400 200";
-    
-    // Constants matching the Tailwind classes
-    const BUTTON_SIZE = 96; // w-24 h-24 = 6rem = 96px
-    const GAP_BETWEEN_LESSONS = 48; // gap-12 = 3rem = 48px
-    const LESSON_SPACING = BUTTON_SIZE + GAP_BETWEEN_LESSONS; // 144px center-to-center
-    const UNIT_HEADER_HEIGHT = 120; // approximate: title block + progress bar etc.
-    const SPACE_BETWEEN_UNITS = 64; // space-y-16 = 4rem = 64px
-    
-    let currentY = 280; // starting Y after the top title and Nuri (approx)
-    const points: { x: number; y: number }[] = [];
-    
-    // We need to generate points for each lesson in order
-    // Since we don't have the actual DOM, we simulate the layout
-    for (let unitIdx = 0; unitIdx < units.length; unitIdx++) {
-      const unit = units[unitIdx];
-      const lessonsInUnit = allLessons.filter(l => l.unitId === unit.id);
-      if (lessonsInUnit.length === 0) continue;
-      
-      // Add unit header Y (the title block)
-      currentY += UNIT_HEADER_HEIGHT;
-      
-      // For each lesson in this unit
-      for (let i = 0; i < lessonsInUnit.length; i++) {
-        // X offset: alternate left/right based on global lesson index
-        const globalIndex = points.length;
-        const xOffset = (globalIndex % 2 === 0) ? 60 : -60;
-        const x = 400 + xOffset;
-        points.push({ x, y: currentY });
-        // Move to next lesson Y
-        currentY += LESSON_SPACING;
-      }
-      // After unit, add space to next unit
-      currentY += SPACE_BETWEEN_UNITS;
-    }
-    
-    if (points.length === 0) return "M 400 200";
-    
-    // Build SVG path using smooth cubic beziers
-    let d = `M ${points[0].x} ${points[0].y}`;
-    for (let i = 1; i < points.length; i++) {
-      const prev = points[i-1];
-      const curr = points[i];
-      // Control points for smooth curve
-      const cp1x = prev.x + (curr.x - prev.x) * 0.3;
-      const cp1y = prev.y + LESSON_SPACING * 0.3;
-      const cp2x = curr.x - (curr.x - prev.x) * 0.3;
-      const cp2y = curr.y - LESSON_SPACING * 0.3;
-      d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${curr.x} ${curr.y}`;
-    }
-    return d;
-  }, [units, allLessons]);
-
-  const viewBoxHeight = useMemo(() => {
-    if (!units.length || !allLessons.length) return 600;
-    // Rough estimate: last point Y + 200
-    const lastY = 280 + 
-      units.reduce((sum, unit) => {
-        const lessonCount = allLessons.filter(l => l.unitId === unit.id).length;
-        return sum + 120 + (lessonCount * 144) + 64;
-      }, 0);
-    return Math.max(600, lastY + 200);
-  }, [units, allLessons]);
-
   if (!rewards) return null;
 
   const level = hayqToLevel(rewards.totalHAYQ);
@@ -168,9 +102,11 @@ export default function WorldPage() {
 
   return (
     <div className="min-h-screen relative text-white overflow-hidden bg-[#1a0a0a]">
+      {/* Pomegranate Texture Background */}
       <div className="absolute inset-0 opacity-10 pointer-events-none" 
         style={{ backgroundImage: "radial-gradient(circle at 2px 2px, #D90012 1px, transparent 0)", backgroundSize: "40px 40px" }} />
       
+      {/* Floating Seeds */}
       {bgSeeds.map(s => (
         <motion.div
           key={s.id}
@@ -190,13 +126,14 @@ export default function WorldPage() {
         />
       ))}
 
-      <div className="relative z-10 flex flex-col min-h-screen w-full overflow-x-hidden">
-        <nav className="flex items-center justify-between px-8 py-5 border-b border-white/10 bg-black/40 backdrop-blur-xl sticky top-0 z-30 flex-wrap gap-2">
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <nav className="flex items-center justify-between px-8 py-5 border-b border-white/10 bg-black/40 backdrop-blur-xl sticky top-0 z-30">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D90012] to-[#FFA500] flex items-center justify-center font-black text-xl shadow-lg border border-white/20">Ն</div>
             <span className="font-black tracking-tighter text-xl uppercase italic bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">NUR Lingo</span>
           </div>
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-3">
+              {/* Level Info */}
               <div className="hidden md:flex flex-col items-end mr-2">
                 <p className="text-[10px] font-black text-white/30 uppercase tracking-widest leading-none mb-1">Rank</p>
                 <p className="text-sm font-black" style={{ color: level.color }}>{level.title[native] ?? level.titleArmenian}</p>
@@ -218,6 +155,7 @@ export default function WorldPage() {
                 <span className="text-xl">❤️</span> {rewards.hearts}
               </div>
               
+              {/* Daily Goal Indicator */}
               <div className="bg-white/5 border border-white/10 px-4 py-2 rounded-2xl shadow-lg flex flex-col items-center">
                 <div className="flex items-center gap-1">
                   <span className="text-xl">🎯</span>
@@ -261,14 +199,10 @@ export default function WorldPage() {
           <p className="text-white/40 font-bold uppercase tracking-[0.3em] text-sm mb-8">Organic learning path — Armenian Soul</p>
         </div>
 
-        <div className="max-w-4xl mx-auto px-8 pb-32 relative flex-1 w-full">
+        <div className="max-w-4xl mx-auto px-8 pb-32 relative flex-1">
           <div className="flex flex-col items-center gap-20 mt-20 relative">
             
-            <svg 
-              className="absolute inset-0 w-full h-full pointer-events-none -z-10 overflow-visible"
-              viewBox={`0 0 800 ${viewBoxHeight}`}
-              preserveAspectRatio="none"
-            >
+            <svg className="absolute inset-0 w-full h-full pointer-events-none -z-10 overflow-visible">
               <defs>
                 <linearGradient id="pathGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                   <stop offset="0%" stopColor="#D90012" stopOpacity="0.2" />
@@ -276,7 +210,7 @@ export default function WorldPage() {
                 </linearGradient>
               </defs>
               <motion.path
-                d={pathD}
+                d="M 400 0 Q 450 200 400 400 T 400 800 T 400 1200 T 400 1600"
                 fill="none"
                 stroke="url(#pathGradient)"
                 strokeWidth="8"
@@ -315,6 +249,7 @@ export default function WorldPage() {
 
                     {progressPercent === 100 && <Confetti color={unit.colorFrom} />}
 
+                    {/* Unit Progress Bar */}
                     <div className="w-48 space-y-2 relative z-10">
                       <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-white/40">
                         <span>Առաջընթաց</span>
