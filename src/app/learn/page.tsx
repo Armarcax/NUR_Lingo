@@ -13,6 +13,7 @@ import {
   saveCrownLevel, earnHeartByPractice,
   type UserRewards
 } from "@/lib/rewards/seeds";
+import { updateQuestProgress } from "@/lib/rewards/quests";
 
 type AnswerState = "idle" | "submitting" | "correct" | "incorrect";
 
@@ -153,6 +154,9 @@ function LearnInner() {
         setStreak(updated.streak);
         setSessionHAYQ(s => s + hayq);
         setSessionSeeds(s => s + seeds);
+        
+        // Update quest progress for earning HAYQ
+        updateQuestProgress("earn_hayq", hayq);
       }
 
       setEx(s => ({
@@ -176,6 +180,8 @@ function LearnInner() {
     if (nextIdx >= lesson.exercises.length) { 
       addRewards(40, 0, lesson.estimatedMinutes);
       saveCrownLevel(lesson.id, sessionLevel);
+      // Update quest progress for completing a lesson
+      updateQuestProgress("complete_lessons", 1);
       setComplete(true); 
       return; 
     }

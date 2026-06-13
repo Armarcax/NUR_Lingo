@@ -1,13 +1,14 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
 import { 
   loadRewards, syncHearts, checkAndApplyFreeze, 
-  checkStreakMilestones, checkDailyGoalBonus,
+  checkStreakMilestones, checkDailyGoalBonus, addRewards,
   type UserRewards 
 } from "@/lib/rewards/seeds";
+import { loadQuests, claimReward, type Quest } from "@/lib/rewards/quests";
 import { getLessonsForPair, LangPair, MultiLesson, MULTI_UNITS } from "@/lib/i18n/multilingual";
 import { hayqToLevel } from "@/lib/lessons/engine";
 import Nuri, { NuriSpeech, type NuriMood } from "@/components/Nuri";
@@ -60,6 +61,12 @@ export default function WorldPage() {
   const [goalAchieved, setGoalAchieved] = useState(false);
   const [native, setNative] = useState<LangCode>("en");
   const [pair, setPair] = useState<LangPair>("en-hy");
+  const [quests, setQuests] = useState<Quest[]>([]);
+
+  // Load quests on mount
+  useEffect(() => {
+    setQuests(loadQuests());
+  }, []);
 
   useEffect(() => {
     const config = loadLangConfig();
@@ -85,6 +92,79 @@ export default function WorldPage() {
     setAllLessons(data.lessons);
   }, []);
 
+  // Update quest UI when rewards change (for earned HAYQ)
+  useEffect(() => {
+    if (rewards) {
+      setQuests(loadQuests());
+    }
+  }, [rewards?.totalHAYQ, rewards?.totalSeeds]);
+
+  // Dynamically compute the snake path based on actual lesson positions
+  const pathD = useMemo(() => {
+    if (!units.length || !allLessons.length) return "M 400 200";
+
+    // Layout constants (must match actual CSS classes)
+    const BUTTON_SIZE = 96;        // w-24 h-24 = 96px
+    const GAP_BETWEEN_LESSONS = 48; // gap-12 = 48px
+    const LESSON_SPACING = BUTTON_SIZE + GAP_BETWEEN_LESSONS; // 144px center-to-center
+    const UNIT_HEADER_HEIGHT = 120; // approximate height of unit title + progress bar
+    const SPACE_BETWEEN_UNITS = 64;  // space-y-16 = 64px
+    const START_Y = 280;             // Y after hero section (Nuri + title)
+
+    let currentY = START_Y;
+    const points: { x: number; y: number }[] = [];
+
+    for (const unit of units) {
+      const lessonsInUnit = allLessons.filter(l => l.unitId === unit.id);
+      if (lessonsInUnit.length === 0) continue;
+
+      // Add unit header offset
+      currentY += UNIT_HEADER_HEIGHT;
+
+      for (let i = 0; i < lessonsInUnit.length; i++) {
+        const globalIndex = points.length;
+        // Alternate X offset: left/right from center 400
+        const xOffset = (globalIndex % 2 === 0) ? 60 : -60;
+        const x = 400 + xOffset;
+        points.push({ x, y: currentY });
+        currentY += LESSON_SPACING;
+      }
+      // Add gap after unit
+      currentY += SPACE_BETWEEN_UNITS;
+    }
+
+    if (points.length === 0) return "M 400 200";
+
+    // Build smooth cubic bezier path
+    let d = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 1; i < points.length; i++) {
+      const prev = points[i - 1];
+      const curr = points[i];
+      // Control points for gentle curve
+      const cp1x = prev.x + (curr.x - prev.x) * 0.3;
+      const cp1y = prev.y + LESSON_SPACING * 0.3;
+      const cp2x = curr.x - (curr.x - prev.x) * 0.3;
+      const cp2y = curr.y - LESSON_SPACING * 0.3;
+      d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${curr.x} ${curr.y}`;
+    }
+    return d;
+  }, [units, allLessons]);
+
+  // Dynamic viewBox height to make the whole path visible
+  const viewBoxHeight = useMemo(() => {
+    if (!units.length || !allLessons.length) return 600;
+    // Estimate last Y position
+    let lastY = 280;
+    for (const unit of units) {
+      const lessonsInUnit = allLessons.filter(l => l.unitId === unit.id);
+      if (lessonsInUnit.length === 0) continue;
+      lastY += 120; // unit header
+      lastY += lessonsInUnit.length * 144; // lessons + gaps
+      lastY += 64; // inter‑unit space
+    }
+    return Math.max(600, lastY + 200);
+  }, [units, allLessons]);
+
   if (!rewards) return null;
 
   const level = hayqToLevel(rewards.totalHAYQ);
@@ -98,6 +178,20 @@ export default function WorldPage() {
 
   const startLesson = (l: MultiLesson) => {
     router.push(`/learn?lesson=${l.id}&pair=${pair}`);
+  };
+
+  const handleClaimQuest = (questId: string) => {
+    const reward = claimReward(questId);
+    if (reward) {
+      addRewards(reward.hayq, reward.seeds || 0);
+      setQuests(loadQuests());
+      // Also refresh rewards to update UI
+      setRewards(prev => prev ? {
+        ...prev,
+        totalHAYQ: prev.totalHAYQ + reward.hayq,
+        totalSeeds: prev.totalSeeds + (reward.seeds || 0),
+      } : null);
+    }
   };
 
   return (
@@ -165,6 +259,40 @@ export default function WorldPage() {
           </div>
         </nav>
 
+        {/* Daily Quests Panel */}
+        <div className="max-w-4xl mx-auto px-8 mt-4">
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-sm">
+            <h3 className="text-sm font-black uppercase tracking-widest text-[#FFA500] mb-3">Daily Quests</h3>
+            <div className="space-y-3">
+              {quests.map((q) => (
+                <div key={q.id} className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <div className="flex justify-between text-xs">
+                      <span>{q.description[native]}</span>
+                      <span>{q.progress}/{q.target}</span>
+                    </div>
+                    <div className="h-1.5 bg-white/10 rounded-full mt-1 overflow-hidden">
+                      <div className="h-full bg-[#FFA500] rounded-full transition-all duration-300" style={{ width: `${(q.progress / q.target) * 100}%` }} />
+                    </div>
+                  </div>
+                  {q.completed && !q.claimed ? (
+                    <button
+                      onClick={() => handleClaimQuest(q.id)}
+                      className="px-3 py-1 text-xs font-bold bg-white text-black rounded-full hover:scale-105 transition-transform"
+                    >
+                      Claim
+                    </button>
+                  ) : q.claimed ? (
+                    <span className="px-3 py-1 text-xs font-bold text-white/40">✓</span>
+                  ) : (
+                    <span className="px-3 py-1 text-xs font-bold text-white/40">⚡</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
         <div className="px-8 pt-16 pb-8 max-w-4xl mx-auto text-center relative flex flex-col items-center">
           <div className="mb-8 flex flex-col items-center gap-4">
             <Nuri 
@@ -202,7 +330,12 @@ export default function WorldPage() {
         <div className="max-w-4xl mx-auto px-8 pb-32 relative flex-1">
           <div className="flex flex-col items-center gap-20 mt-20 relative">
             
-            <svg className="absolute inset-0 w-full h-full pointer-events-none -z-10 overflow-visible">
+            {/* Dynamic snake path */}
+            <svg 
+              className="absolute inset-0 w-full h-full pointer-events-none -z-10 overflow-visible"
+              viewBox={`0 0 800 ${viewBoxHeight}`}
+              preserveAspectRatio="none"
+            >
               <defs>
                 <linearGradient id="pathGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                   <stop offset="0%" stopColor="#D90012" stopOpacity="0.2" />
@@ -210,7 +343,7 @@ export default function WorldPage() {
                 </linearGradient>
               </defs>
               <motion.path
-                d="M 400 0 Q 450 200 400 400 T 400 800 T 400 1200 T 400 1600"
+                d={pathD}
                 fill="none"
                 stroke="url(#pathGradient)"
                 strokeWidth="8"

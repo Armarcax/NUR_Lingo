@@ -26,7 +26,7 @@ const DEFAULT_REWARDS: UserRewards = {
   streak: 0,
   streakFreeze: 0,
   crowns: {},
-  hearts: 5,                     // changed from 3 to 5
+  hearts: 5,
   lastHeartUpdate: new Date().toISOString(),
   milestones: [],
   dailyGoal: 10,
@@ -45,7 +45,7 @@ export function loadRewards(): UserRewards {
       ...DEFAULT_REWARDS, 
       ...rewards, 
       crowns: rewards.crowns || {},
-      hearts: rewards.hearts ?? 5,   // default 5
+      hearts: rewards.hearts ?? 5,
       lastHeartUpdate: rewards.lastHeartUpdate || new Date().toISOString(),
       milestones: rewards.milestones || [],
       dailyGoal: rewards.dailyGoal || 10,
@@ -77,10 +77,20 @@ export function updateStreak(rewards: UserRewards): UserRewards {
   const yesterdayStr = yesterday.toISOString().split("T")[0];
 
   let nextStreak = rewards.streak;
+  let streakIncreased = false;
   if (rewards.lastActivityDate === yesterdayStr) {
     nextStreak += 1;
+    streakIncreased = true;
   } else {
     nextStreak = 1;
+    streakIncreased = true; // first day of streak also counts as increase
+  }
+
+  // Update quest progress if streak increased (client-side only)
+  if (streakIncreased && typeof window !== "undefined") {
+    import("./quests").then(({ updateQuestProgress }) => {
+      updateQuestProgress("streak_maintain", 1);
+    }).catch(err => console.warn("Quest module not loaded yet", err));
   }
 
   return { ...rewards, streak: nextStreak, lastActivityDate: today };
@@ -95,7 +105,7 @@ export function addHAYQ(rewards: UserRewards, amount: number): UserRewards {
     totalHAYQ: rewards.totalHAYQ + amount,
     dailyActivity: {
       ...rewards.dailyActivity,
-      [today]: currentActivity + 1 // Increment active minutes loosely
+      [today]: currentActivity + 1
     }
   };
 }
@@ -170,7 +180,6 @@ export function deductHeart(): UserRewards {
   return updated;
 }
 
-// Heart recovery: 5 minutes per heart (Duolingo style)
 const HEART_RECOVERY_MINUTES = 5;
 const HEART_RECOVERY_MS = HEART_RECOVERY_MINUTES * 60 * 1000;
 const MAX_HEARTS = 5;
@@ -187,7 +196,6 @@ export function syncHearts(): UserRewards {
     const heartsToAdd = Math.floor(diffMs / HEART_RECOVERY_MS);
     const newHearts = Math.min(MAX_HEARTS, current.hearts + heartsToAdd);
     
-    // Calculate remainder time to preserve partial progress
     const remainingTime = diffMs % HEART_RECOVERY_MS;
     const newUpdateDate = new Date(now.getTime() - remainingTime);
 
