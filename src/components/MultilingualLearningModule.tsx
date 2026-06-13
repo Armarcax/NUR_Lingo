@@ -126,7 +126,7 @@ function UnitsGrid({ units, pair, onSelectUnit }: any) {
         Սովորիր {fromLang === "hy" ? "անգլերեն" : fromLang === "ru" ? "անգլերեն" : "հայերեն"} – ընտրիր թեմա
       </p>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {units.map((unit: MultiUnit) => (   // <--- ԱՅՍՏԵՂ ԱՎԵԼԱՑՎԱԾ Է MultiUnit ՏԻՊԸ
+        {units.map((unit: MultiUnit) => (
           <button
             key={unit.id}
             onClick={() => onSelectUnit(unit)}
@@ -276,7 +276,7 @@ function ExercisePlayer({ pair, lesson, exercise, currentIndex, totalExercises, 
         return (
           <div>
             <div className="flex flex-wrap gap-2 mb-4">
-              {orderedWords.map((word, idx) => (
+              {orderedWords.map((word: string, idx: number) => (
                 <button
                   key={idx}
                   onClick={() => moveWord(idx, idx > 0 ? idx - 1 : orderedWords.length - 1)}
@@ -291,22 +291,22 @@ function ExercisePlayer({ pair, lesson, exercise, currentIndex, totalExercises, 
         );
       case "match_pairs":
         if (!exercise.pairs) return null;
-        const leftItems = exercise.pairs.map(([l]: [string, string]) => l);
-        const rightItems = exercise.pairs.map(([, r]: [string, string]) => r);
+        const leftItems: string[] = exercise.pairs.map(([l]: [string, string]) => l);
+        const rightItems: string[] = exercise.pairs.map(([, r]: [string, string]) => r);
         const shuffledRight = useMemo(() => shuffleArray([...rightItems]), [rightItems]);
         return (
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              {leftItems.map(left => (
+              {leftItems.map((left: string) => (
                 <div key={left} className="match-pair-left">{left}</div>
               ))}
             </div>
             <div className="space-y-2">
-              {shuffledRight.map(right => (
+              {shuffledRight.map((right: string) => (
                 <button
                   key={right}
                   onClick={() => {
-                    const unmatchedLeft = leftItems.find(l => !matchedPairs[l]);
+                    const unmatchedLeft = leftItems.find((l: string) => !matchedPairs[l]);
                     if (unmatchedLeft) setMatchedPairs(prev => ({ ...prev, [unmatchedLeft]: right }));
                   }}
                   className="match-pair-right"
