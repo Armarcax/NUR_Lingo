@@ -8,7 +8,7 @@ import {
   type MultiUnit,
   type MultiLesson,
   type MultiExercise,
-} from "@/lib/i18n/multilingual"; // ճիշտ ուղին դրեք
+} from "@/lib/i18n/multilingual";
 
 // ----------------------------------------------------------------------
 // Օժանդակ ֆունկցիաներ
@@ -126,7 +126,7 @@ function UnitsGrid({ units, pair, onSelectUnit }: any) {
         Սովորիր {fromLang === "hy" ? "անգլերեն" : fromLang === "ru" ? "անգլերեն" : "հայերեն"} – ընտրիր թեմա
       </p>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {units.map(unit => (
+        {units.map((unit: MultiUnit) => (   // <--- ԱՅՍՏԵՂ ԱՎԵԼԱՑՎԱԾ Է MultiUnit ՏԻՊԸ
           <button
             key={unit.id}
             onClick={() => onSelectUnit(unit)}
