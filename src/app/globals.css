@@ -129,3 +129,55 @@
 .sparkle-3 { 
   animation: sparkle 2.5s ease-in-out infinite 1.6s; 
 }
+
+/* globals.css – ավելացնել ֆայլի վերջում */
+
+/* 3D flip card-ների համար */
+.perspective {
+  perspective: 1000px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* Լրացուցիչ ուղղումներ ուսուցողական մոդուլի համար */
+.btn-secondary {
+  @apply px-4 py-2 rounded-lg font-medium transition-all;
+  background: rgba(255,255,255,0.1);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+.btn-secondary:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+.exercise-card {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+
+.word-chip {
+  @apply inline-block px-3 py-2 m-1 bg-gray-800 rounded-lg cursor-pointer select-none;
+  transition: all 0.1s ease;
+}
+.word-chip:active {
+  transform: scale(0.97);
+}
+
+.match-pair-left {
+  @apply p-3 bg-gray-800 rounded-lg text-center;
+}
+.match-pair-right {
+  @apply p-3 bg-gray-700 rounded-lg text-center cursor-pointer hover:bg-gray-600 transition;
+}

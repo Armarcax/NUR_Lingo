@@ -1,17 +1,14 @@
 "use client";
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
+import { motion } from "framer-motion";
 import Nuri, { NuriSpeech, getMoodFromScore, type NuriMood } from "@/components/Nuri";
-import BottomNav from "@/components/BottomNav";
-import { loadLangConfig, UI_STRINGS, type LangCode, type LangPair } from "@/lib/i18n/index";
-import { getLessonById, type MultiLesson, type MultiExercise } from "@/lib/i18n/multilingual";
+import { loadLangConfig, type LangCode, type LangPair } from "@/lib/i18n/index";
+import { getLessonById, type MultiLesson } from "@/lib/i18n/multilingual";
 import { 
   loadRewards, saveRewards, addRewards, updateStreak, addHAYQ,
   syncHearts, deductHeart, buyHeartRefill, getNextHeartCountdown,
   saveCrownLevel, earnHeartByPractice,
-  type UserRewards
 } from "@/lib/rewards/seeds";
 import { updateQuestProgress } from "@/lib/rewards/quests";
 
@@ -20,6 +17,7 @@ type AnswerState = "idle" | "submitting" | "correct" | "incorrect";
 interface ExState {
   index: number;
   userAnswer: string;
+  matchPairsAnswer: Record<string, string>;
   state: AnswerState;
   feedback: string;
   score: number;
@@ -42,6 +40,14 @@ function randomLine(key: string) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+function shuffleArray<T>(arr: T[]): T[] {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 function LearnInner() {
   const router = useRouter();
   const params = useSearchParams();
@@ -60,16 +66,43 @@ function LearnInner() {
   const [sessionSeeds, setSessionSeeds] = useState(0);
   const [streak, setStreak] = useState(0);
   const [sessionLevel, setSLevel] = useState(1);
+  
+  // word_order state
   const [selectedWords, setSW] = useState<string[]>([]);
   const [availWords, setAW] = useState<string[]>([]);
+  
+  // match_pairs state
+  const [matchPairsMap, setMatchPairsMap] = useState<Record<string, string>>({});
+  const [matchRightItems, setMatchRightItems] = useState<string[]>([]);
+  const [matchLeftItems, setMatchLeftItems] = useState<string[]>([]);
 
   const [ex, setEx] = useState<ExState>({
-    index: 0, userAnswer: "", state: "idle",
+    index: 0, userAnswer: "", matchPairsAnswer: {}, state: "idle",
     feedback: "", score: 0, hayqEarned: 0,
     nuriMood: "idle", nuriSpeech: randomLine("idle"),
   });
 
   const current = lesson?.exercises[ex.index];
+
+  // Reset states when exercise changes
+  useEffect(() => {
+    if (!current) return;
+    if (current.type === "word_order" && current.words) {
+      setAW([...current.words]);
+      setSW([]);
+    } else if (current.type === "match_pairs" && current.pairs) {
+      const left = current.pairs.map(p => p[0]);
+      const right = current.pairs.map(p => p[1]);
+      setMatchLeftItems(left);
+      setMatchRightItems(shuffleArray([...right]));
+      setMatchPairsMap({});
+      setEx(prev => ({ ...prev, matchPairsAnswer: {} }));
+    } else {
+      setMatchLeftItems([]);
+      setMatchRightItems([]);
+      setMatchPairsMap({});
+    }
+  }, [current]);
 
   useEffect(() => {
     const cfg = loadLangConfig();
@@ -93,13 +126,6 @@ function LearnInner() {
   }, [lessonId, pairParam, router]);
 
   useEffect(() => {
-    if (current?.type === "word_order" && current.words) {
-      setAW([...current.words]);
-      setSW([]);
-    }
-  }, [current]);
-
-  useEffect(() => {
     const timer = setInterval(() => {
       const nextH = syncHearts();
       if (nextH.hearts !== hearts) setHearts(nextH.hearts);
@@ -110,10 +136,21 @@ function LearnInner() {
 
   const submit = useCallback(async () => {
     if (!current || ex.state === "submitting") return;
-    const answer = (current.type === "word_order" && sessionLevel < 3)
-      ? selectedWords.join(" ")
-      : ex.userAnswer.trim();
-    if (!answer) return;
+    
+    let answerForApi: string;
+    if (current.type === "word_order" && sessionLevel < 3) {
+      if (selectedWords.length === 0) return;
+      answerForApi = selectedWords.join(" ");
+    } else if (current.type === "match_pairs") {
+      if (Object.keys(matchPairsMap).length !== matchLeftItems.length) return;
+      answerForApi = JSON.stringify(matchPairsMap);
+    } else if (current.type === "multiple_choice") {
+      if (!ex.userAnswer) return;
+      answerForApi = ex.userAnswer;
+    } else {
+      if (!ex.userAnswer.trim()) return;
+      answerForApi = ex.userAnswer.trim();
+    }
 
     setEx(s => ({ ...s, state: "submitting", nuriMood: "thinking", nuriSpeech: randomLine("thinking") }));
 
@@ -122,12 +159,13 @@ function LearnInner() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userAnswer: answer,
+          userAnswer: answerForApi,
           expectedAnswer: current.targetAnswer,
           englishOriginal: current.prompt["en"] ?? current.prompt[native] ?? current.targetAnswer,
           allValidAnswers: current.acceptableAnswers || [],
           sourceLanguage: native,
           targetLanguage: (loadLangConfig()?.learning || "hy"),
+          exerciseType: current.type,
           useAI: false,
         }),
       });
@@ -155,7 +193,6 @@ function LearnInner() {
         setSessionHAYQ(s => s + hayq);
         setSessionSeeds(s => s + seeds);
         
-        // Update quest progress for earning HAYQ
         updateQuestProgress("earn_hayq", hayq);
       }
 
@@ -170,9 +207,9 @@ function LearnInner() {
         nuriSpeech: randomLine(score >= 0.98 ? "correct_perfect" : correct ? "correct" : "incorrect"),
       }));
     } catch {
-      setEx(s => ({ ...s, state: "incorrect", feedback: "Connection error", nuriMood: "sad", nuriSpeech: "Oops! 😅" }));
+      setEx(s => ({ ...s, state: "incorrect", feedback: "Ցանցի սխալ", nuriMood: "sad", nuriSpeech: "Oops! 😅" }));
     }
-  }, [current, ex.userAnswer, ex.state, selectedWords, lesson, streak, native]);
+  }, [current, ex.userAnswer, ex.state, selectedWords, matchPairsMap, matchLeftItems.length, lesson, streak, native, sessionLevel]);
 
   const next = useCallback(() => {
     if (!lesson) return;
@@ -180,13 +217,13 @@ function LearnInner() {
     if (nextIdx >= lesson.exercises.length) { 
       addRewards(40, 0, lesson.estimatedMinutes);
       saveCrownLevel(lesson.id, sessionLevel);
-      // Update quest progress for completing a lesson
       updateQuestProgress("complete_lessons", 1);
       setComplete(true); 
       return; 
     }
-    setEx({ index: nextIdx, userAnswer: "", state: "idle", feedback: "", score: 0, hayqEarned: 0, nuriMood: "happy", nuriSpeech: randomLine("idle") });
+    setEx({ index: nextIdx, userAnswer: "", matchPairsAnswer: {}, state: "idle", feedback: "", score: 0, hayqEarned: 0, nuriMood: "happy", nuriSpeech: randomLine("idle") });
     setSW([]); setAW([]);
+    setMatchPairsMap({});
   }, [lesson, ex.index, sessionLevel]);
 
   const handleRefill = useCallback(() => {
@@ -245,16 +282,55 @@ function LearnInner() {
           )}
 
           <div className="mt-8">
-            {current.type === "word_order" && sessionLevel < 3 ? (
-              <WordOrderInput selected={selectedWords} available={availWords} onSelect={(w: string) => {setSW([...selectedWords, w]); setAW(availWords.filter(x => x !== w))}} onDeselect={(w: string) => {setAW([...availWords, w]); setSW(selectedWords.filter(x => x !== w))}} disabled={ex.state !== "idle"} />
-            ) : current.type === "multiple_choice" && current.options && sessionLevel < 3 ? (
+            {current.type === "word_order" && sessionLevel < 3 && current.words ? (
+              <WordOrderInput 
+                selected={selectedWords} 
+                available={availWords} 
+                onSelect={(w) => {setSW([...selectedWords, w]); setAW(availWords.filter(x => x !== w))}} 
+                onDeselect={(w) => {setAW([...availWords, w]); setSW(selectedWords.filter(x => x !== w))}} 
+                disabled={ex.state !== "idle"} 
+              />
+            ) : current.type === "multiple_choice" && sessionLevel < 3 && current.options ? (
               <div className="grid grid-cols-2 gap-4">
                 {current.options.map(opt => (
-                  <button key={opt} onClick={() => setEx({...ex, userAnswer: opt})} className={`p-4 rounded-xl border-2 ${ex.userAnswer === opt ? 'border-blue-500' : 'border-white/10'}`}>{opt}</button>
+                  <button 
+                    key={opt} 
+                    onClick={() => setEx({...ex, userAnswer: opt})} 
+                    className={`p-4 rounded-xl border-2 transition ${ex.userAnswer === opt ? 'border-blue-500 bg-blue-500/20' : 'border-white/10 hover:border-white/30'}`}
+                  >
+                    {opt}
+                  </button>
                 ))}
               </div>
+            ) : current.type === "match_pairs" && sessionLevel < 3 && current.pairs ? (
+              <MatchPairsInput
+                leftItems={matchLeftItems}
+                rightItems={matchRightItems}
+                matched={matchPairsMap}
+                onMatch={(left, right) => {
+                  const newMap = { ...matchPairsMap, [left]: right };
+                  setMatchPairsMap(newMap);
+                  setEx(prev => ({ ...prev, matchPairsAnswer: newMap }));
+                  setMatchRightItems(prev => prev.filter(r => r !== right));
+                }}
+                disabled={ex.state !== "idle"}
+              />
+            ) : current.type === "listening" && sessionLevel < 3 && current.ttsText ? (
+              <ListeningInput
+                ttsText={current.ttsText}
+                ttsLang={current.ttsLang || (loadLangConfig()?.learning || "hy")}
+                value={ex.userAnswer}
+                onChange={(val) => setEx({...ex, userAnswer: val})}
+                disabled={ex.state !== "idle"}
+              />
             ) : (
-              <textarea value={ex.userAnswer} onChange={e => setEx({...ex, userAnswer: e.target.value})} className="w-full bg-black/20 p-4 rounded-xl h-32" placeholder="..." />
+              <textarea 
+                value={ex.userAnswer} 
+                onChange={e => setEx({...ex, userAnswer: e.target.value})} 
+                className="w-full bg-black/20 p-4 rounded-xl h-32" 
+                placeholder="Մուտքագրեք ձեր պատասխանը..."
+                disabled={ex.state !== "idle"}
+              />
             )}
           </div>
         </div>
@@ -262,11 +338,11 @@ function LearnInner() {
 
       <div className="p-6 border-t border-white/10">
         {ex.state === "idle" ? (
-          <button onClick={submit} className="w-full py-4 bg-blue-600 rounded-xl font-bold">Check</button>
+          <button onClick={submit} className="w-full py-4 bg-blue-600 rounded-xl font-bold">Ստուգել</button>
         ) : (
           <div className={`p-4 rounded-xl mb-4 ${ex.state === 'correct' ? 'bg-green-900/50' : 'bg-red-900/50'}`}>
             <p>{ex.feedback}</p>
-            <button onClick={next} className="mt-4 w-full py-4 bg-white text-black rounded-xl font-bold">Continue</button>
+            <button onClick={next} className="mt-4 w-full py-4 bg-white text-black rounded-xl font-bold">Շարունակել</button>
           </div>
         )}
       </div>
@@ -282,6 +358,9 @@ export default function LearnPage() {
   );
 }
 
+// ----------------------------------------------------------------------
+// Word Order Input Component
+// ----------------------------------------------------------------------
 interface WordOrderInputProps {
   selected: string[];
   available: string[];
@@ -298,7 +377,7 @@ function WordOrderInput({ selected, available, onSelect, onDeselect, disabled }:
           <button 
             key={`${w}-${i}`} 
             onClick={() => !disabled && onDeselect(w)} 
-            className="bg-blue-600 px-3 py-1 rounded"
+            className="bg-blue-600 px-3 py-1 rounded text-sm"
           >
             {w}
           </button>
@@ -309,7 +388,7 @@ function WordOrderInput({ selected, available, onSelect, onDeselect, disabled }:
           <button 
             key={`${w}-${i}`} 
             onClick={() => !disabled && onSelect(w)} 
-            className="bg-white/10 px-3 py-1 rounded"
+            className="bg-white/10 px-3 py-1 rounded text-sm hover:bg-white/20"
           >
             {w}
           </button>
@@ -319,6 +398,111 @@ function WordOrderInput({ selected, available, onSelect, onDeselect, disabled }:
   );
 }
 
+// ----------------------------------------------------------------------
+// Match Pairs Input Component
+// ----------------------------------------------------------------------
+interface MatchPairsInputProps {
+  leftItems: string[];
+  rightItems: string[];
+  matched: Record<string, string>;
+  onMatch: (left: string, right: string) => void;
+  disabled: boolean;
+}
+
+function MatchPairsInput({ leftItems, rightItems, matched, onMatch, disabled }: MatchPairsInputProps) {
+  const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
+
+  const handleLeftClick = (left: string) => {
+    if (disabled) return;
+    if (matched[left]) return;
+    setSelectedLeft(selectedLeft === left ? null : left);
+  };
+
+  const handleRightClick = (right: string) => {
+    if (disabled) return;
+    if (selectedLeft && !matched[selectedLeft]) {
+      onMatch(selectedLeft, right);
+      setSelectedLeft(null);
+    }
+  };
+
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      <div className="space-y-2">
+        {leftItems.map(left => (
+          <button
+            key={left}
+            onClick={() => handleLeftClick(left)}
+            className={`w-full p-3 rounded-xl text-left transition ${
+              matched[left] 
+                ? 'bg-green-800/50 line-through opacity-60 cursor-not-allowed' 
+                : selectedLeft === left 
+                  ? 'bg-blue-600' 
+                  : 'bg-white/10 hover:bg-white/20'
+            }`}
+            disabled={!!matched[left] || disabled}
+          >
+            {left}
+          </button>
+        ))}
+      </div>
+      <div className="space-y-2">
+        {rightItems.map(right => (
+          <button
+            key={right}
+            onClick={() => handleRightClick(right)}
+            className="w-full p-3 rounded-xl bg-white/10 hover:bg-white/20 text-left"
+            disabled={disabled}
+          >
+            {right}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ----------------------------------------------------------------------
+// Listening Input Component
+// ----------------------------------------------------------------------
+interface ListeningInputProps {
+  ttsText: string;
+  ttsLang: string;
+  value: string;
+  onChange: (val: string) => void;
+  disabled: boolean;
+}
+
+function ListeningInput({ ttsText, ttsLang, value, onChange, disabled }: ListeningInputProps) {
+  const speak = () => {
+    const utterance = new SpeechSynthesisUtterance(ttsText);
+    utterance.lang = ttsLang;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  return (
+    <div className="space-y-4">
+      <button
+        onClick={speak}
+        className="w-full py-3 bg-orange-600 rounded-xl font-bold flex items-center justify-center gap-2"
+        disabled={disabled}
+      >
+        🔊 Լսել արտասանությունը
+      </button>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Լսեք և գրեք ձեր լսածը..."
+        className="w-full bg-black/20 p-4 rounded-xl h-32"
+        disabled={disabled}
+      />
+    </div>
+  );
+}
+
+// ----------------------------------------------------------------------
+// NoHeartsScreen and CompletionScreen (unchanged)
+// ----------------------------------------------------------------------
 interface NoHeartsScreenProps {
   countdown: number;
   totalHAYQ: number;
