@@ -100,7 +100,6 @@ export function claimReward(questId: string): { hayq: number; seeds: number } | 
   if (!quest || !quest.completed || quest.claimed) return null;
   quest.claimed = true;
   saveQuests(quests);
-  // Ensure seeds is always a number (default to 0 if undefined)
   return {
     hayq: quest.reward.hayq,
     seeds: quest.reward.seeds ?? 0,
@@ -118,7 +117,10 @@ export function addQuestProgressAndUpdateRewards(
   if (quest?.completed && !quest.claimed) {
     const reward = claimReward(questId);
     if (reward) {
-      return reward;
+      return {
+        hayqAdded: reward.hayq,
+        seedsAdded: reward.seeds,
+      };
     }
   }
   return null;
