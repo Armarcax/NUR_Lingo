@@ -85,32 +85,46 @@ export default function WorldPage() {
     setAllLessons(data.lessons);
   }, []);
 
-  // Dynamic SVG path based on number of lessons
+  // Generate a smooth sinusoidal path
   const pathD = useMemo(() => {
     const lessonCount = allLessons.length;
-    if (lessonCount === 0) return "M 400 0 Q 450 200 400 400";
+    if (lessonCount === 0) return "M 400 200";
     
-    // Each lesson occupies roughly 60px vertically
-    const stepY = 60;
-    const maxY = 400 + (lessonCount - 1) * stepY;
+    const startX = 400;
+    const startY = 100;
+    const amplitude = 120;          // wave width
+    const verticalStep = 70;        // distance between consecutive nodes
+    const totalHeight = (lessonCount - 1) * verticalStep + 150;
     
-    let path = "M 400 0 Q 450 200 400 400";
-    let currentY = 400;
-    for (let i = 1; i < lessonCount; i++) {
-      const nextY = currentY + stepY;
-      // Alternate x offset to create a winding snake
-      const xOffset = (i % 2 === 0) ? 450 : 350;
-      path += ` T ${xOffset} ${nextY}`;
-      currentY = nextY;
+    let d = `M ${startX} ${startY}`;
+    let currentX = startX;
+    let currentY = startY;
+    
+    for (let i = 1; i <= lessonCount; i++) {
+      // target Y increases gradually
+      const targetY = startY + i * verticalStep;
+      // compute X using sine wave: oscillate around center 400
+      const t = i / Math.max(1, lessonCount - 1); // 0..1
+      const angle = t * Math.PI * 2; // one full cycle
+      const targetX = 400 + amplitude * Math.sin(angle);
+      
+      // Use cubic bezier for smooth transition
+      const cp1x = currentX + (targetX - currentX) * 0.3;
+      const cp1y = currentY + verticalStep * 0.3;
+      const cp2x = targetX - (targetX - currentX) * 0.3;
+      const cp2y = targetY - verticalStep * 0.3;
+      d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${targetX} ${targetY}`;
+      
+      currentX = targetX;
+      currentY = targetY;
     }
-    return path;
+    return d;
   }, [allLessons.length]);
 
-  // Dynamic viewBox height to ensure the entire path is visible
   const viewBoxHeight = useMemo(() => {
     const lessonCount = allLessons.length;
-    const minHeight = 600;
-    const dynamicHeight = 400 + (lessonCount - 1) * 60 + 200;
+    const minHeight = 500;
+    const dynamicHeight = 100 + (lessonCount - 1) * 70 + 200;
     return Math.max(minHeight, dynamicHeight);
   }, [allLessons.length]);
 
@@ -131,11 +145,9 @@ export default function WorldPage() {
 
   return (
     <div className="min-h-screen relative text-white overflow-hidden bg-[#1a0a0a]">
-      {/* Pomegranate Texture Background */}
       <div className="absolute inset-0 opacity-10 pointer-events-none" 
         style={{ backgroundImage: "radial-gradient(circle at 2px 2px, #D90012 1px, transparent 0)", backgroundSize: "40px 40px" }} />
       
-      {/* Floating Seeds */}
       {bgSeeds.map(s => (
         <motion.div
           key={s.id}
@@ -162,7 +174,6 @@ export default function WorldPage() {
             <span className="font-black tracking-tighter text-xl uppercase italic bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">NUR Lingo</span>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
-              {/* Level Info */}
               <div className="hidden md:flex flex-col items-end mr-2">
                 <p className="text-[10px] font-black text-white/30 uppercase tracking-widest leading-none mb-1">Rank</p>
                 <p className="text-sm font-black" style={{ color: level.color }}>{level.title[native] ?? level.titleArmenian}</p>
@@ -184,7 +195,6 @@ export default function WorldPage() {
                 <span className="text-xl">❤️</span> {rewards.hearts}
               </div>
               
-              {/* Daily Goal Indicator */}
               <div className="bg-white/5 border border-white/10 px-4 py-2 rounded-2xl shadow-lg flex flex-col items-center">
                 <div className="flex items-center gap-1">
                   <span className="text-xl">🎯</span>
@@ -231,7 +241,6 @@ export default function WorldPage() {
         <div className="max-w-4xl mx-auto px-8 pb-32 relative flex-1 w-full">
           <div className="flex flex-col items-center gap-20 mt-20 relative">
             
-            {/* Dynamic SVG path */}
             <svg 
               className="absolute inset-0 w-full h-full pointer-events-none -z-10 overflow-visible"
               viewBox={`0 0 800 ${viewBoxHeight}`}
@@ -283,7 +292,6 @@ export default function WorldPage() {
 
                     {progressPercent === 100 && <Confetti color={unit.colorFrom} />}
 
-                    {/* Unit Progress Bar */}
                     <div className="w-48 space-y-2 relative z-10">
                       <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-white/40">
                         <span>Առաջընթաց</span>
