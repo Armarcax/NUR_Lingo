@@ -61,7 +61,6 @@ export function loadQuests(): Quest[] {
       return fresh;
     }
     const data = JSON.parse(stored);
-    // reset quests daily if date changed
     const today = new Date().toISOString().slice(0, 10);
     if (data.date !== today) {
       const fresh = DEFAULT_QUESTS.map(q => ({
@@ -101,10 +100,18 @@ export function claimReward(questId: string): { hayq: number; seeds: number } | 
   if (!quest || !quest.completed || quest.claimed) return null;
   quest.claimed = true;
   saveQuests(quests);
-  return quest.reward;
+  // Ensure seeds is always a number (default to 0 if undefined)
+  return {
+    hayq: quest.reward.hayq,
+    seeds: quest.reward.seeds ?? 0,
+  };
 }
 
-export function addQuestProgressAndUpdateRewards(questId: string, increment: number, currentRewards: { totalHAYQ: number; totalSeeds: number }): { hayqAdded: number; seedsAdded: number } | null {
+export function addQuestProgressAndUpdateRewards(
+  questId: string,
+  increment: number,
+  _currentRewards: { totalHAYQ: number; totalSeeds: number }
+): { hayqAdded: number; seedsAdded: number } | null {
   updateQuestProgress(questId, increment);
   const quests = loadQuests();
   const quest = quests.find(q => q.id === questId);
