@@ -2573,6 +2573,387 @@ function makeAdvancedLesson(id: string, slug: string, enT: string, hyT: string, 
   };
 }
 
+// ===== WORLD 6–10 BUILDER FUNCTIONS (add before qL helper) =====
+
+function buildWorld6(): QuickLesson[] {
+  const topics = [
+    ["sports", "Sports", "Սպորտ", "Спорт"],
+    ["games", "Games", "Խաղեր", "Игры"],
+    ["reading", "Reading", "Ընթերցանություն", "Чтение"],
+    ["music", "Music", "Երաժշտություն", "Музыка"],
+    ["painting", "Painting", "Նկարչություն", "Живопись"],
+    ["cooking", "Cooking", "Խոհարարություն", "Приготовление еды"],
+    ["photography", "Photography", "Լուսանկարչություն", "Фотография"],
+    ["gardening", "Gardening", "Այգեգործություն", "Садоводство"],
+    ["diy", "DIY / Crafts", "DIY / Արհեստներ", "DIY / Ремёсла"],
+    ["travel", "Travel as Hobby", "Ճամփորդություն որպես հոբբի", "Путешествия как хобби"],
+  ];
+  return topics.map(([slug, enT, hyT, ruT], idx) =>
+    makeHobbyLesson(`w6_l${idx + 1}`, slug, enT, hyT, ruT)
+  );
+}
+
+function makeHobbyLesson(id: string, slug: string, enT: string, hyT: string, ruT: string): QuickLesson {
+  const commonVocab: Array<[string, string, string]> = [
+    ["հոբբի", "hobby", "хобби"], ["ազատ ժամանակ", "free time", "свободное время"],
+    ["հետաքրքրություն", "interest", "интерес"], ["սիրել", "to love", "любить"],
+    ["վայելել", "to enjoy", "наслаждаться"], ["զբաղվել", "to practice", "заниматься"],
+    ["հմտություն", "skill", "навык"], ["պարապմունք", "practice", "тренировка"],
+    ["ակումբ", "club", "клуб"], ["ուսուցիչ", "teacher", "учитель"],
+    ["ընկերներ", "friends", "друзья"], ["ժամանակ անցկացնել", "to spend time", "проводить время"],
+    ["հանգիստ", "relaxation", "отдых"], ["առողջություն", "health", "здоровье"],
+    ["սարքավորում", "equipment", "оборудование"], ["ծախս", "cost", "расход"],
+    ["ժամանակացույց", "schedule", "расписание"], ["մրցույթ", "competition", "соревнование"],
+    ["սիրողական", "amateur", "любительский"], ["պրոֆեսիոնալ", "professional", "профессиональный"],
+    ["էներգիա", "energy", "энергия"], ["հաջողություն", "success", "успех"],
+    ["սովորել", "to learn", "учиться"], ["բարելավել", "to improve", "улучшать"],
+    ["հանգստանալ", "to relax", "расслабляться"]
+  ];
+  const phrases: Array<[string, string, string, string[]?]> = [
+    ["Ինչպիսի՞ հոբբիներ ունես։", "What hobbies do you have?", "Какие у тебя хобби?"],
+    ["Իմ հոբբին է ...", "My hobby is ...", "Моё хобби — ..."],
+    ["Սիրում եմ ազատ ժամանակս անցկացնել ...", "I love spending my free time ...", "Люблю проводить свободное время ..."],
+    ["Շաբաթը երկու անգամ եմ պարապում։", "I practice twice a week.", "Занимаюсь два раза в неделю."],
+    ["Դժվար է, բայց հետաքրքիր է։", "It's difficult but interesting.", "Трудно, но интересно."],
+    ["Միացել եմ ակումբի։", "I joined a club.", "Вступил в клуб."],
+    ["Ուզում եմ բարելավել իմ հմտությունները։", "I want to improve my skills.", "Хочу улучшить навыки."],
+    ["Իմ ընկերներն էլ են սիրում այս հոբբին։", "My friends also like this hobby.", "Мои друзья тоже любят это хобби."],
+    ["Սա թանկ հոբբի է։", "This is an expensive hobby.", "Это дорогое хобби."],
+    ["Ինձ նոր սարքավորում է պետք։", "I need new equipment.", "Мне нужно новое оборудование."],
+    ["Հոբբին օգնում է հանգստանալ։", "Hobbies help to relax.", "Хобби помогает расслабиться."],
+    ["Ո՞ր հոբբին ես առաջարկում։", "Which hobby do you recommend?", "Какое хобби посоветуешь?"]
+  ];
+  const dialogues = [
+    { title: { en: "Talking About Hobbies", hy: "Խոսենք հոբբիների մասին", ru: "Разговор о хобби" }, turns: [
+      ["nurik", "Ի՞նչ ես սիրում անել ազատ ժամանակ։", "What do you like to do in your free time?", "Что любишь делать в свободное время?"],
+      ["user", "Ես սիրում եմ ...", "I like ...", "Мне нравится ..."],
+      ["nurik", "Որքա՞ն հաճախ ես զբաղվում դրանով։", "How often do you do it?", "Как часто ты этим занимаешься?"],
+      ["user", "Ամեն օր։", "Every day.", "Каждый день."]
+    ]},
+    { title: { en: "Joining a Club", hy: "Ակումբին միանալ", ru: "Вступление в клуб" }, turns: [
+      ["user", "Ես ուզում եմ միանալ ակումբին։", "I want to join the club.", "Хочу вступить в клуб."],
+      ["nurik", "Լավ ընտրություն է։", "Good choice.", "Хороший выбор."],
+      ["user", "Ե՞րբ են հանդիպումները։", "When are the meetings?", "Когда встречи?"],
+      ["nurik", "Երեքշաբթի և հինգշաբթի երեկոյան։", "Tuesday and Thursday evenings.", "Вторник и четверг вечером."]
+    ]},
+    { title: { en: "Expensive Hobby", hy: "Թանկ հոբբի", ru: "Дорогое хобби" }, turns: [
+      ["nurik", "Լուսանկարչությունը թանկ հոբբի է։", "Photography is an expensive hobby.", "Фотография — дорогое хобби."],
+      ["user", "Այո, սարքավորումը շատ արժե։", "Yes, equipment costs a lot.", "Да, оборудование стоит дорого."],
+      ["nurik", "Բայց արժե այն։", "But it's worth it.", "Но оно того стоит."],
+      ["user", "Լիովին համաձայն եմ։", "I completely agree.", "Полностью согласен."]
+    ]}
+  ];
+  return {
+    id, worldId: "w6", slug, difficulty: "A2",
+    title: { en: enT, hy: hyT, ru: ruT },
+    concept: { en: `Talking about ${enT.toLowerCase()} as a hobby.`, hy: `Խոսել ${hyT.toLowerCase()} հոբբիի մասին։`, ru: `Говорить о хобби ${ruT.toLowerCase()}.` },
+    vocab: commonVocab, phrases, dialogues
+  };
+}
+
+function buildWorld7(): QuickLesson[] {
+  const topics = [
+    ["computers", "Computers", "Համակարգիչներ", "Компьютеры"],
+    ["internet", "Internet", "Ինտերնետ", "Интернет"],
+    ["smartphones", "Smartphones", "Խելացի հեռախոսներ", "Смартфоны"],
+    ["social_media", "Social Media", "Սոցիալական ցանցեր", "Социальные сети"],
+    ["apps", "Apps", "Հավելվածներ", "Приложения"],
+    ["ai", "Artificial Intelligence", "Արհեստական բանականություն", "Искусственный интеллект"],
+    ["cybersecurity", "Cybersecurity", "Կիբերանվտանգություն", "Кибербезопасность"],
+    ["gaming", "Gaming", "Խաղեր", "Игры"],
+    ["cloud", "Cloud Computing", "Ամպային հաշվարկ", "Облачные вычисления"],
+    ["future_tech", "Future Tech", "Ապագայի տեխնոլոգիաներ", "Технологии будущего"]
+  ];
+  return topics.map(([slug, enT, hyT, ruT], idx) =>
+    makeTechLesson(`w7_l${idx + 1}`, slug, enT, hyT, ruT)
+  );
+}
+
+function makeTechLesson(id: string, slug: string, enT: string, hyT: string, ruT: string): QuickLesson {
+  const commonVocab: Array<[string, string, string]> = [
+    ["համակարգիչ", "computer", "компьютер"], ["նոութբուք", "laptop", "ноутбук"],
+    ["հեռախոս", "phone", "телефон"], ["պլանշետ", "tablet", "планшет"],
+    ["էկրան", "screen", "экран"], ["ստեղնաշար", "keyboard", "клавиатура"],
+    ["մկնիկ", "mouse", "мышь"], ["ինտերնետ", "internet", "интернет"],
+    ["wifi", "wifi", "wifi"], ["ցանց", "network", "сеть"],
+    ["հավելված", "app", "приложение"], ["կայք", "website", "сайт"],
+    ["գաղտնաբառ", "password", "пароль"], ["հաշիվ", "account", "аккаунт"],
+    ["տվյալներ", "data", "данные"], ["ամպ", "cloud", "облако"],
+    ["անվտանգություն", "security", "безопасность"], ["վիրուս", "virus", "вирус"],
+    ["թարմացում", "update", "обновление"], ["սխալ", "error", "ошибка"],
+    ["ծրագրավորում", "programming", "программирование"], ["արհեստական բանականություն", "AI", "ИИ"],
+    ["վիրտուալ", "virtual", "виртуальный"], ["խելացի", "smart", "умный"],
+    ["արագ", "fast", "быстрый"]
+  ];
+  const phrases: Array<[string, string, string, string[]?]> = [
+    ["Օգտագործու՞մ ես սոցիալական ցանցեր։", "Do you use social media?", "Пользуешься соцсетями?"],
+    ["Իմ սիրած հավելվածը ...", "My favorite app is ...", "Моё любимое приложение ..."],
+    ["Ինչպե՞ս միացնել wifi-ն։", "How to connect to wifi?", "Как подключиться к wifi?"],
+    ["Մոռացել եմ գաղտնաբառս։", "I forgot my password.", "Забыл пароль."],
+    ["Այս կայքը հուսալի է։", "This website is reliable.", "Этот сайт надёжный."],
+    ["Իմ համակարգիչը կախված է։", "My computer is frozen.", "Мой компьютер завис."],
+    ["Կարո՞ղ ես օգնել թարմացնել ծրագիրը։", "Can you help update the software?", "Можешь помочь обновить программу?"],
+    ["Արհեստական բանականությունը փոխում է աշխարհը։", "AI is changing the world.", "ИИ меняет мир."],
+    ["Ինչպե՞ս պաշտպանվել կիբերհարձակումներից։", "How to protect against cyberattacks?", "Как защититься от кибератак?"],
+    ["Պետք է կրկնօրինակեմ իմ ֆայլերը։", "I need to back up my files.", "Нужно сделать бэкап файлов."],
+    ["Խաղում ես առցանց խաղեր։", "Do you play online games?", "Играешь в онлайн-игры?"],
+    ["Վաղը թողարկվում է նոր մոդելը։", "The new model is released tomorrow.", "Завтра выходит новая модель."]
+  ];
+  const dialogues = [
+    { title: { en: "Computer Trouble", hy: "Համակարգչային խնդիր", ru: "Проблема с компьютером" }, turns: [
+      ["user", "Համակարգիչս չի միանում։", "My computer won't turn on.", "Мой компьютер не включается."],
+      ["nurik", "Ստուգիր հոսանքի լարը։", "Check the power cord.", "Проверь шнур питания."],
+      ["user", "Ամեն ինչ միացված է, բայց չի աշխատում։", "Everything is connected, but it doesn't work.", "Всё подключено, но не работает."],
+      ["nurik", "Տար service կենտրոն։", "Take it to a service center.", "Отнеси в сервисный центр."]
+    ]},
+    { title: { en: "New App", hy: "Նոր հավելված", ru: "Новое приложение" }, turns: [
+      ["nurik", "Բեռնել եմ նոր հավելված սովորելու համար։", "I downloaded a new learning app.", "Скачал новое учебное приложение."],
+      ["user", "Ի՞նչ է անում։", "What does it do?", "Что оно делает?"],
+      ["nurik", "Սովորեցնում է լեզուներ խաղերի միջոցով։", "It teaches languages through games.", "Учит языкам через игры."],
+      ["user", "Հետաքրքիր է, ուղարկի՛ր հղումը։", "Interesting, send me the link.", "Интересно, скинь ссылку."]
+    ]},
+    { title: { en: "AI Chatbot", hy: "Արհեստական բանականության չատբոտ", ru: "Чат-бот с ИИ" }, turns: [
+      ["user", "Խոսել եմ AI չատբոտի հետ երեկ։", "I talked to an AI chatbot yesterday.", "Говорил с чат-ботом ИИ вчера."],
+      ["nurik", "Ինչ մասին եք խոսել։", "What did you talk about?", "О чём говорили?"],
+      ["user", "Ապագա տեխնոլոգիաների մասին։", "About future technologies.", "О будущих технологиях."],
+      ["nurik", "Տպավո՞րիչ պատասխաններ էր տալիս։", "Did it give impressive answers?", "Давал впечатляющие ответы?"]
+    ]}
+  ];
+  return {
+    id, worldId: "w7", slug, difficulty: "B1",
+    title: { en: enT, hy: hyT, ru: ruT },
+    concept: { en: `Discussing ${enT}.`, hy: `Քննարկել ${hyT}.`, ru: `Обсуждение ${ruT}.` },
+    vocab: commonVocab, phrases, dialogues
+  };
+}
+
+function buildWorld8(): QuickLesson[] {
+  const topics = [
+    ["climate", "Climate Change", "Կլիմայի փոփոխություն", "Изменение климата"],
+    ["animals", "Wild Animals", "Վայրի կենդանիներ", "Дикие животные"],
+    ["plants", "Plants & Forests", "Բույսեր և անտառներ", "Растения и леса"],
+    ["pollution", "Pollution", "Աղտոտում", "Загрязнение"],
+    ["recycling", "Recycling", "Վերամշակում", "Переработка"],
+    ["energy", "Renewable Energy", "Վերականգնվող էներգիա", "Возобновляемая энергия"],
+    ["water", "Water Conservation", "Ջրի պահպանություն", "Сохранение воды"],
+    ["eco_friendly", "Eco-friendly Living", "Էկո-բարեկամական կյանք", "Эко-жизнь"],
+    ["disasters", "Natural Disasters", "Բնական աղետներ", "Стихийные бедствия"],
+    ["activism", "Environmental Activism", "Բնապահպանական ակտիվիզմ", "Экологический активизм"]
+  ];
+  return topics.map(([slug, enT, hyT, ruT], idx) =>
+    makeEnvLesson(`w8_l${idx + 1}`, slug, enT, hyT, ruT)
+  );
+}
+
+function makeEnvLesson(id: string, slug: string, enT: string, hyT: string, ruT: string): QuickLesson {
+  const commonVocab: Array<[string, string, string]> = [
+    ["բնություն", "nature", "природа"], ["շրջակա միջավայր", "environment", "окружающая среда"],
+    ["կլիմա", "climate", "климат"], ["ջերմաստիճան", "temperature", "температура"],
+    ["աղտոտում", "pollution", "загрязнение"], ["թափոններ", "waste", "отходы"],
+    ["պլաստիկ", "plastic", "пластик"], ["վերամշակում", "recycling", "переработка"],
+    ["անտառահատում", "deforestation", "вырубка лесов"], ["կենդանիներ", "animals", "животные"],
+    ["վտանգված տեսակ", "endangered species", "вымирающий вид"], ["արգելոց", "reserve", "заповедник"],
+    ["էկոհամակարգ", "ecosystem", "экосистема"], ["կայունություն", "sustainability", "устойчивость"],
+    ["արևային էներգիա", "solar energy", "солнечная энергия"], ["քամու էներգիա", "wind energy", "ветряная энергия"],
+    ["ածխածնի հետք", "carbon footprint", "углеродный след"], ["կանաչ", "green", "зелёный"],
+    ["վերականգնվող", "renewable", "возобновляемый"], ["վնասակար", "harmful", "вредный"],
+    ["պաշտպանել", "to protect", "защищать"], ["փրկել", "to save", "спасать"],
+    ["նվազեցնել", "to reduce", "сокращать"], ["վերաօգտագործել", "to reuse", "повторно использовать"],
+    ["տնկել", "to plant", "сажать"]
+  ];
+  const phrases: Array<[string, string, string, string[]?]> = [
+    ["Ինչպե՞ս կարող ենք պաշտպանել բնությունը։", "How can we protect nature?", "Как мы можем защитить природу?"],
+    ["Կլիմայի փոփոխությունը իրական խնդիր է։", "Climate change is a real problem.", "Изменение климата — реальная проблема."],
+    ["Պետք է նվազեցնենք պլաստիկի օգտագործումը։", "We need to reduce plastic use.", "Нужно сократить использование пластика."],
+    ["Ես տեսակավորում եմ աղբը տանը։", "I sort waste at home.", "Я сортирую мусор дома."],
+    ["Արևային մարտկոցները մեծ օգուտ ունեն։", "Solar panels have great benefits.", "Солнечные батареи имеют большую пользу."],
+    ["Անհետացող կենդանիներին պետք է պաշտպանել։", "Endangered animals must be protected.", "Вымирающих животных нужно защищать."],
+    ["Ծառեր տնկենք ավելի շատ։", "Let's plant more trees.", "Давайте посадим больше деревьев."],
+    ["Ջուրը խնայիր։", "Save water.", "Экономь воду."],
+    ["Էկոլոգիական ապրանքներն ավելի թանկ են, բայց արժեն։", "Eco products are more expensive but worth it.", "Эко-товары дороже, но стоят того."],
+    ["Ի՞նչ ես անում ածխածնի հետքդ նվազեցնելու համար։", "What do you do to reduce your carbon footprint?", "Что делаешь для снижения углеродного следа?"],
+    ["Միասին կարող ենք փոխել աշխարհը։", "Together we can change the world.", "Вместе мы можем изменить мир."],
+    ["Եկեք միանանք բնապահպանական շարժմանը։", "Let's join the environmental movement.", "Давайте присоединимся к экологическому движению."]
+  ];
+  const dialogues = [
+    { title: { en: "Cleaning the Beach", hy: "Լողափի մաքրում", ru: "Уборка пляжа" }, turns: [
+      ["nurik", "Այս շաբաթ լողափի մաքրման ակցիա կա։", "There's a beach cleanup this week.", "На этой неделе уборка пляжа."],
+      ["user", "Ես կմասնակցեմ։", "I will participate.", "Я поучаствую."],
+      ["nurik", "Ժամը 10-ին հանդիպենք մուտքի մոտ։", "Let's meet at 10 at the entrance.", "Встретимся в 10 у входа."],
+      ["user", "Լավ, աչքով կանեմ։", "OK, I'll be there.", "Хорошо, буду."]
+    ]},
+    { title: { en: "Saving Energy", hy: "Էներգիայի խնայում", ru: "Экономия энергии" }, turns: [
+      ["user", "Անջատի՛ր լույսը, երբ դուրս ես գալիս սենյակից։", "Turn off the light when you leave the room.", "Выключай свет, когда выходишь из комнаты."],
+      ["nurik", "Գիտեմ, ես փորձում եմ խնայել էներգիան։", "I know, I try to save energy.", "Знаю, стараюсь экономить."],
+      ["user", "Կարող ենք LED լամպեր գնել։", "We can buy LED bulbs.", "Можем купить LED-лампы."],
+      ["nurik", "Լավ միտք է։", "Good idea.", "Хорошая идея."]
+    ]},
+    { title: { en: "Endangered Animals", hy: "Անհետացող կենդանիներ", ru: "Вымирающие животные" }, turns: [
+      ["nurik", "Լսե՞լ ես ամուրյան ընձառյուծի մասին։", "Have you heard of the Amur leopard?", "Слышал об амурском леопарде?"],
+      ["user", "Այո, շատ քիչ են մնացել։", "Yes, very few remain.", "Да, их осталось очень мало."],
+      ["nurik", "Պետք է անհապաղ միջոցներ ձեռնարկել։", "Immediate action is needed.", "Нужны срочные меры."],
+      ["user", "Կազմակերպություններն արդեն աշխատում են։", "Organizations are already working.", "Организации уже работают."]
+    ]}
+  ];
+  return {
+    id, worldId: "w8", slug, difficulty: "B1",
+    title: { en: enT, hy: hyT, ru: ruT },
+    concept: { en: `Discussing ${enT}.`, hy: `Քննարկել ${hyT}.`, ru: `Обсуждение ${ruT}.` },
+    vocab: commonVocab, phrases, dialogues
+  };
+}
+
+function buildWorld9(): QuickLesson[] {
+  const topics = [
+    ["banking", "Banking", "Բանկային գործ", "Банковское дело"],
+    ["marketing", "Marketing", "Մարքեթինգ", "Маркетинг"],
+    ["management", "Management", "Կառավարում", "Управление"],
+    ["startup", "Startups", "Ստարտափներ", "Стартапы"],
+    ["sales", "Sales", "Վաճառք", "Продажи"],
+    ["accounting", "Accounting", "Հաշվապահություն", "Бухгалтерия"],
+    ["investing", "Investing", "Ներդրումներ", "Инвестиции"],
+    ["negotiation", "Business Negotiation", "Գործնական բանակցություններ", "Деловые переговоры"],
+    ["ecommerce", "E-commerce", "Էլեկտրոնային առևտուր", "Электронная коммерция"],
+    ["leadership", "Leadership", "Առաջնորդություն", "Лидерство"]
+  ];
+  return topics.map(([slug, enT, hyT, ruT], idx) =>
+    makeBizLesson(`w9_l${idx + 1}`, slug, enT, hyT, ruT)
+  );
+}
+
+function makeBizLesson(id: string, slug: string, enT: string, hyT: string, ruT: string): QuickLesson {
+  const commonVocab: Array<[string, string, string]> = [
+    ["բիզնես", "business", "бизнес"], ["ընկերություն", "company", "компания"],
+    ["հաճախորդ", "client", "клиент"], ["շուկա", "market", "рынок"],
+    ["շահույթ", "profit", "прибыль"], ["ծախս", "expense", "расход"],
+    ["վարկ", "loan", "кредит"], ["ավանդ", "deposit", "депозит"],
+    ["հաշիվ", "account", "счёт"], ["հարկ", "tax", "налог"],
+    ["աշխատավարձ", "salary", "зарплата"], ["բոնուս", "bonus", "бонус"],
+    ["պայմանագիր", "contract", "контракт"], ["կնիք", "stamp", "печать"],
+    ["ստորագրություն", "signature", "подпись"], ["հանդիպում", "meeting", "встреча"],
+    ["ներկայացում", "presentation", "презентация"], ["վաճառք", "sales", "продажи"],
+    ["գովազդ", "advertising", "реклама"], ["ապրանք", "product", "товар"],
+    ["ծառայություն", "service", "услуга"], ["մենեջեր", "manager", "менеджер"],
+    ["տնօրեն", "director", "директор"], ["բաժնետեր", "shareholder", "акционер"],
+    ["ներդրում", "investment", "инвестиция"]
+  ];
+  const phrases: Array<[string, string, string, string[]?]> = [
+    ["Ինչպիսի՞ բիզնեսով ես զբաղվում։", "What kind of business do you do?", "Каким бизнесом занимаешься?"],
+    ["Մեր ընկերությունը զբաղվում է ...", "Our company deals with ...", "Наша компания занимается ..."],
+    ["Այս եռամսյակում շահույթն աճել է։", "Profit has grown this quarter.", "Прибыль выросла в этом квартале."],
+    ["Պետք է կրճատենք ծախսերը։", "We need to reduce expenses.", "Нужно сократить расходы."],
+    ["Ձեր առաջարկը հետաքրքիր է, բայց գինը բարձր է։", "Your offer is interesting, but the price is high.", "Ваше предложение интересно, но цена высока."],
+    ["Կարո՞ղ եք զեղչ տալ մեծ քանակի դեպքում։", "Can you give a discount for large quantity?", "Можете скидку на большой объём?"],
+    ["Պայմանագիրը պետք է ստորագրվի մինչեւ ուրբաթ։", "The contract must be signed by Friday.", "Контракт должен быть подписан до пятницы."],
+    ["Եկեք կազմենք մարքեթինգային պլան։", "Let's make a marketing plan.", "Давайте составим маркетинговый план."],
+    ["Որո՞նք են մեր մրցակիցները։", "Who are our competitors?", "Кто наши конкуренты?"],
+    ["Ինչպե՞ս բարձրացնել վաճառքը։", "How to increase sales?", "Как увеличить продажи?"],
+    ["Աշխատակիցների մոտիվացիան կարեւոր է։", "Employee motivation is important.", "Мотивация сотрудников важна."],
+    ["Ներդրումներ կատարել նոր տեխնոլոգիաներում։", "Invest in new technologies.", "Инвестируйте в новые технологии."]
+  ];
+  const dialogues = [
+    { title: { en: "Negotiating Price", hy: "Գնի շուրջ բանակցություն", ru: "Переговоры о цене" }, turns: [
+      ["user", "Մեր առաջարկը 10% զեղչ է մեծ պատվերի համար։", "Our offer is 10% discount for large orders.", "Наше предложение — 10% скидка на крупные заказы."],
+      ["nurik", "Ընդունում ենք, բայց առաքումը պետք է լինի անվճար։", "We accept, but shipping must be free.", "Принимаем, но доставка должна быть бесплатной."],
+      ["user", "Համաձայն եմ, եթե պատվերը 1000 միավորից ավել է։", "Agreed, if the order is over 1000 units.", "Согласен, если заказ более 1000 штук."],
+      ["nurik", "Լավ, ձեռքսեղմումով։", "OK, handshake.", "Хорошо, рукопожатие."]
+    ]},
+    { title: { en: "Startup Pitch", hy: "Ստարտափի ներկայացում", ru: "Презентация стартапа" }, turns: [
+      ["nurik", "Մեր նախագիծը էկոլոգիական փաթեթավորման մասին է։", "Our project is about eco-friendly packaging.", "Наш проект об экологичной упаковке."],
+      ["user", "Որքա՞ն ներդրում է անհրաժեշտ։", "How much investment is needed?", "Сколько инвестиций нужно?"],
+      ["nurik", "50 հազար դոլար, և մեկ տարում կվերադարձնենք։", "$50k, and we'll return in one year.", "50 тысяч долларов, и вернём за год."],
+      ["user", "Հետաքրքիր է, ներկայացրու ավելի մանրամասն։", "Interesting, present in more detail.", "Интересно, представь подробнее."]
+    ]},
+    { title: { en: "Annual Meeting", hy: "Տարեկան հանդիպում", ru: "Годовое собрание" }, turns: [
+      ["user", "Տարվա վերջնական հաշվետվությունը պատրա՞ստ է։", "Is the annual report ready?", "Годовой отчёт готов?"],
+      ["nurik", "Այո, ահա ֆայլը։", "Yes, here is the file.", "Да, вот файл."],
+      ["user", "Շահույթը 20%-ով ավելացել է։", "Profit increased by 20%.", "Прибыль выросла на 20%."],
+      ["nurik", "Հիանալի աշխատանք բոլորին։", "Great job everyone.", "Отличная работа всех."]
+    ]}
+  ];
+  return {
+    id, worldId: "w9", slug, difficulty: "B1",
+    title: { en: enT, hy: hyT, ru: ruT },
+    concept: { en: `Business topics: ${enT}`, hy: `Բիզնես թեմա՝ ${hyT}`, ru: `Бизнес тема: ${ruT}` },
+    vocab: commonVocab, phrases, dialogues
+  };
+}
+
+function buildWorld10(): QuickLesson[] {
+  const topics = [
+    ["painting", "Painting", "Նկարչություն", "Живопись"],
+    ["music", "Music Genres", "Երաժշտական ժանրեր", "Музыкальные жанры"],
+    ["literature", "Literature", "Գրականություն", "Литература"],
+    ["poetry", "Poetry", "Պոեզիա", "Поэзия"],
+    ["cinema", "Cinema", "Կինո", "Кино"],
+    ["theater", "Theatre", "Թատրոն", "Театр"],
+    ["sculpture", "Sculpture", "Քանդակագործություն", "Скульптура"],
+    ["architecture", "Architecture", "Ճարտարապետություն", "Архитектура"],
+    ["dance", "Dance Art", "Պարարվեստ", "Танцевальное искусство"],
+    ["photography_art", "Fine Art Photography", "Գեղարվեստական լուսանկարչություն", "Художественная фотография"]
+  ];
+  return topics.map(([slug, enT, hyT, ruT], idx) =>
+    makeArtLesson(`w10_l${idx + 1}`, slug, enT, hyT, ruT)
+  );
+}
+
+function makeArtLesson(id: string, slug: string, enT: string, hyT: string, ruT: string): QuickLesson {
+  const commonVocab: Array<[string, string, string]> = [
+    ["արվեստ", "art", "искусство"], ["նկարիչ", "artist", "художник"],
+    ["գործ", "work (art)", "произведение"], ["ցուցահանդես", "exhibition", "выставка"],
+    ["թանգարան", "museum", "музей"], ["պատկերասրահ", "gallery", "галерея"],
+    ["գեղեցկություն", "beauty", "красота"], ["ոգեշնչում", "inspiration", "вдохновение"],
+    ["ստեղծագործել", "to create", "создавать"], ["արտահայտել", "to express", "выражать"],
+    ["զգացմունք", "emotion", "эмоция"], ["գաղափար", "idea", "идея"],
+    ["ոճ", "style", "стиль"], ["դասական", "classical", "классический"],
+    ["ժամանակակից", "modern", "современный"], ["վեպ", "novel", "роман"],
+    ["բանաստեղծություն", "poem", "стихотворение"], ["դերասան", "actor", "актёр"],
+    ["ֆիլմ", "film", "фильм"], ["ռեժիսոր", "director", "режиссёр"],
+    ["դեր", "role", "роль"], ["բեմ", "stage", "сцена"],
+    ["հանդիսատես", "audience", "зритель"], ["քննադատ", "critic", "критик"],
+    ["գլուխգործոց", "masterpiece", "шедевр"]
+  ];
+  const phrases: Array<[string, string, string, string[]?]> = [
+    ["Սիրու՞մ ես արվեստ։", "Do you like art?", "Любишь искусство?"],
+    ["Իմ սիրած նկարիչը ...", "My favorite artist is ...", "Мой любимый художник ..."],
+    ["Վերջերս գնացի ցուցահանդեսի։", "I recently went to an exhibition.", "Недавно был на выставке."],
+    ["Այս ֆիլմը արժանացել է Օսկարի։", "This film won an Oscar.", "Этот фильм получил Оскар."],
+    ["Դասական երաժշտությունը հանգստացնում է։", "Classical music relaxes.", "Классическая музыка расслабляет."],
+    ["Ես գիրք եմ գրում։", "I am writing a book.", "Я пишу книгу."],
+    ["Ո՞րն է քո սիրած բանաստեղծությունը։", "What's your favorite poem?", "Какое твоё любимое стихотворение?"],
+    ["Թատրոնն այլ զգացողություն է տալիս, քան կինոն։", "Theatre gives a different feeling than cinema.", "Театр даёт другие ощущения, чем кино."],
+    ["Պետք է ավելի շատ աջակցել տեղական արվեստին։", "We should support local art more.", "Нужно больше поддерживать местное искусство."],
+    ["Այս քանդակը շատ արտահայտիչ է։", "This sculpture is very expressive.", "Эта скульптура очень выразительна."],
+    ["Ինչպե՞ս ես սովորում նկարել։", "How are you learning to paint?", "Как учишься рисовать?"],
+    ["Երաժշտությունը համընդհանուր լեզու է։", "Music is a universal language.", "Музыка — универсальный язык."]
+  ];
+  const dialogues = [
+    { title: { en: "At the Museum", hy: "Թանգարանում", ru: "В музее" }, turns: [
+      ["user", "Տեսե՞լ ես Վան Գոգի «Աստղալի գիշերը»։", "Have you seen Van Gogh's Starry Night?", "Видел «Звёздную ночь» Ван Гога?"],
+      ["nurik", "Այո, ռեպրոդուկցիայով։", "Yes, in reproduction.", "Да, в репродукции."],
+      ["user", "Բնօրինակը Նյու Յորքում է, պետք է տեսնել։", "The original is in New York, must see.", "Оригинал в Нью-Йорке, нужно увидеть."],
+      ["nurik", "Հույս ունեմ մի օր կգնամ։", "I hope to go someday.", "Надеюсь, когда-нибудь поеду."]
+    ]},
+    { title: { en: "Reading Books", hy: "Գրքեր կարդալ", ru: "Чтение книг" }, turns: [
+      ["nurik", "Ի՞նչ ես կարդում այս օրերին։", "What are you reading these days?", "Что читаешь в эти дни?"],
+      ["user", "Պատմական վեպ Հայաստանի մասին։", "A historical novel about Armenia.", "Исторический роман об Армении."],
+      ["nurik", "Հեղինակը ո՞վ է։", "Who is the author?", "Кто автор?"],
+      ["user", "Մկրտիչ Հայրապետյան։", "Mkrtich Hayrapetyan.", "Мкртич Айрапетян."]
+    ]},
+    { title: { en: "Cinema Discussion", hy: "Կինոյի քննարկում", ru: "Обсуждение кино" }, turns: [
+      ["user", "Երեկ դիտեցի մի հայկական ֆիլմ։", "Yesterday I watched an Armenian film.", "Вчера посмотрел армянский фильм."],
+      ["nurik", "Ինչպիսի՞ն էր։", "How was it?", "Как он?"],
+      ["user", "Շատ հուզիչ, խորհուրդ եմ տալիս։", "Very touching, I recommend it.", "Очень трогательный, рекомендую."],
+      ["nurik", "Շնորհակալություն, կդիտեմ։", "Thanks, I'll watch it.", "Спасибо, посмотрю."]
+    ]}
+  ];
+  return {
+    id, worldId: "w10", slug, difficulty: "B1",
+    title: { en: enT, hy: hyT, ru: ruT },
+    concept: { en: `Exploring ${enT}`, hy: `Ուսումնասիրել ${hyT}`, ru: `Изучаем ${ruT}` },
+    vocab: commonVocab, phrases, dialogues
+  };
+}
 // ─── qL helper (used by world 2) ─────────────────────────────────────────────
 
 function qL(
