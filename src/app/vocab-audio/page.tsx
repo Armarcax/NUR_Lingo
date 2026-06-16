@@ -3,13 +3,13 @@
 import { useState, useEffect, useMemo } from "react";
 import BottomNav from "@/components/BottomNav";
 import { CONTENT_LESSONS, type VocabItem } from "@/lib/content/database";
+import { useSpeech } from "@/lib/hooks/useSpeech";
 
 export default function VocabAudioPage() {
+  const { speak, isSpeaking, isSupported } = useSpeech();
   const [vocab, setVocab] = useState<VocabItem[]>([]);
   const [playing, setPlaying] = useState<string | null>(null);
-  const [audioSupported, setAudioSupported] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterLang, setFilterLang] = useState<"all" | "hy" | "en" | "ru">("all");
 
   useEffect(() => {
     const all: VocabItem[] = [];
@@ -18,9 +18,6 @@ export default function VocabAudioPage() {
     }
     const unique = Array.from(new Map(all.map(v => [v.id, v])).values());
     setVocab(unique);
-    if (typeof window !== "undefined" && !window.speechSynthesis) {
-      setAudioSupported(false);
-    }
   }, []);
 
   const filteredVocab = useMemo(() => {
@@ -33,28 +30,24 @@ export default function VocabAudioPage() {
     });
   }, [vocab, searchQuery]);
 
-  const speak = (text: string, lang: string, id: string) => {
-    if (!audioSupported) {
+  const handleSpeak = (text: string, id: string) => {
+    if (!isSupported) {
       alert("Ձեր բրաուզերը չի աջակցում ձայնային արտասանությանը");
       return;
     }
-    if (playing) window.speechSynthesis.cancel();
     setPlaying(id);
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = lang;
-    utterance.rate = 0.85;
-    utterance.pitch = 1;
-    utterance.onend = () => setPlaying(null);
-    utterance.onerror = () => setPlaying(null);
-    window.speechSynthesis.speak(utterance);
+    speak(text, "hy", () => {
+      setPlaying(null);
+    });
   };
 
-  if (!audioSupported) {
+  if (!isSupported) {
     return (
       <div className="min-h-screen bg-[#1a0a0a] flex items-center justify-center p-4 pb-20">
-        <div className="bg-red-900/30 p-6 rounded-xl text-center border border-red-500/30">
-          <p className="text-red-300">⚠️ Ձեր բրաուզերը չի աջակցում ձայնային արտասանությանը:</p>
+        <div className="bg-red-900/30 p-6 rounded-xl text-center border border-red-500/30 max-w-md">
+          <p className="text-red-300 text-lg">⚠️ Ձեր բրաուզերը չի աջակցում ձայնային արտասանությանը:</p>
           <p className="text-sm mt-2 text-gray-400">Խնդրում ենք օգտագործել Chrome, Edge կամ Safari:</p>
+          <p className="text-xs mt-4 text-gray-500">Speech Synthesis API-ն հասանելի չէ:</p>
         </div>
         <BottomNav />
       </div>
@@ -96,7 +89,7 @@ export default function VocabAudioPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => speak(item.hy, "hy", item.id)}
+                  onClick={() => handleSpeak(item.hy, item.id)}
                   disabled={playing === item.id}
                   className={`px-4 py-2 rounded-full text-sm font-bold transition ${
                     playing === item.id

@@ -6,6 +6,7 @@ import BottomNav from "@/components/BottomNav";
 import InteractiveDialogue from "@/components/InteractiveDialogue";
 import { CONTENT_LESSONS, type DialogueTurn } from "@/lib/content/database";
 import { loadLangConfig, type LangCode } from "@/lib/i18n/index";
+import { useSpeech } from "@/lib/hooks/useSpeech";
 
 interface DialogueWithMeta {
   id: string;
@@ -19,6 +20,7 @@ interface DialogueWithMeta {
 
 export default function DialoguesPage() {
   const router = useRouter();
+  const { speak, isSpeaking, isSupported } = useSpeech();
   const [dialogues, setDialogues] = useState<DialogueWithMeta[]>([]);
   const [nativeLang, setNativeLang] = useState<LangCode>("hy");
   const [expandedDialogue, setExpandedDialogue] = useState<string | null>(null);
@@ -50,16 +52,15 @@ export default function DialoguesPage() {
     setDialogues(allDialogues);
   }, []);
 
-  const speak = (text: string, id: string) => {
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
-    if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+  const handleSpeak = (text: string, id: string) => {
+    if (!isSupported) {
+      alert("Ձեր բրաուզերը չի աջակցում ձայնային արտասանությանը");
+      return;
+    }
     setSpeakingId(id);
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "hy";
-    utterance.rate = 0.9;
-    utterance.onend = () => setSpeakingId(null);
-    utterance.onerror = () => setSpeakingId(null);
-    window.speechSynthesis.speak(utterance);
+    speak(text, "hy", () => {
+      setSpeakingId(null);
+    });
   };
 
   const toggleDialogue = (id: string) => {
@@ -94,7 +95,7 @@ export default function DialoguesPage() {
         const key = `${dlg.id}-${idx}`;
         const isRevealed = revealedLines[key];
         const audioId = `${dlg.id}-${idx}`;
-        const isSpeaking = speakingId === audioId;
+        const isSpeakingNow = isSpeaking && speakingId === audioId;
         return (
           <div
             key={key}
@@ -125,14 +126,14 @@ export default function DialoguesPage() {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                speak(turn.hy, audioId);
+                handleSpeak(turn.hy, audioId);
               }}
-              disabled={isSpeaking}
+              disabled={isSpeakingNow}
               className={`absolute -right-8 top-1/2 transform -translate-y-1/2 text-sm opacity-0 group-hover:opacity-100 transition ${
-                isSpeaking ? "text-gray-500" : "text-blue-400 hover:text-blue-300"
+                isSpeakingNow ? "text-gray-500" : "text-blue-400 hover:text-blue-300"
               }`}
             >
-              {isSpeaking ? "🔊 ..." : "🔊"}
+              {isSpeakingNow ? "🔊 ..." : "🔊"}
             </button>
           </div>
         );
@@ -160,7 +161,6 @@ export default function DialoguesPage() {
         turns={dlg.turns}
         onComplete={(score, total) => {
           console.log(`Score ${score}/${total}`);
-          // Կարող ես ավելացնել HAYQ պարգև
         }}
       />
       <div className="text-center pt-3">
