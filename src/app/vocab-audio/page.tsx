@@ -4,12 +4,15 @@ import { useState, useEffect, useMemo } from "react";
 import BottomNav from "@/components/BottomNav";
 import { CONTENT_LESSONS, type VocabItem } from "@/lib/content/database";
 import { useSpeech } from "@/lib/hooks/useSpeech";
+import { useAudioRecorder } from "@/lib/hooks/useAudioRecorder";
 
 export default function VocabAudioPage() {
   const { speak, isSpeaking, isSupported } = useSpeech();
+  const { isRecording, startRecording, stopRecording, saveRecording, getRecording, playRecording, deleteRecording } = useAudioRecorder();
   const [vocab, setVocab] = useState<VocabItem[]>([]);
   const [playing, setPlaying] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [recordingId, setRecordingId] = useState<string | null>(null);
 
   useEffect(() => {
     const all: VocabItem[] = [];
@@ -36,33 +39,36 @@ export default function VocabAudioPage() {
       return;
     }
     setPlaying(id);
-    speak(text, "hy", () => {
-      setPlaying(null);
-    });
+    speak(text, "hy", () => setPlaying(null));
   };
 
-  if (!isSupported) {
-    return (
-      <div className="min-h-screen bg-[#1a0a0a] flex items-center justify-center p-4 pb-20">
-        <div className="bg-red-900/30 p-6 rounded-xl text-center border border-red-500/30 max-w-md">
-          <p className="text-red-300 text-lg">⚠️ Ձեր բրաուզերը չի աջակցում ձայնային արտասանությանը:</p>
-          <p className="text-sm mt-2 text-gray-400">Խնդրում ենք օգտագործել Chrome, Edge կամ Safari:</p>
-          <p className="text-xs mt-4 text-gray-500">Speech Synthesis API-ն հասանելի չէ:</p>
-        </div>
-        <BottomNav />
-      </div>
-    );
-  }
+  const handleRecord = async (id: string) => {
+    if (isRecording && recordingId === id) {
+      stopRecording();
+      // After stopping, we need to save the recording
+      setTimeout(() => {
+        saveRecording(id);
+        setRecordingId(null);
+      }, 500);
+      return;
+    }
+    // Start recording for this word
+    setRecordingId(id);
+    await startRecording();
+  };
+
+  const hasUserRecording = (id: string): boolean => {
+    return !!getRecording(id);
+  };
 
   return (
     <div className="min-h-screen bg-[#1a0a0a] text-white pb-20">
       <div className="max-w-3xl mx-auto px-4 py-6">
-        <h1 className="text-2xl font-bold mb-2">🔊 Բառապաշար (աուդիո)</h1>
+        <h1 className="text-2xl font-bold mb-2">🔊 Բառապաշար (աուդիո + ձայնագրություն)</h1>
         <p className="text-sm text-gray-400 mb-4">
-          {vocab.length} բառ. հպեք 🔊 կոճակին՝ լսելու արտասանությունը
+          {vocab.length} բառ. Լսիր բազային արտասանությունը կամ ձայնագրիր քո սեփականը:
         </p>
 
-        {/* Search */}
         <div className="mb-4">
           <input
             type="text"
@@ -77,30 +83,76 @@ export default function VocabAudioPage() {
           {filteredVocab.length === 0 ? (
             <div className="text-center py-8 text-gray-500">Բառեր չեն գտնվել</div>
           ) : (
-            filteredVocab.map(item => (
-              <div
-                key={item.id}
-                className="bg-white/5 border border-white/10 rounded-xl p-4 flex justify-between items-center hover:bg-white/10 transition"
-              >
-                <div>
-                  <div className="text-lg font-bold">{item.hy}</div>
-                  <div className="text-sm text-gray-400">
-                    {item.en} / {item.ru}
+            filteredVocab.map(item => {
+              const hasRecording = hasUserRecording(item.id);
+              return (
+                <div
+                  key={item.id}
+                  className="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/10 transition"
+                >
+                  <div className="flex flex-wrap justify-between items-center gap-2">
+                    <div className="flex-1 min-w-[100px]">
+                      <div className="text-lg font-bold">{item.hy}</div>
+                      <div className="text-sm text-gray-400">
+                        {item.en} / {item.ru}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {/* Base audio */}
+                      <button
+                        onClick={() => handleSpeak(item.hy, item.id)}
+                        disabled={playing === item.id}
+                        className={`px-3 py-1 rounded-full text-sm font-bold transition ${
+                          playing === item.id
+                            ? "bg-green-600 text-white cursor-wait"
+                            : "bg-blue-600 hover:bg-blue-700 text-white"
+                        }`}
+                      >
+                        {playing === item.id ? "🔊 ..." : "🔊"}
+                      </button>
+
+                      {/* Record / Stop */}
+                      <button
+                        onClick={() => handleRecord(item.id)}
+                        className={`px-3 py-1 rounded-full text-sm font-bold transition ${
+                          isRecording && recordingId === item.id
+                            ? "bg-red-600 hover:bg-red-700 animate-pulse"
+                            : "bg-purple-600 hover:bg-purple-700"
+                        } text-white`}
+                      >
+                        {isRecording && recordingId === item.id ? "⏹" : "🎤"}
+                      </button>
+
+                      {/* Play user recording */}
+                      {hasRecording && (
+                        <button
+                          onClick={() => playRecording(item.id)}
+                          className="px-3 py-1 rounded-full text-sm font-bold bg-green-700 hover:bg-green-800 text-white"
+                        >
+                          ▶️
+                        </button>
+                      )}
+
+                      {/* Delete user recording */}
+                      {hasRecording && (
+                        <button
+                          onClick={() => {
+                            if (confirm("Ջնջե՞լ ձեր ձայնագրությունը:")) {
+                              deleteRecording(item.id);
+                              // force re-render
+                              setVocab([...vocab]);
+                            }
+                          }}
+                          className="px-3 py-1 rounded-full text-sm font-bold bg-red-800 hover:bg-red-900 text-white"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <button
-                  onClick={() => handleSpeak(item.hy, item.id)}
-                  disabled={playing === item.id}
-                  className={`px-4 py-2 rounded-full text-sm font-bold transition ${
-                    playing === item.id
-                      ? "bg-green-600 text-white cursor-wait"
-                      : "bg-blue-600 hover:bg-blue-700 text-white"
-                  }`}
-                >
-                  {playing === item.id ? "🔊 ..." : "🔊 Լսել"}
-                </button>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
