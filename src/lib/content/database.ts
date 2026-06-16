@@ -2623,7 +2623,7 @@ function makeHobbyLesson(id: string, slug: string, enT: string, hyT: string, ruT
     ["Հոբբին օգնում է հանգստանալ։", "Hobbies help to relax.", "Хобби помогает расслабиться."],
     ["Ո՞ր հոբբին ես առաջարկում։", "Which hobby do you recommend?", "Какое хобби посоветуешь?"]
   ];
-  const dialogues = [
+  const dialogues: Array<{ title: Tri; turns: Array<[speaker: "nurik" | "user", hy: string, en: string, ru: string]> }> = [
     { title: { en: "Talking About Hobbies", hy: "Խոսենք հոբբիների մասին", ru: "Разговор о хобби" }, turns: [
       ["nurik", "Ի՞նչ ես սիրում անել ազատ ժամանակ։", "What do you like to do in your free time?", "Что любишь делать в свободное время?"],
       ["user", "Ես սիրում եմ ...", "I like ...", "Мне нравится ..."],
@@ -2699,7 +2699,7 @@ function makeTechLesson(id: string, slug: string, enT: string, hyT: string, ruT:
     ["Խաղում ես առցանց խաղեր։", "Do you play online games?", "Играешь в онлайн-игры?"],
     ["Վաղը թողարկվում է նոր մոդելը։", "The new model is released tomorrow.", "Завтра выходит новая модель."]
   ];
-  const dialogues = [
+  const dialogues: Array<{ title: Tri; turns: Array<[speaker: "nurik" | "user", hy: string, en: string, ru: string]> }> = [
     { title: { en: "Computer Trouble", hy: "Համակարգչային խնդիր", ru: "Проблема с компьютером" }, turns: [
       ["user", "Համակարգիչս չի միանում։", "My computer won't turn on.", "Мой компьютер не включается."],
       ["nurik", "Ստուգիր հոսանքի լարը։", "Check the power cord.", "Проверь шнур питания."],
@@ -2775,7 +2775,7 @@ function makeEnvLesson(id: string, slug: string, enT: string, hyT: string, ruT: 
     ["Միասին կարող ենք փոխել աշխարհը։", "Together we can change the world.", "Вместе мы можем изменить мир."],
     ["Եկեք միանանք բնապահպանական շարժմանը։", "Let's join the environmental movement.", "Давайте присоединимся к экологическому движению."]
   ];
-  const dialogues = [
+  const dialogues: Array<{ title: Tri; turns: Array<[speaker: "nurik" | "user", hy: string, en: string, ru: string]> }> = [
     { title: { en: "Cleaning the Beach", hy: "Լողափի մաքրում", ru: "Уборка пляжа" }, turns: [
       ["nurik", "Այս շաբաթ լողափի մաքրման ակցիա կա։", "There's a beach cleanup this week.", "На этой неделе уборка пляжа."],
       ["user", "Ես կմասնակցեմ։", "I will participate.", "Я поучаствую."],
@@ -2851,7 +2851,7 @@ function makeBizLesson(id: string, slug: string, enT: string, hyT: string, ruT: 
     ["Աշխատակիցների մոտիվացիան կարեւոր է։", "Employee motivation is important.", "Мотивация сотрудников важна."],
     ["Ներդրումներ կատարել նոր տեխնոլոգիաներում։", "Invest in new technologies.", "Инвестируйте в новые технологии."]
   ];
-  const dialogues = [
+  const dialogues: Array<{ title: Tri; turns: Array<[speaker: "nurik" | "user", hy: string, en: string, ru: string]> }> = [
     { title: { en: "Negotiating Price", hy: "Գնի շուրջ բանակցություն", ru: "Переговоры о цене" }, turns: [
       ["user", "Մեր առաջարկը 10% զեղչ է մեծ պատվերի համար։", "Our offer is 10% discount for large orders.", "Наше предложение — 10% скидка на крупные заказы."],
       ["nurik", "Ընդունում ենք, բայց առաքումը պետք է լինի անվճար։", "We accept, but shipping must be free.", "Принимаем, но доставка должна быть бесплатной."],
@@ -2927,7 +2927,7 @@ function makeArtLesson(id: string, slug: string, enT: string, hyT: string, ruT: 
     ["Ինչպե՞ս ես սովորում նկարել։", "How are you learning to paint?", "Как учишься рисовать?"],
     ["Երաժշտությունը համընդհանուր լեզու է։", "Music is a universal language.", "Музыка — универсальный язык."]
   ];
-  const dialogues = [
+  const dialogues: Array<{ title: Tri; turns: Array<[speaker: "nurik" | "user", hy: string, en: string, ru: string]> }> = [
     { title: { en: "At the Museum", hy: "Թանգարանում", ru: "В музее" }, turns: [
       ["user", "Տեսե՞լ ես Վան Գոգի «Աստղալի գիշերը»։", "Have you seen Van Gogh's Starry Night?", "Видел «Звёздную ночь» Ван Гога?"],
       ["nurik", "Այո, ռեպրոդուկցիայով։", "Yes, in reproduction.", "Да, в репродукции."],
