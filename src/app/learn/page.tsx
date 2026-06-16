@@ -138,7 +138,7 @@ function LearnInner() {
     if (!current || ex.state === "submitting") return;
     
     let answerForApi: string;
-    if (current.type === "word_order" && sessionLevel < 3) {
+    if (current.type === "word_order") {
       if (selectedWords.length === 0) return;
       answerForApi = selectedWords.join(" ");
     } else if (current.type === "match_pairs") {
@@ -148,6 +148,7 @@ function LearnInner() {
       if (!ex.userAnswer) return;
       answerForApi = ex.userAnswer;
     } else {
+      // For listening and textarea types
       if (!ex.userAnswer.trim()) return;
       answerForApi = ex.userAnswer.trim();
     }
@@ -209,7 +210,7 @@ function LearnInner() {
     } catch {
       setEx(s => ({ ...s, state: "incorrect", feedback: "Ցանցի սխալ", nuriMood: "sad", nuriSpeech: "Oops! 😅" }));
     }
-  }, [current, ex.userAnswer, ex.state, selectedWords, matchPairsMap, matchLeftItems.length, lesson, streak, native, sessionLevel]);
+  }, [current, ex.userAnswer, ex.state, selectedWords, matchPairsMap, matchLeftItems.length, lesson, streak, native]);
 
   const next = useCallback(() => {
     if (!lesson) return;
@@ -282,7 +283,7 @@ function LearnInner() {
           )}
 
           <div className="mt-8">
-            {current.type === "word_order" && sessionLevel < 3 && current.words ? (
+            {current.type === "word_order" && current.words ? (
               <WordOrderInput 
                 selected={selectedWords} 
                 available={availWords} 
@@ -290,7 +291,7 @@ function LearnInner() {
                 onDeselect={(w) => {setAW([...availWords, w]); setSW(selectedWords.filter(x => x !== w))}} 
                 disabled={ex.state !== "idle"} 
               />
-            ) : current.type === "multiple_choice" && sessionLevel < 3 && current.options ? (
+            ) : current.type === "multiple_choice" && current.options ? (
               <div className="grid grid-cols-2 gap-4">
                 {current.options.map(opt => (
                   <button 
@@ -302,7 +303,7 @@ function LearnInner() {
                   </button>
                 ))}
               </div>
-            ) : current.type === "match_pairs" && sessionLevel < 3 && current.pairs ? (
+            ) : current.type === "match_pairs" && current.pairs ? (
               <MatchPairsInput
                 leftItems={matchLeftItems}
                 rightItems={matchRightItems}
@@ -315,7 +316,7 @@ function LearnInner() {
                 }}
                 disabled={ex.state !== "idle"}
               />
-            ) : current.type === "listening" && sessionLevel < 3 && current.ttsText ? (
+            ) : current.type === "listening" && current.ttsText ? (
               <ListeningInput
                 ttsText={current.ttsText}
                 ttsLang={current.ttsLang || (loadLangConfig()?.learning || "hy")}
@@ -469,7 +470,7 @@ function MatchPairsInput({ leftItems, rightItems, matched, onMatch, disabled }: 
 interface ListeningInputProps {
   ttsText: string;
   ttsLang: string;
-  promptText: string;   // the question text
+  promptText: string;
   value: string;
   onChange: (val: string) => void;
   disabled: boolean;
@@ -479,18 +480,15 @@ function ListeningInput({ ttsText, ttsLang, promptText, value, onChange, disable
   const [isPlaying, setIsPlaying] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Cancel previous speech and speak new text
   const speak = () => {
     if (disabled || isPlaying) return;
-    // Cancel any ongoing speech
     window.speechSynthesis?.cancel();
 
     const utterance = new SpeechSynthesisUtterance(ttsText);
     utterance.lang = ttsLang;
-    utterance.rate = 0.85; // slightly slower for clarity
+    utterance.rate = 0.85;
     utterance.pitch = 1;
 
-    // Try to find a native voice
     const voices = window.speechSynthesis?.getVoices?.() || [];
     const nativeVoice = voices.find(v => v.lang.startsWith(ttsLang.split("-")[0]));
     if (nativeVoice) utterance.voice = nativeVoice;
@@ -498,7 +496,6 @@ function ListeningInput({ ttsText, ttsLang, promptText, value, onChange, disable
     setIsPlaying(true);
     utterance.onend = () => {
       setIsPlaying(false);
-      // Auto-focus the textarea after playback ends
       textareaRef.current?.focus();
     };
     utterance.onerror = () => setIsPlaying(false);
@@ -506,7 +503,6 @@ function ListeningInput({ ttsText, ttsLang, promptText, value, onChange, disable
     window.speechSynthesis?.speak(utterance);
   };
 
-  // Cancel speech when component unmounts or disabled changes
   useEffect(() => {
     if (disabled) {
       window.speechSynthesis?.cancel();
@@ -516,13 +512,11 @@ function ListeningInput({ ttsText, ttsLang, promptText, value, onChange, disable
 
   return (
     <div className="space-y-4">
-      {/* Instructions */}
       <div className="text-sm text-blue-300 bg-blue-950/30 p-3 rounded-xl">
         <p>🎧 {promptText}</p>
         <p className="text-xs opacity-70 mt-1">Լսեք ուշադիր և գրեք վերջին արտահայտությունը:</p>
       </div>
 
-      {/* Play button */}
       <button
         onClick={speak}
         disabled={disabled || isPlaying}
@@ -545,7 +539,6 @@ function ListeningInput({ ttsText, ttsLang, promptText, value, onChange, disable
         )}
       </button>
 
-      {/* Text area for user answer */}
       <textarea
         ref={textareaRef}
         value={value}
