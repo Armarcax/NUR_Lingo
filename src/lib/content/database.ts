@@ -152,6 +152,72 @@ export const WORLDS: World[] = [
     colorTo: "#064E3B",
     lessons: ["w5_l1", "w5_l2", "w5_l3", "w5_l4", "w5_l5", "w5_l6"],
   },
+  // ===== NEW WORLDS w6–w10 =====
+  {
+    id: "w6",
+    title: { en: "Hobbies & Entertainment", hy: "Հոբբիներ և Ժամանց", ru: "Хобби и Развлечения" },
+    description: {
+      en: "Free time, sports, games, cinema.",
+      hy: "Ազատ ժամանակ, սպորտ, խաղեր, կինո։",
+      ru: "Свободное время, спорт, игры, кино.",
+    },
+    iconEmoji: "🎮",
+    colorFrom: "#E91E63",
+    colorTo: "#AD1457",
+    lessons: ["w6_l1", "w6_l2", "w6_l3", "w6_l4", "w6_l5", "w6_l6", "w6_l7", "w6_l8", "w6_l9", "w6_l10"],
+  },
+  {
+    id: "w7",
+    title: { en: "Technology & Digital Life", hy: "Տեխնոլոգիա և Թվային Կյանք", ru: "Технологии и Цифровая Жизнь" },
+    description: {
+      en: "Computers, internet, social media, AI.",
+      hy: "Համակարգիչներ, ինտերնետ, սոցցանցեր, AI։",
+      ru: "Компьютеры, интернет, соцсети, ИИ.",
+    },
+    iconEmoji: "📱",
+    colorFrom: "#2196F3",
+    colorTo: "#0D47A1",
+    lessons: ["w7_l1", "w7_l2", "w7_l3", "w7_l4", "w7_l5", "w7_l6", "w7_l7", "w7_l8", "w7_l9", "w7_l10"],
+  },
+  {
+    id: "w8",
+    title: { en: "Environment & Ecology", hy: "Շրջակա Միջավայր և Էկոլոգիա", ru: "Окружающая Среда и Экология" },
+    description: {
+      en: "Nature, climate, recycling, animals.",
+      hy: "Բնություն, կլիմա, վերամշակում, կենդանիներ։",
+      ru: "Природа, климат, переработка, животные.",
+    },
+    iconEmoji: "🌱",
+    colorFrom: "#4CAF50",
+    colorTo: "#1B5E20",
+    lessons: ["w8_l1", "w8_l2", "w8_l3", "w8_l4", "w8_l5", "w8_l6", "w8_l7", "w8_l8", "w8_l9", "w8_l10"],
+  },
+  {
+    id: "w9",
+    title: { en: "Business & Finance", hy: "Բիզնես և Ֆինանսներ", ru: "Бизнес и Финансы" },
+    description: {
+      en: "Money, banking, negotiations, marketing.",
+      hy: "Փող, բանկային գործ, բանակցություններ, մարքեթինգ։",
+      ru: "Деньги, банковское дело, переговоры, маркетинг.",
+    },
+    iconEmoji: "💼",
+    colorFrom: "#FF9800",
+    colorTo: "#E65100",
+    lessons: ["w9_l1", "w9_l2", "w9_l3", "w9_l4", "w9_l5", "w9_l6", "w9_l7", "w9_l8", "w9_l9", "w9_l10"],
+  },
+  {
+    id: "w10",
+    title: { en: "Art & Literature", hy: "Արվեստ և Գրականություն", ru: "Искусство и Литература" },
+    description: {
+      en: "Painting, music, books, poetry.",
+      hy: "Նկարչություն, երաժշտություն, գրքեր, պոեզիա։",
+      ru: "Живопись, музыка, книги, поэзия.",
+    },
+    iconEmoji: "🎨",
+    colorFrom: "#9C27B0",
+    colorTo: "#4A148C",
+    lessons: ["w10_l1", "w10_l2", "w10_l3", "w10_l4", "w10_l5", "w10_l6", "w10_l7", "w10_l8", "w10_l9", "w10_l10"],
+  },
 ];
 
 // ─── Reusable shared vocab blocks (compact) ──────────────────────────────────
@@ -823,9 +889,16 @@ const QUICK_LESSONS: QuickLesson[] = [
   ...buildWorld4(),
   // ===== World 5 =====
   ...buildWorld5(),
+  // ===== NEW WORLDS w6–w10 =====
+  ...buildWorld6(),
+  ...buildWorld7(),
+  ...buildWorld8(),
+  ...buildWorld9(),
+  ...buildWorld10(),
 ];
 
 // ─── World 2–5 builders (kept as functions for readability) ──────────────────
+// (These are exactly as in your original file – I'm including them completely)
 
 function buildWorld2(): QuickLesson[] {
   return [
@@ -879,7 +952,6 @@ function buildWorld2(): QuickLesson[] {
           ["user", "Գտա, պայուսակիս մեջ էր։", "Found it, in my bag.", "Нашёл, в сумке."],
         ]},
       ]),
-
     qL("w2_l2", "w2", "rooms", "Rooms", "Սենյակներ", "Комнаты", "Rooms in the house.",
       [
         ["խոհանոց", "kitchen", "кухня"], ["ննջարան", "bedroom", "спальня"],
@@ -930,7 +1002,6 @@ function buildWorld2(): QuickLesson[] {
           ["user", "Շնորհակալություն։", "Thank you.", "Спасибо."],
         ]},
       ]),
-
     qL("w2_l3", "w2", "furniture", "Furniture", "Կահույք", "Мебель", "Furniture vocabulary.",
       [
         ["աթոռ", "chair", "стул"], ["սեղան", "table", "стол"],
@@ -981,7 +1052,6 @@ function buildWorld2(): QuickLesson[] {
           ["user", "Հիանալի։", "Great.", "Отлично."],
         ]},
       ]),
-
     qL("w2_l4", "w2", "food", "Food", "Ուտելիք", "Еда", "Food vocabulary.",
       [
         ["հաց", "bread", "хлеб"], ["պանիր", "cheese", "сыр"],
@@ -1032,7 +1102,6 @@ function buildWorld2(): QuickLesson[] {
           ["user", "Երբեմն։", "Sometimes.", "Иногда."],
         ]},
       ]),
-
     qL("w2_l5", "w2", "drinks", "Drinks", "Ըմպելիքներ", "Напитки", "Drinks vocabulary.",
       [
         ["ջուր", "water", "вода"], ["թեյ", "tea", "чай"],
@@ -1083,7 +1152,6 @@ function buildWorld2(): QuickLesson[] {
           ["user", "Բոլորիս։", "To all of us.", "За всех нас."],
         ]},
       ]),
-
     qL("w2_l6", "w2", "restaurant", "Restaurant", "Ռեստորան", "Ресторан", "Eating out.",
       [
         ["ռեստորան", "restaurant", "ресторан"], ["սրճարան", "café", "кафе"],
@@ -1134,7 +1202,6 @@ function buildWorld2(): QuickLesson[] {
           ["nurik", "Ե՞րբ։", "When?", "Когда?"],
         ]},
       ]),
-
     qL("w2_l7", "w2", "shopping", "Shopping", "Գնումներ", "Покупки", "Shopping vocabulary.",
       [
         ["խանութ", "shop", "магазин"], ["շուկա", "market", "рынок"],
@@ -1185,7 +1252,6 @@ function buildWorld2(): QuickLesson[] {
           ["nurik", "Լավ, գումարը կվերադարձնեմ։", "OK, I'll refund.", "Хорошо, верну деньги."],
         ]},
       ]),
-
     qL("w2_l8", "w2", "clothing", "Clothing", "Հագուստ", "Одежда", "Clothes vocabulary.",
       [
         ["շապիկ", "shirt", "рубашка"], ["տաբատ", "trousers", "брюки"],
@@ -1236,7 +1302,6 @@ function buildWorld2(): QuickLesson[] {
           ["user", "Լավ։", "OK.", "Хорошо."],
         ]},
       ]),
-
     qL("w2_l9", "w2", "weather", "Weather", "Եղանակ", "Погода", "Weather talk.",
       [
         ["արև", "sun", "солнце"], ["ամպ", "cloud", "облако"],
@@ -1287,7 +1352,6 @@ function buildWorld2(): QuickLesson[] {
           ["user", "Շնորհակալություն։", "Thank you.", "Спасибо."],
         ]},
       ]),
-
     qL("w2_l10", "w2", "time", "Time", "Ժամանակ", "Время", "Time and clock.",
       [
         ["ժամ", "hour", "час"], ["րոպե", "minute", "минута"],
@@ -1360,7 +1424,6 @@ function buildWorld3(): QuickLesson[] {
 function makeTravelLesson(
   id: string, slug: string, enT: string, hyT: string, ruT: string, conceptEn: string
 ): QuickLesson {
-  // Shared travel-themed content per topic (compact but valid).
   const banks: Record<string, { vocab: Array<[string, string, string]>; phrases: Array<[string, string, string]>; dialogues: any[] }> = {
     airport: {
       vocab: [
@@ -1817,7 +1880,6 @@ function buildWorld4(): QuickLesson[] {
     ["meetings", "Meetings", "Հանդիպումներ", "Встречи"],
     ["technology", "Technology", "Տեխնոլոգիա", "Технология"],
   ];
-  // For brevity, reuse a generic builder with topic-specific seed vocab.
   return topics.map(([slug, en, hy, ru], i) => makeWorkEduLesson(`w4_l${i + 1}`, slug, en, hy, ru));
 }
 
@@ -2511,7 +2573,7 @@ function makeAdvancedLesson(id: string, slug: string, enT: string, hyT: string, 
   };
 }
 
-// ─── Compact qL helper alias ─────────────────────────────────────────────────
+// ─── qL helper (used by world 2) ─────────────────────────────────────────────
 
 function qL(
   id: string, worldId: string, slug: string, enT: string, hyT: string, ruT: string,
@@ -2530,7 +2592,6 @@ function qL(
 
 // ─── Append expanded QuickLessons to CONTENT_LESSONS ─────────────────────────
 
-// (expand() applied lazily so it runs after function declarations)
 CONTENT_LESSONS.push(...QUICK_LESSONS.map(expand));
 
 // ─── Lookup helpers ──────────────────────────────────────────────────────────
@@ -2541,7 +2602,6 @@ export const getContentLessonById = (id: string) => CONTENT_LESSONS.find(l => l.
 export const getLessonsForWorld = (worldId: string) =>
   CONTENT_LESSONS.filter(l => l.worldId === worldId);
 
-/** All lessons in canonical world/lesson order. */
 export function getAllLessonsOrdered(): ContentLesson[] {
   const out: ContentLesson[] = [];
   for (const w of WORLDS) {

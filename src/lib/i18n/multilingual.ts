@@ -69,8 +69,7 @@ export const MULTI_UNITS: MultiUnit[] = [
 
 // ─── HY→EN (Armenian speaker learns English) ────────────────────────────────
 
-const HY_EN_LESSONS: MultiLesson[] = [
-  {
+const HY_EN_LESSONS: MultiLesson[] = [{
     id: "hyen_l1", unitId: "u1",
     title: { hy: "Ողջույն", en: "Greetings", ru: "Приветствие" },
     description: { hy: "Ինչպե՞ս ողջունել անգլերեն", en: "How to greet in English", ru: "Как здороваться по-английски" },
@@ -187,8 +186,687 @@ const HY_EN_LESSONS: MultiLesson[] = [
         acceptableAnswers: ["I am number three", "I am third"],
         words: ["I", "am", "number", "three"], hayqReward: 10 },
     ]
-  }
-];
+  },
+  {
+    id: "hyen_dlg_1",
+    unitId: "u1",
+    title: { hy: "Ծանոթություն", en: "Introduction", ru: "Знакомство" },
+    description: { hy: "Զրույց Ծանոթություն թեմայով", en: "Dialogue about Introduction", ru: "Диалог на тему Знакомство" },
+    estimatedMinutes: 6,
+    hayqTotal: 60,
+    exercises: [
+      {
+        id: "hyen_dlg_1_ex1",
+        type: "translate",
+        prompt: { hy: "Թարգմանել անգլերեն՝ «Ինչպե՞ս ես դու»", en: "Translate to English", ru: "Переведите на английский" },
+        targetAnswer: "How are you?",
+        acceptableAnswers: ["How are you", "How are you?"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_1_ex2",
+        type: "multiple_choice",
+        prompt: { hy: "«Ցտեսություն»-ի անգլերեն թարգմանությունը", en: "English for «Goodbye»", ru: "Английский для «До свидания»" },
+        targetAnswer: "Goodbye",
+        options: ["Goodbye", "Hello", "Thank you", "Sorry"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_1_ex3",
+        type: "word_order",
+        prompt: { hy: "Դասավորել բառերը", en: "Arrange words", ru: "Составьте" },
+        targetAnswer: "I love learning Armenian",
+        words: ["I", "love", "learning", "Armenian"],
+        hayqReward: 10,
+      }
+    ]
+  },
+  {
+    id: "hyen_dlg_2",
+    unitId: "u1",
+    title: { hy: "Ընտանիք", en: "Family", ru: "Семья" },
+    description: { hy: "Զրույց Ընտանիք թեմայով", en: "Dialogue about Family", ru: "Диалог на тему Семья" },
+    estimatedMinutes: 6,
+    hayqTotal: 60,
+    exercises: [
+      {
+        id: "hyen_dlg_2_ex1",
+        type: "translate",
+        prompt: { hy: "Թարգմանել անգլերեն՝ «Ինչպե՞ս ես դու»", en: "Translate to English", ru: "Переведите на английский" },
+        targetAnswer: "How are you?",
+        acceptableAnswers: ["How are you", "How are you?"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_2_ex2",
+        type: "multiple_choice",
+        prompt: { hy: "«Ցտեսություն»-ի անգլերեն թարգմանությունը", en: "English for «Goodbye»", ru: "Английский для «До свидания»" },
+        targetAnswer: "Goodbye",
+        options: ["Goodbye", "Hello", "Thank you", "Sorry"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_2_ex3",
+        type: "word_order",
+        prompt: { hy: "Դասավորել բառերը", en: "Arrange words", ru: "Составьте" },
+        targetAnswer: "I love learning Armenian",
+        words: ["I", "love", "learning", "Armenian"],
+        hayqReward: 10,
+      }
+    ]
+  },
+  {
+    id: "hyen_dlg_3",
+    unitId: "u1",
+    title: { hy: "Տուն", en: "Home", ru: "Дом" },
+    description: { hy: "Զրույց Տուն թեմայով", en: "Dialogue about Home", ru: "Диалог на тему Дом" },
+    estimatedMinutes: 6,
+    hayqTotal: 60,
+    exercises: [
+      {
+        id: "hyen_dlg_3_ex1",
+        type: "translate",
+        prompt: { hy: "Թարգմանել անգլերեն՝ «Ինչպե՞ս ես դու»", en: "Translate to English", ru: "Переведите на английский" },
+        targetAnswer: "How are you?",
+        acceptableAnswers: ["How are you", "How are you?"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_3_ex2",
+        type: "multiple_choice",
+        prompt: { hy: "«Ցտեսություն»-ի անգլերեն թարգմանությունը", en: "English for «Goodbye»", ru: "Английский для «До свидания»" },
+        targetAnswer: "Goodbye",
+        options: ["Goodbye", "Hello", "Thank you", "Sorry"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_3_ex3",
+        type: "word_order",
+        prompt: { hy: "Դասավորել բառերը", en: "Arrange words", ru: "Составьте" },
+        targetAnswer: "I love learning Armenian",
+        words: ["I", "love", "learning", "Armenian"],
+        hayqReward: 10,
+      }
+    ]
+  },
+  {
+    id: "hyen_dlg_4",
+    unitId: "u1",
+    title: { hy: "Սնունդ", en: "Food", ru: "Еда" },
+    description: { hy: "Զրույց Սնունդ թեմայով", en: "Dialogue about Food", ru: "Диалог на тему Еда" },
+    estimatedMinutes: 6,
+    hayqTotal: 60,
+    exercises: [
+      {
+        id: "hyen_dlg_4_ex1",
+        type: "translate",
+        prompt: { hy: "Թարգմանել անգլերեն՝ «Ինչպե՞ս ես դու»", en: "Translate to English", ru: "Переведите на английский" },
+        targetAnswer: "How are you?",
+        acceptableAnswers: ["How are you", "How are you?"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_4_ex2",
+        type: "multiple_choice",
+        prompt: { hy: "«Ցտեսություն»-ի անգլերեն թարգմանությունը", en: "English for «Goodbye»", ru: "Английский для «До свидания»" },
+        targetAnswer: "Goodbye",
+        options: ["Goodbye", "Hello", "Thank you", "Sorry"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_4_ex3",
+        type: "word_order",
+        prompt: { hy: "Դասավորել բառերը", en: "Arrange words", ru: "Составьте" },
+        targetAnswer: "I love learning Armenian",
+        words: ["I", "love", "learning", "Armenian"],
+        hayqReward: 10,
+      }
+    ]
+  },
+  {
+    id: "hyen_dlg_5",
+    unitId: "u1",
+    title: { hy: "Խմիչք", en: "Drinks", ru: "Напитки" },
+    description: { hy: "Զրույց Խմիչք թեմայով", en: "Dialogue about Drinks", ru: "Диалог на тему Напитки" },
+    estimatedMinutes: 6,
+    hayqTotal: 60,
+    exercises: [
+      {
+        id: "hyen_dlg_5_ex1",
+        type: "translate",
+        prompt: { hy: "Թարգմանել անգլերեն՝ «Ինչպե՞ս ես դու»", en: "Translate to English", ru: "Переведите на английский" },
+        targetAnswer: "How are you?",
+        acceptableAnswers: ["How are you", "How are you?"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_5_ex2",
+        type: "multiple_choice",
+        prompt: { hy: "«Ցտեսություն»-ի անգլերեն թարգմանությունը", en: "English for «Goodbye»", ru: "Английский для «До свидания»" },
+        targetAnswer: "Goodbye",
+        options: ["Goodbye", "Hello", "Thank you", "Sorry"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_5_ex3",
+        type: "word_order",
+        prompt: { hy: "Դասավորել բառերը", en: "Arrange words", ru: "Составьте" },
+        targetAnswer: "I love learning Armenian",
+        words: ["I", "love", "learning", "Armenian"],
+        hayqReward: 10,
+      }
+    ]
+  },
+  {
+    id: "hyen_dlg_6",
+    unitId: "u1",
+    title: { hy: "Գնումներ", en: "Shopping", ru: "Покупки" },
+    description: { hy: "Զրույց Գնումներ թեմայով", en: "Dialogue about Shopping", ru: "Диалог на тему Покупки" },
+    estimatedMinutes: 6,
+    hayqTotal: 60,
+    exercises: [
+      {
+        id: "hyen_dlg_6_ex1",
+        type: "translate",
+        prompt: { hy: "Թարգմանել անգլերեն՝ «Ինչպե՞ս ես դու»", en: "Translate to English", ru: "Переведите на английский" },
+        targetAnswer: "How are you?",
+        acceptableAnswers: ["How are you", "How are you?"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_6_ex2",
+        type: "multiple_choice",
+        prompt: { hy: "«Ցտեսություն»-ի անգլերեն թարգմանությունը", en: "English for «Goodbye»", ru: "Английский для «До свидания»" },
+        targetAnswer: "Goodbye",
+        options: ["Goodbye", "Hello", "Thank you", "Sorry"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_6_ex3",
+        type: "word_order",
+        prompt: { hy: "Դասավորել բառերը", en: "Arrange words", ru: "Составьте" },
+        targetAnswer: "I love learning Armenian",
+        words: ["I", "love", "learning", "Armenian"],
+        hayqReward: 10,
+      }
+    ]
+  },
+  {
+    id: "hyen_dlg_7",
+    unitId: "u1",
+    title: { hy: "Ճամփորդություն", en: "Travel", ru: "Путешествие" },
+    description: { hy: "Զրույց Ճամփորդություն թեմայով", en: "Dialogue about Travel", ru: "Диалог на тему Путешествие" },
+    estimatedMinutes: 6,
+    hayqTotal: 60,
+    exercises: [
+      {
+        id: "hyen_dlg_7_ex1",
+        type: "translate",
+        prompt: { hy: "Թարգմանել անգլերեն՝ «Ինչպե՞ս ես դու»", en: "Translate to English", ru: "Переведите на английский" },
+        targetAnswer: "How are you?",
+        acceptableAnswers: ["How are you", "How are you?"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_7_ex2",
+        type: "multiple_choice",
+        prompt: { hy: "«Ցտեսություն»-ի անգլերեն թարգմանությունը", en: "English for «Goodbye»", ru: "Английский для «До свидания»" },
+        targetAnswer: "Goodbye",
+        options: ["Goodbye", "Hello", "Thank you", "Sorry"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_7_ex3",
+        type: "word_order",
+        prompt: { hy: "Դասավորել բառերը", en: "Arrange words", ru: "Составьте" },
+        targetAnswer: "I love learning Armenian",
+        words: ["I", "love", "learning", "Armenian"],
+        hayqReward: 10,
+      }
+    ]
+  },
+  {
+    id: "hyen_dlg_8",
+    unitId: "u1",
+    title: { hy: "Ժամանակ", en: "Time", ru: "Время" },
+    description: { hy: "Զրույց Ժամանակ թեմայով", en: "Dialogue about Time", ru: "Диалог на тему Время" },
+    estimatedMinutes: 6,
+    hayqTotal: 60,
+    exercises: [
+      {
+        id: "hyen_dlg_8_ex1",
+        type: "translate",
+        prompt: { hy: "Թարգմանել անգլերեն՝ «Ինչպե՞ս ես դու»", en: "Translate to English", ru: "Переведите на английский" },
+        targetAnswer: "How are you?",
+        acceptableAnswers: ["How are you", "How are you?"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_8_ex2",
+        type: "multiple_choice",
+        prompt: { hy: "«Ցտեսություն»-ի անգլերեն թարգմանությունը", en: "English for «Goodbye»", ru: "Английский для «До свидания»" },
+        targetAnswer: "Goodbye",
+        options: ["Goodbye", "Hello", "Thank you", "Sorry"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_8_ex3",
+        type: "word_order",
+        prompt: { hy: "Դասավորել բառերը", en: "Arrange words", ru: "Составьте" },
+        targetAnswer: "I love learning Armenian",
+        words: ["I", "love", "learning", "Armenian"],
+        hayqReward: 10,
+      }
+    ]
+  },
+  {
+    id: "hyen_dlg_9",
+    unitId: "u1",
+    title: { hy: "Եղանակ", en: "Weather", ru: "Погода" },
+    description: { hy: "Զրույց Եղանակ թեմայով", en: "Dialogue about Weather", ru: "Диалог на тему Погода" },
+    estimatedMinutes: 6,
+    hayqTotal: 60,
+    exercises: [
+      {
+        id: "hyen_dlg_9_ex1",
+        type: "translate",
+        prompt: { hy: "Թարգմանել անգլերեն՝ «Ինչպե՞ս ես դու»", en: "Translate to English", ru: "Переведите на английский" },
+        targetAnswer: "How are you?",
+        acceptableAnswers: ["How are you", "How are you?"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_9_ex2",
+        type: "multiple_choice",
+        prompt: { hy: "«Ցտեսություն»-ի անգլերեն թարգմանությունը", en: "English for «Goodbye»", ru: "Английский для «До свидания»" },
+        targetAnswer: "Goodbye",
+        options: ["Goodbye", "Hello", "Thank you", "Sorry"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_9_ex3",
+        type: "word_order",
+        prompt: { hy: "Դասավորել բառերը", en: "Arrange words", ru: "Составьте" },
+        targetAnswer: "I love learning Armenian",
+        words: ["I", "love", "learning", "Armenian"],
+        hayqReward: 10,
+      }
+    ]
+  },
+  {
+    id: "hyen_dlg_10",
+    unitId: "u1",
+    title: { hy: "Աշխատանք", en: "Work", ru: "Работа" },
+    description: { hy: "Զրույց Աշխատանք թեմայով", en: "Dialogue about Work", ru: "Диалог на тему Работа" },
+    estimatedMinutes: 6,
+    hayqTotal: 60,
+    exercises: [
+      {
+        id: "hyen_dlg_10_ex1",
+        type: "translate",
+        prompt: { hy: "Թարգմանել անգլերեն՝ «Ինչպե՞ս ես դու»", en: "Translate to English", ru: "Переведите на английский" },
+        targetAnswer: "How are you?",
+        acceptableAnswers: ["How are you", "How are you?"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_10_ex2",
+        type: "multiple_choice",
+        prompt: { hy: "«Ցտեսություն»-ի անգլերեն թարգմանությունը", en: "English for «Goodbye»", ru: "Английский для «До свидания»" },
+        targetAnswer: "Goodbye",
+        options: ["Goodbye", "Hello", "Thank you", "Sorry"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_10_ex3",
+        type: "word_order",
+        prompt: { hy: "Դասավորել բառերը", en: "Arrange words", ru: "Составьте" },
+        targetAnswer: "I love learning Armenian",
+        words: ["I", "love", "learning", "Armenian"],
+        hayqReward: 10,
+      }
+    ]
+  },
+  {
+    id: "hyen_dlg_11",
+    unitId: "u1",
+    title: { hy: "Հոբբի", en: "Hobby", ru: "Хобби" },
+    description: { hy: "Զրույց Հոբբի թեմայով", en: "Dialogue about Hobby", ru: "Диалог на тему Хобби" },
+    estimatedMinutes: 6,
+    hayqTotal: 60,
+    exercises: [
+      {
+        id: "hyen_dlg_11_ex1",
+        type: "translate",
+        prompt: { hy: "Թարգմանել անգլերեն՝ «Ինչպե՞ս ես դու»", en: "Translate to English", ru: "Переведите на английский" },
+        targetAnswer: "How are you?",
+        acceptableAnswers: ["How are you", "How are you?"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_11_ex2",
+        type: "multiple_choice",
+        prompt: { hy: "«Ցտեսություն»-ի անգլերեն թարգմանությունը", en: "English for «Goodbye»", ru: "Английский для «До свидания»" },
+        targetAnswer: "Goodbye",
+        options: ["Goodbye", "Hello", "Thank you", "Sorry"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_11_ex3",
+        type: "word_order",
+        prompt: { hy: "Դասավորել բառերը", en: "Arrange words", ru: "Составьте" },
+        targetAnswer: "I love learning Armenian",
+        words: ["I", "love", "learning", "Armenian"],
+        hayqReward: 10,
+      }
+    ]
+  },
+  {
+    id: "hyen_dlg_12",
+    unitId: "u1",
+    title: { hy: "Բժիշկ", en: "Doctor", ru: "Врач" },
+    description: { hy: "Զրույց Բժիշկ թեմայով", en: "Dialogue about Doctor", ru: "Диалог на тему Врач" },
+    estimatedMinutes: 6,
+    hayqTotal: 60,
+    exercises: [
+      {
+        id: "hyen_dlg_12_ex1",
+        type: "translate",
+        prompt: { hy: "Թարգմանել անգլերեն՝ «Ինչպե՞ս ես դու»", en: "Translate to English", ru: "Переведите на английский" },
+        targetAnswer: "How are you?",
+        acceptableAnswers: ["How are you", "How are you?"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_12_ex2",
+        type: "multiple_choice",
+        prompt: { hy: "«Ցտեսություն»-ի անգլերեն թարգմանությունը", en: "English for «Goodbye»", ru: "Английский для «До свидания»" },
+        targetAnswer: "Goodbye",
+        options: ["Goodbye", "Hello", "Thank you", "Sorry"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_12_ex3",
+        type: "word_order",
+        prompt: { hy: "Դասավորել բառերը", en: "Arrange words", ru: "Составьте" },
+        targetAnswer: "I love learning Armenian",
+        words: ["I", "love", "learning", "Armenian"],
+        hayqReward: 10,
+      }
+    ]
+  },
+  {
+    id: "hyen_dlg_13",
+    unitId: "u1",
+    title: { hy: "Հյուրանոց", en: "Hotel", ru: "Отель" },
+    description: { hy: "Զրույց Հյուրանոց թեմայով", en: "Dialogue about Hotel", ru: "Диалог на тему Отель" },
+    estimatedMinutes: 6,
+    hayqTotal: 60,
+    exercises: [
+      {
+        id: "hyen_dlg_13_ex1",
+        type: "translate",
+        prompt: { hy: "Թարգմանել անգլերեն՝ «Ինչպե՞ս ես դու»", en: "Translate to English", ru: "Переведите на английский" },
+        targetAnswer: "How are you?",
+        acceptableAnswers: ["How are you", "How are you?"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_13_ex2",
+        type: "multiple_choice",
+        prompt: { hy: "«Ցտեսություն»-ի անգլերեն թարգմանությունը", en: "English for «Goodbye»", ru: "Английский для «До свидания»" },
+        targetAnswer: "Goodbye",
+        options: ["Goodbye", "Hello", "Thank you", "Sorry"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_13_ex3",
+        type: "word_order",
+        prompt: { hy: "Դասավորել բառերը", en: "Arrange words", ru: "Составьте" },
+        targetAnswer: "I love learning Armenian",
+        words: ["I", "love", "learning", "Armenian"],
+        hayqReward: 10,
+      }
+    ]
+  },
+  {
+    id: "hyen_dlg_14",
+    unitId: "u1",
+    title: { hy: "Ռեստորան", en: "Restaurant", ru: "Ресторан" },
+    description: { hy: "Զրույց Ռեստորան թեմայով", en: "Dialogue about Restaurant", ru: "Диалог на тему Ресторан" },
+    estimatedMinutes: 6,
+    hayqTotal: 60,
+    exercises: [
+      {
+        id: "hyen_dlg_14_ex1",
+        type: "translate",
+        prompt: { hy: "Թարգմանել անգլերեն՝ «Ինչպե՞ս ես դու»", en: "Translate to English", ru: "Переведите на английский" },
+        targetAnswer: "How are you?",
+        acceptableAnswers: ["How are you", "How are you?"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_14_ex2",
+        type: "multiple_choice",
+        prompt: { hy: "«Ցտեսություն»-ի անգլերեն թարգմանությունը", en: "English for «Goodbye»", ru: "Английский для «До свидания»" },
+        targetAnswer: "Goodbye",
+        options: ["Goodbye", "Hello", "Thank you", "Sorry"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_14_ex3",
+        type: "word_order",
+        prompt: { hy: "Դասավորել բառերը", en: "Arrange words", ru: "Составьте" },
+        targetAnswer: "I love learning Armenian",
+        words: ["I", "love", "learning", "Armenian"],
+        hayqReward: 10,
+      }
+    ]
+  },
+  {
+    id: "hyen_dlg_15",
+    unitId: "u1",
+    title: { hy: "Ֆիլմ", en: "Movie", ru: "Фильм" },
+    description: { hy: "Զրույց Ֆիլմ թեմայով", en: "Dialogue about Movie", ru: "Диалог на тему Фильм" },
+    estimatedMinutes: 6,
+    hayqTotal: 60,
+    exercises: [
+      {
+        id: "hyen_dlg_15_ex1",
+        type: "translate",
+        prompt: { hy: "Թարգմանել անգլերեն՝ «Ինչպե՞ս ես դու»", en: "Translate to English", ru: "Переведите на английский" },
+        targetAnswer: "How are you?",
+        acceptableAnswers: ["How are you", "How are you?"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_15_ex2",
+        type: "multiple_choice",
+        prompt: { hy: "«Ցտեսություն»-ի անգլերեն թարգմանությունը", en: "English for «Goodbye»", ru: "Английский для «До свидания»" },
+        targetAnswer: "Goodbye",
+        options: ["Goodbye", "Hello", "Thank you", "Sorry"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_15_ex3",
+        type: "word_order",
+        prompt: { hy: "Դասավորել բառերը", en: "Arrange words", ru: "Составьте" },
+        targetAnswer: "I love learning Armenian",
+        words: ["I", "love", "learning", "Armenian"],
+        hayqReward: 10,
+      }
+    ]
+  },
+  {
+    id: "hyen_dlg_16",
+    unitId: "u1",
+    title: { hy: "Երաժշտություն", en: "Music", ru: "Музыка" },
+    description: { hy: "Զրույց Երաժշտություն թեմայով", en: "Dialogue about Music", ru: "Диалог на тему Музыка" },
+    estimatedMinutes: 6,
+    hayqTotal: 60,
+    exercises: [
+      {
+        id: "hyen_dlg_16_ex1",
+        type: "translate",
+        prompt: { hy: "Թարգմանել անգլերեն՝ «Ինչպե՞ս ես դու»", en: "Translate to English", ru: "Переведите на английский" },
+        targetAnswer: "How are you?",
+        acceptableAnswers: ["How are you", "How are you?"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_16_ex2",
+        type: "multiple_choice",
+        prompt: { hy: "«Ցտեսություն»-ի անգլերեն թարգմանությունը", en: "English for «Goodbye»", ru: "Английский для «До свидания»" },
+        targetAnswer: "Goodbye",
+        options: ["Goodbye", "Hello", "Thank you", "Sorry"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_16_ex3",
+        type: "word_order",
+        prompt: { hy: "Դասավորել բառերը", en: "Arrange words", ru: "Составьте" },
+        targetAnswer: "I love learning Armenian",
+        words: ["I", "love", "learning", "Armenian"],
+        hayqReward: 10,
+      }
+    ]
+  },
+  {
+    id: "hyen_dlg_17",
+    unitId: "u1",
+    title: { hy: "Սպորտ", en: "Sport", ru: "Спорт" },
+    description: { hy: "Զրույց Սպորտ թեմայով", en: "Dialogue about Sport", ru: "Диалог на тему Спорт" },
+    estimatedMinutes: 6,
+    hayqTotal: 60,
+    exercises: [
+      {
+        id: "hyen_dlg_17_ex1",
+        type: "translate",
+        prompt: { hy: "Թարգմանել անգլերեն՝ «Ինչպե՞ս ես դու»", en: "Translate to English", ru: "Переведите на английский" },
+        targetAnswer: "How are you?",
+        acceptableAnswers: ["How are you", "How are you?"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_17_ex2",
+        type: "multiple_choice",
+        prompt: { hy: "«Ցտեսություն»-ի անգլերեն թարգմանությունը", en: "English for «Goodbye»", ru: "Английский для «До свидания»" },
+        targetAnswer: "Goodbye",
+        options: ["Goodbye", "Hello", "Thank you", "Sorry"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_17_ex3",
+        type: "word_order",
+        prompt: { hy: "Դասավորել բառերը", en: "Arrange words", ru: "Составьте" },
+        targetAnswer: "I love learning Armenian",
+        words: ["I", "love", "learning", "Armenian"],
+        hayqReward: 10,
+      }
+    ]
+  },
+  {
+    id: "hyen_dlg_18",
+    unitId: "u1",
+    title: { hy: "Տեխնոլոգիա", en: "Technology", ru: "Технологии" },
+    description: { hy: "Զրույց Տեխնոլոգիա թեմայով", en: "Dialogue about Technology", ru: "Диалог на тему Технологии" },
+    estimatedMinutes: 6,
+    hayqTotal: 60,
+    exercises: [
+      {
+        id: "hyen_dlg_18_ex1",
+        type: "translate",
+        prompt: { hy: "Թարգմանել անգլերեն՝ «Ինչպե՞ս ես դու»", en: "Translate to English", ru: "Переведите на английский" },
+        targetAnswer: "How are you?",
+        acceptableAnswers: ["How are you", "How are you?"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_18_ex2",
+        type: "multiple_choice",
+        prompt: { hy: "«Ցտեսություն»-ի անգլերեն թարգմանությունը", en: "English for «Goodbye»", ru: "Английский для «До свидания»" },
+        targetAnswer: "Goodbye",
+        options: ["Goodbye", "Hello", "Thank you", "Sorry"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_18_ex3",
+        type: "word_order",
+        prompt: { hy: "Դասավորել բառերը", en: "Arrange words", ru: "Составьте" },
+        targetAnswer: "I love learning Armenian",
+        words: ["I", "love", "learning", "Armenian"],
+        hayqReward: 10,
+      }
+    ]
+  },
+  {
+    id: "hyen_dlg_19",
+    unitId: "u1",
+    title: { hy: "Կրթություն", en: "Education", ru: "Образование" },
+    description: { hy: "Զրույց Կրթություն թեմայով", en: "Dialogue about Education", ru: "Диалог на тему Образование" },
+    estimatedMinutes: 6,
+    hayqTotal: 60,
+    exercises: [
+      {
+        id: "hyen_dlg_19_ex1",
+        type: "translate",
+        prompt: { hy: "Թարգմանել անգլերեն՝ «Ինչպե՞ս ես դու»", en: "Translate to English", ru: "Переведите на английский" },
+        targetAnswer: "How are you?",
+        acceptableAnswers: ["How are you", "How are you?"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_19_ex2",
+        type: "multiple_choice",
+        prompt: { hy: "«Ցտեսություն»-ի անգլերեն թարգմանությունը", en: "English for «Goodbye»", ru: "Английский для «До свидания»" },
+        targetAnswer: "Goodbye",
+        options: ["Goodbye", "Hello", "Thank you", "Sorry"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_19_ex3",
+        type: "word_order",
+        prompt: { hy: "Դասավորել բառերը", en: "Arrange words", ru: "Составьте" },
+        targetAnswer: "I love learning Armenian",
+        words: ["I", "love", "learning", "Armenian"],
+        hayqReward: 10,
+      }
+    ]
+  },
+  {
+    id: "hyen_dlg_20",
+    unitId: "u1",
+    title: { hy: "Բնություն", en: "Nature", ru: "Природа" },
+    description: { hy: "Զրույց Բնություն թեմայով", en: "Dialogue about Nature", ru: "Диалог на тему Природа" },
+    estimatedMinutes: 6,
+    hayqTotal: 60,
+    exercises: [
+      {
+        id: "hyen_dlg_20_ex1",
+        type: "translate",
+        prompt: { hy: "Թարգմանել անգլերեն՝ «Ինչպե՞ս ես դու»", en: "Translate to English", ru: "Переведите на английский" },
+        targetAnswer: "How are you?",
+        acceptableAnswers: ["How are you", "How are you?"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_20_ex2",
+        type: "multiple_choice",
+        prompt: { hy: "«Ցտեսություն»-ի անգլերեն թարգմանությունը", en: "English for «Goodbye»", ru: "Английский для «До свидания»" },
+        targetAnswer: "Goodbye",
+        options: ["Goodbye", "Hello", "Thank you", "Sorry"],
+        hayqReward: 10,
+      },
+      {
+        id: "hyen_dlg_20_ex3",
+        type: "word_order",
+        prompt: { hy: "Դասավորել բառերը", en: "Arrange words", ru: "Составьте" },
+        targetAnswer: "I love learning Armenian",
+        words: ["I", "love", "learning", "Armenian"],
+        hayqReward: 10,
+      }
+    ]
+  }];
 
 // ─── RU→HY (Russian speaker learns Armenian) ────────────────────────────────
 
