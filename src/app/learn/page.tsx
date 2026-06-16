@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import Nuri, { NuriSpeech, getMoodFromScore, type NuriMood } from "@/components/Nuri";
@@ -319,6 +319,7 @@ function LearnInner() {
               <ListeningInput
                 ttsText={current.ttsText}
                 ttsLang={current.ttsLang || (loadLangConfig()?.learning || "hy")}
+                promptText={current.prompt[native] ?? current.prompt["en"]}
                 value={ex.userAnswer}
                 onChange={(val) => setEx({...ex, userAnswer: val})}
                 disabled={ex.state !== "idle"}
@@ -463,37 +464,94 @@ function MatchPairsInput({ leftItems, rightItems, matched, onMatch, disabled }: 
 }
 
 // ----------------------------------------------------------------------
-// Listening Input Component
+// ✨ IMPROVED Listening Input Component
 // ----------------------------------------------------------------------
 interface ListeningInputProps {
   ttsText: string;
   ttsLang: string;
+  promptText: string;   // the question text
   value: string;
   onChange: (val: string) => void;
   disabled: boolean;
 }
 
-function ListeningInput({ ttsText, ttsLang, value, onChange, disabled }: ListeningInputProps) {
+function ListeningInput({ ttsText, ttsLang, promptText, value, onChange, disabled }: ListeningInputProps) {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Cancel previous speech and speak new text
   const speak = () => {
+    if (disabled || isPlaying) return;
+    // Cancel any ongoing speech
+    window.speechSynthesis?.cancel();
+
     const utterance = new SpeechSynthesisUtterance(ttsText);
     utterance.lang = ttsLang;
-    window.speechSynthesis.speak(utterance);
+    utterance.rate = 0.85; // slightly slower for clarity
+    utterance.pitch = 1;
+
+    // Try to find a native voice
+    const voices = window.speechSynthesis?.getVoices?.() || [];
+    const nativeVoice = voices.find(v => v.lang.startsWith(ttsLang.split("-")[0]));
+    if (nativeVoice) utterance.voice = nativeVoice;
+
+    setIsPlaying(true);
+    utterance.onend = () => {
+      setIsPlaying(false);
+      // Auto-focus the textarea after playback ends
+      textareaRef.current?.focus();
+    };
+    utterance.onerror = () => setIsPlaying(false);
+
+    window.speechSynthesis?.speak(utterance);
   };
+
+  // Cancel speech when component unmounts or disabled changes
+  useEffect(() => {
+    if (disabled) {
+      window.speechSynthesis?.cancel();
+      setIsPlaying(false);
+    }
+  }, [disabled]);
 
   return (
     <div className="space-y-4">
+      {/* Instructions */}
+      <div className="text-sm text-blue-300 bg-blue-950/30 p-3 rounded-xl">
+        <p>🎧 {promptText}</p>
+        <p className="text-xs opacity-70 mt-1">Լսեք ուշադիր և գրեք վերջին արտահայտությունը:</p>
+      </div>
+
+      {/* Play button */}
       <button
         onClick={speak}
-        className="w-full py-3 bg-orange-600 rounded-xl font-bold flex items-center justify-center gap-2"
-        disabled={disabled}
+        disabled={disabled || isPlaying}
+        className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition ${
+          isPlaying
+            ? 'bg-orange-700/70 cursor-wait'
+            : disabled
+              ? 'bg-gray-600 cursor-not-allowed'
+              : 'bg-orange-600 hover:bg-orange-700'
+        }`}
       >
-        🔊 Լսել արտասանությունը
+        {isPlaying ? (
+          <>
+            <span className="animate-pulse">⏳</span> Նվագարկվում է...
+          </>
+        ) : disabled ? (
+          '🔇 Սպասեք...'
+        ) : (
+          '🔊 Լսել արտասանությունը'
+        )}
       </button>
+
+      {/* Text area for user answer */}
       <textarea
+        ref={textareaRef}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Լսեք և գրեք ձեր լսածը..."
-        className="w-full bg-black/20 p-4 rounded-xl h-32"
+        placeholder="Գրեք ձեր լսածը այստեղ..."
+        className="w-full bg-black/20 p-4 rounded-xl h-32 focus:outline-none focus:ring-2 focus:ring-orange-500 transition"
         disabled={disabled}
       />
     </div>
