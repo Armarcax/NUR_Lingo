@@ -1,33 +1,12 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-
 export default function Level0Page() {
-  const contentRef = useRef<HTMLDivElement>(null);
-
   const handlePrint = () => {
     window.print();
   };
 
-  useEffect(() => {
-    // Styles for printing
-    const style = document.createElement('style');
-    style.innerHTML = `
-      @media print {
-        body * { visibility: hidden; }
-        #level0-content, #level0-content * { visibility: visible; }
-        #level0-content { position: absolute; left: 0; top: 0; width: 100%; }
-        .no-print { display: none !important; }
-        .dialog { break-inside: avoid; }
-        table { break-inside: auto; }
-      }
-    `;
-    document.head.appendChild(style);
-    return () => { document.head.removeChild(style); };
-  }, []);
-
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="min-h-screen bg-gray-50 py-8 px-4 text-black">
       <div className="max-w-4xl mx-auto">
         {/* Print button */}
         <div className="no-print flex justify-end mb-4">
@@ -40,12 +19,7 @@ export default function Level0Page() {
         </div>
 
         {/* Content */}
-        <div
-          id="level0-content"
-          ref={contentRef}
-          className="bg-white p-8 rounded-2xl shadow-xl"
-          style={{ fontFamily: "'Segoe UI', 'Arial', sans-serif" }}
-        >
+        <div id="level0-content" className="bg-white p-8 rounded-2xl shadow-xl text-black">
           <h1 className="text-3xl font-bold text-red-700 border-b-4 border-red-700 pb-2 mb-6">
             📘 NUR Lingo – Զրոյական Մակարդակ (Level 0)
           </h1>
@@ -60,23 +34,23 @@ export default function Level0Page() {
           <table className="w-full border-collapse text-sm mb-6">
             <thead>
               <tr className="bg-blue-800 text-white">
-                <th className="p-2 text-left">#</th>
-                <th className="p-2 text-left">Տառ</th>
-                <th className="p-2 text-left">Անուն</th>
-                <th className="p-2 text-left">EN</th>
-                <th className="p-2 text-left">RU</th>
-                <th className="p-2 text-left">Օրինակ</th>
+                <th className="p-2 text-left border">#</th>
+                <th className="p-2 text-left border">Տառ</th>
+                <th className="p-2 text-left border">Անուն</th>
+                <th className="p-2 text-left border">EN</th>
+                <th className="p-2 text-left border">RU</th>
+                <th className="p-2 text-left border">Օրինակ</th>
               </tr>
             </thead>
             <tbody>
               {alphabetData.map((row, i) => (
                 <tr key={i} className={i % 2 === 0 ? 'bg-gray-50' : ''}>
-                  <td className="p-2 border">{row.id}</td>
-                  <td className="p-2 border">{row.letter}</td>
-                  <td className="p-2 border">{row.name}</td>
-                  <td className="p-2 border">{row.en}</td>
-                  <td className="p-2 border">{row.ru}</td>
-                  <td className="p-2 border">{row.example}</td>
+                  <td className="p-2 border text-black">{row.id}</td>
+                  <td className="p-2 border text-black">{row.letter}</td>
+                  <td className="p-2 border text-black">{row.name}</td>
+                  <td className="p-2 border text-black">{row.en}</td>
+                  <td className="p-2 border text-black">{row.ru}</td>
+                  <td className="p-2 border text-black">{row.example}</td>
                 </tr>
               ))}
             </tbody>
@@ -89,17 +63,17 @@ export default function Level0Page() {
           <table className="w-full border-collapse text-sm mb-6">
             <thead>
               <tr className="bg-blue-800 text-white">
-                <th className="p-2 text-left">Հայերեն</th>
-                <th className="p-2 text-left">English</th>
-                <th className="p-2 text-left">Русский</th>
+                <th className="p-2 text-left border">Հայերեն</th>
+                <th className="p-2 text-left border">English</th>
+                <th className="p-2 text-left border">Русский</th>
               </tr>
             </thead>
             <tbody>
               {phrasesData.map((row, i) => (
                 <tr key={i} className={i % 2 === 0 ? 'bg-gray-50' : ''}>
-                  <td className="p-2 border">{row.hy}</td>
-                  <td className="p-2 border">{row.en}</td>
-                  <td className="p-2 border">{row.ru}</td>
+                  <td className="p-2 border text-black">{row.hy}</td>
+                  <td className="p-2 border text-black">{row.en}</td>
+                  <td className="p-2 border text-black">{row.ru}</td>
                 </tr>
               ))}
             </tbody>
@@ -112,19 +86,19 @@ export default function Level0Page() {
           <table className="w-full border-collapse text-sm mb-6">
             <thead>
               <tr className="bg-blue-800 text-white">
-                <th className="p-2 text-left">#</th>
-                <th className="p-2 text-left">Հայերեն</th>
-                <th className="p-2 text-left">English</th>
-                <th className="p-2 text-left">Русский</th>
+                <th className="p-2 text-left border">#</th>
+                <th className="p-2 text-left border">Հայերեն</th>
+                <th className="p-2 text-left border">English</th>
+                <th className="p-2 text-left border">Русский</th>
               </tr>
             </thead>
             <tbody>
               {numbersData.map((row, i) => (
                 <tr key={i} className={i % 2 === 0 ? 'bg-gray-50' : ''}>
-                  <td className="p-2 border">{row.id}</td>
-                  <td className="p-2 border">{row.hy}</td>
-                  <td className="p-2 border">{row.en}</td>
-                  <td className="p-2 border">{row.ru}</td>
+                  <td className="p-2 border text-black">{row.id}</td>
+                  <td className="p-2 border text-black">{row.hy}</td>
+                  <td className="p-2 border text-black">{row.en}</td>
+                  <td className="p-2 border text-black">{row.ru}</td>
                 </tr>
               ))}
             </tbody>
@@ -137,35 +111,35 @@ export default function Level0Page() {
           <table className="w-full border-collapse text-sm mb-6">
             <thead>
               <tr className="bg-blue-800 text-white">
-                <th className="p-2 text-left">Հայերեն</th>
-                <th className="p-2 text-left">English</th>
-                <th className="p-2 text-left">Русский</th>
+                <th className="p-2 text-left border">Հայերեն</th>
+                <th className="p-2 text-left border">English</th>
+                <th className="p-2 text-left border">Русский</th>
               </tr>
             </thead>
             <tbody>
               {familyData.map((row, i) => (
                 <tr key={i} className={i % 2 === 0 ? 'bg-gray-50' : ''}>
-                  <td className="p-2 border">{row.hy}</td>
-                  <td className="p-2 border">{row.en}</td>
-                  <td className="p-2 border">{row.ru}</td>
+                  <td className="p-2 border text-black">{row.hy}</td>
+                  <td className="p-2 border text-black">{row.en}</td>
+                  <td className="p-2 border text-black">{row.ru}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <p className="font-semibold mt-2">Օգտակար արտահայտություններ.</p>
+          <p className="font-semibold text-black mt-2">Օգտակար արտահայտություններ.</p>
           <table className="w-full border-collapse text-sm mb-6">
             <thead>
               <tr className="bg-blue-800 text-white">
-                <th className="p-2 text-left">Հայերեն</th>
-                <th className="p-2 text-left">English</th>
-                <th className="p-2 text-left">Русский</th>
+                <th className="p-2 text-left border">Հայերեն</th>
+                <th className="p-2 text-left border">English</th>
+                <th className="p-2 text-left border">Русский</th>
               </tr>
             </thead>
             <tbody>
-              <tr className="bg-gray-50"><td className="p-2 border">Ունե՞ս ընտանիք</td><td className="p-2 border">Do you have a family?</td><td className="p-2 border">У тебя есть семья?</td></tr>
-              <tr><td className="p-2 border">Ունեմ մայր, հայր և եղբայր</td><td className="p-2 border">I have a mother, father and a brother</td><td className="p-2 border">У меня есть мама, папа и брат</td></tr>
-              <tr className="bg-gray-50"><td className="p-2 border">Իմ մայրը բժշկուհի է</td><td className="p-2 border">My mother is a doctor</td><td className="p-2 border">Моя мама — врач</td></tr>
-              <tr><td className="p-2 border">Իմ հայրը ինժեներ է</td><td className="p-2 border">My father is an engineer</td><td className="p-2 border">Мой папа — инженер</td></tr>
+              <tr className="bg-gray-50"><td className="p-2 border text-black">Ունե՞ս ընտանիք</td><td className="p-2 border text-black">Do you have a family?</td><td className="p-2 border text-black">У тебя есть семья?</td></tr>
+              <tr><td className="p-2 border text-black">Ունեմ մայր, հայր և եղբայր</td><td className="p-2 border text-black">I have a mother, father and a brother</td><td className="p-2 border text-black">У меня есть мама, папа и брат</td></tr>
+              <tr className="bg-gray-50"><td className="p-2 border text-black">Իմ մայրը բժշկուհի է</td><td className="p-2 border text-black">My mother is a doctor</td><td className="p-2 border text-black">Моя мама — врач</td></tr>
+              <tr><td className="p-2 border text-black">Իմ հայրը ինժեներ է</td><td className="p-2 border text-black">My father is an engineer</td><td className="p-2 border text-black">Мой папа — инженер</td></tr>
             </tbody>
           </table>
 
@@ -176,17 +150,17 @@ export default function Level0Page() {
           <table className="w-full border-collapse text-sm mb-6">
             <thead>
               <tr className="bg-blue-800 text-white">
-                <th className="p-2 text-left">Հայերեն</th>
-                <th className="p-2 text-left">English</th>
-                <th className="p-2 text-left">Русский</th>
+                <th className="p-2 text-left border">Հայերեն</th>
+                <th className="p-2 text-left border">English</th>
+                <th className="p-2 text-left border">Русский</th>
               </tr>
             </thead>
             <tbody>
               {colorsData.map((row, i) => (
                 <tr key={i} className={i % 2 === 0 ? 'bg-gray-50' : ''}>
-                  <td className="p-2 border">{row.hy}</td>
-                  <td className="p-2 border">{row.en}</td>
-                  <td className="p-2 border">{row.ru}</td>
+                  <td className="p-2 border text-black">{row.hy}</td>
+                  <td className="p-2 border text-black">{row.en}</td>
+                  <td className="p-2 border text-black">{row.ru}</td>
                 </tr>
               ))}
             </tbody>
@@ -199,17 +173,17 @@ export default function Level0Page() {
           <table className="w-full border-collapse text-sm mb-6">
             <thead>
               <tr className="bg-blue-800 text-white">
-                <th className="p-2 text-left">Հայերեն</th>
-                <th className="p-2 text-left">English</th>
-                <th className="p-2 text-left">Русский</th>
+                <th className="p-2 text-left border">Հայերեն</th>
+                <th className="p-2 text-left border">English</th>
+                <th className="p-2 text-left border">Русский</th>
               </tr>
             </thead>
             <tbody>
               {verbsData.map((row, i) => (
                 <tr key={i} className={i % 2 === 0 ? 'bg-gray-50' : ''}>
-                  <td className="p-2 border">{row.hy}</td>
-                  <td className="p-2 border">{row.en}</td>
-                  <td className="p-2 border">{row.ru}</td>
+                  <td className="p-2 border text-black">{row.hy}</td>
+                  <td className="p-2 border text-black">{row.en}</td>
+                  <td className="p-2 border text-black">{row.ru}</td>
                 </tr>
               ))}
             </tbody>
@@ -218,34 +192,34 @@ export default function Level0Page() {
           <table className="w-full border-collapse text-sm mb-6">
             <thead>
               <tr className="bg-blue-800 text-white">
-                <th className="p-2 text-left">Դեմք</th>
-                <th className="p-2 text-left">Հայերեն</th>
-                <th className="p-2 text-left">English</th>
-                <th className="p-2 text-left">Русский</th>
+                <th className="p-2 text-left border">Դեմք</th>
+                <th className="p-2 text-left border">Հայերեն</th>
+                <th className="p-2 text-left border">English</th>
+                <th className="p-2 text-left border">Русский</th>
               </tr>
             </thead>
             <tbody>
-              <tr className="bg-gray-50"><td className="p-2 border">Ես</td><td className="p-2 border">ես եմ</td><td className="p-2 border">I am</td><td className="p-2 border">я есть</td></tr>
-              <tr><td className="p-2 border">Դու</td><td className="p-2 border">դու ես</td><td className="p-2 border">you are</td><td className="p-2 border">ты есть</td></tr>
-              <tr className="bg-gray-50"><td className="p-2 border">Նա</td><td className="p-2 border">նա է</td><td className="p-2 border">he/she/it is</td><td className="p-2 border">он/она/оно есть</td></tr>
-              <tr><td className="p-2 border">Մենք</td><td className="p-2 border">մենք ենք</td><td className="p-2 border">we are</td><td className="p-2 border">мы есть</td></tr>
-              <tr className="bg-gray-50"><td className="p-2 border">Դուք</td><td className="p-2 border">դուք եք</td><td className="p-2 border">you are (pl)</td><td className="p-2 border">вы есть</td></tr>
-              <tr><td className="p-2 border">Նրանք</td><td className="p-2 border">նրանք են</td><td className="p-2 border">they are</td><td className="p-2 border">они есть</td></tr>
+              <tr className="bg-gray-50"><td className="p-2 border text-black">Ես</td><td className="p-2 border text-black">ես եմ</td><td className="p-2 border text-black">I am</td><td className="p-2 border text-black">я есть</td></tr>
+              <tr><td className="p-2 border text-black">Դու</td><td className="p-2 border text-black">դու ես</td><td className="p-2 border text-black">you are</td><td className="p-2 border text-black">ты есть</td></tr>
+              <tr className="bg-gray-50"><td className="p-2 border text-black">Նա</td><td className="p-2 border text-black">նա է</td><td className="p-2 border text-black">he/she/it is</td><td className="p-2 border text-black">он/она/оно есть</td></tr>
+              <tr><td className="p-2 border text-black">Մենք</td><td className="p-2 border text-black">մենք ենք</td><td className="p-2 border text-black">we are</td><td className="p-2 border text-black">мы есть</td></tr>
+              <tr className="bg-gray-50"><td className="p-2 border text-black">Դուք</td><td className="p-2 border text-black">դուք եք</td><td className="p-2 border text-black">you are (pl)</td><td className="p-2 border text-black">вы есть</td></tr>
+              <tr><td className="p-2 border text-black">Նրանք</td><td className="p-2 border text-black">նրանք են</td><td className="p-2 border text-black">they are</td><td className="p-2 border text-black">они есть</td></tr>
             </tbody>
           </table>
-          <p className="font-semibold">Օրինակներ.</p>
+          <p className="font-semibold text-black">Օրինակներ.</p>
           <table className="w-full border-collapse text-sm mb-6">
             <thead>
               <tr className="bg-blue-800 text-white">
-                <th className="p-2 text-left">Հայերեն</th>
-                <th className="p-2 text-left">English</th>
-                <th className="p-2 text-left">Русский</th>
+                <th className="p-2 text-left border">Հայերեն</th>
+                <th className="p-2 text-left border">English</th>
+                <th className="p-2 text-left border">Русский</th>
               </tr>
             </thead>
             <tbody>
-              <tr className="bg-gray-50"><td className="p-2 border">Ես հայ եմ</td><td className="p-2 border">I am Armenian</td><td className="p-2 border">Я армянин</td></tr>
-              <tr><td className="p-2 border">Դու ուսանող ես</td><td className="p-2 border">You are a student</td><td className="p-2 border">Ты студент</td></tr>
-              <tr className="bg-gray-50"><td className="p-2 border">Նա բժիշկ է</td><td className="p-2 border">He/She is a doctor</td><td className="p-2 border">Он/Она врач</td></tr>
+              <tr className="bg-gray-50"><td className="p-2 border text-black">Ես հայ եմ</td><td className="p-2 border text-black">I am Armenian</td><td className="p-2 border text-black">Я армянин</td></tr>
+              <tr><td className="p-2 border text-black">Դու ուսանող ես</td><td className="p-2 border text-black">You are a student</td><td className="p-2 border text-black">Ты студент</td></tr>
+              <tr className="bg-gray-50"><td className="p-2 border text-black">Նա բժիշկ է</td><td className="p-2 border text-black">He/She is a doctor</td><td className="p-2 border text-black">Он/Она врач</td></tr>
             </tbody>
           </table>
 
@@ -254,13 +228,15 @@ export default function Level0Page() {
             💬 7. Առաջին Դիալոգներ
           </h2>
           {dialoguesData.map((dlg, idx) => (
-            <div key={idx} className="bg-white border-l-4 border-red-600 p-5 mb-6 rounded-r-lg shadow-sm">
+            <div key={idx} className="bg-white border-l-4 border-red-600 p-5 mb-6 rounded-r-lg shadow-sm text-black">
               <div className="flex gap-3 mb-2 text-sm font-semibold">
                 <span className="text-red-600">🇦🇲 Հայերեն</span>
                 <span className="text-blue-600">🇬🇧 English</span>
                 <span className="text-green-700">🇷🇺 Русский</span>
               </div>
-              <div dangerouslySetInnerHTML={{ __html: dlg.html }} />
+              {dlg.lines.map((line, li) => (
+                <p key={li} className="text-black">{line}</p>
+              ))}
             </div>
           ))}
 
@@ -270,45 +246,45 @@ export default function Level0Page() {
           </h2>
           <h3 className="text-xl font-semibold text-blue-700 mt-4">Հարցական Բառեր</h3>
           <table className="w-full border-collapse text-sm mb-4">
-            <thead><tr className="bg-blue-800 text-white"><th className="p-2 text-left">Հայերեն</th><th className="p-2 text-left">English</th><th className="p-2 text-left">Русский</th></tr></thead>
+            <thead><tr className="bg-blue-800 text-white"><th className="p-2 text-left border">Հայերեն</th><th className="p-2 text-left border">English</th><th className="p-2 text-left border">Русский</th></tr></thead>
             <tbody>
-              <tr className="bg-gray-50"><td className="p-2 border">ինչ</td><td className="p-2 border">what</td><td className="p-2 border">что</td></tr>
-              <tr><td className="p-2 border">ով</td><td className="p-2 border">who</td><td className="p-2 border">кто</td></tr>
-              <tr className="bg-gray-50"><td className="p-2 border">որտեղ</td><td className="p-2 border">where</td><td className="p-2 border">где</td></tr>
-              <tr><td className="p-2 border">երբ</td><td className="p-2 border">when</td><td className="p-2 border">когда</td></tr>
-              <tr className="bg-gray-50"><td className="p-2 border">ինչու</td><td className="p-2 border">why</td><td className="p-2 border">почему</td></tr>
-              <tr><td className="p-2 border">ինչպես</td><td className="p-2 border">how</td><td className="p-2 border">как</td></tr>
-              <tr className="bg-gray-50"><td className="p-2 border">որ</td><td className="p-2 border">which</td><td className="p-2 border">который</td></tr>
-              <tr><td className="p-2 border">քանի</td><td className="p-2 border">how many</td><td className="p-2 border">сколько</td></tr>
+              <tr className="bg-gray-50"><td className="p-2 border text-black">ինչ</td><td className="p-2 border text-black">what</td><td className="p-2 border text-black">что</td></tr>
+              <tr><td className="p-2 border text-black">ով</td><td className="p-2 border text-black">who</td><td className="p-2 border text-black">кто</td></tr>
+              <tr className="bg-gray-50"><td className="p-2 border text-black">որտեղ</td><td className="p-2 border text-black">where</td><td className="p-2 border text-black">где</td></tr>
+              <tr><td className="p-2 border text-black">երբ</td><td className="p-2 border text-black">when</td><td className="p-2 border text-black">когда</td></tr>
+              <tr className="bg-gray-50"><td className="p-2 border text-black">ինչու</td><td className="p-2 border text-black">why</td><td className="p-2 border text-black">почему</td></tr>
+              <tr><td className="p-2 border text-black">ինչպես</td><td className="p-2 border text-black">how</td><td className="p-2 border text-black">как</td></tr>
+              <tr className="bg-gray-50"><td className="p-2 border text-black">որ</td><td className="p-2 border text-black">which</td><td className="p-2 border text-black">который</td></tr>
+              <tr><td className="p-2 border text-black">քանի</td><td className="p-2 border text-black">how many</td><td className="p-2 border text-black">сколько</td></tr>
             </tbody>
           </table>
           <h3 className="text-xl font-semibold text-blue-700 mt-4">Նախդիրներ</h3>
           <table className="w-full border-collapse text-sm mb-4">
-            <thead><tr className="bg-blue-800 text-white"><th className="p-2 text-left">Հայերեն</th><th className="p-2 text-left">English</th><th className="p-2 text-left">Русский</th></tr></thead>
+            <thead><tr className="bg-blue-800 text-white"><th className="p-2 text-left border">Հայերեն</th><th className="p-2 text-left border">English</th><th className="p-2 text-left border">Русский</th></tr></thead>
             <tbody>
-              <tr className="bg-gray-50"><td className="p-2 border">մեջ</td><td className="p-2 border">in / inside</td><td className="p-2 border">в</td></tr>
-              <tr><td className="p-2 border">վրա</td><td className="p-2 border">on</td><td className="p-2 border">на</td></tr>
-              <tr className="bg-gray-50"><td className="p-2 border">տակ</td><td className="p-2 border">under</td><td className="p-2 border">под</td></tr>
-              <tr><td className="p-2 border">մոտ</td><td className="p-2 border">near</td><td className="p-2 border">около</td></tr>
-              <tr className="bg-gray-50"><td className="p-2 border">կողքին</td><td className="p-2 border">next to</td><td className="p-2 border">рядом</td></tr>
-              <tr><td className="p-2 border">դիմաց</td><td className="p-2 border">in front of</td><td className="p-2 border">перед</td></tr>
-              <tr className="bg-gray-50"><td className="p-2 border">հետևում</td><td className="p-2 border">behind</td><td className="p-2 border">за</td></tr>
-              <tr><td className="p-2 border">առանց</td><td className="p-2 border">without</td><td className="p-2 border">без</td></tr>
-              <tr className="bg-gray-50"><td className="p-2 border">հետ</td><td className="p-2 border">with</td><td className="p-2 border">с</td></tr>
-              <tr><td className="p-2 border">համար</td><td className="p-2 border">for</td><td className="p-2 border">для</td></tr>
+              <tr className="bg-gray-50"><td className="p-2 border text-black">մեջ</td><td className="p-2 border text-black">in / inside</td><td className="p-2 border text-black">в</td></tr>
+              <tr><td className="p-2 border text-black">վրա</td><td className="p-2 border text-black">on</td><td className="p-2 border text-black">на</td></tr>
+              <tr className="bg-gray-50"><td className="p-2 border text-black">տակ</td><td className="p-2 border text-black">under</td><td className="p-2 border text-black">под</td></tr>
+              <tr><td className="p-2 border text-black">մոտ</td><td className="p-2 border text-black">near</td><td className="p-2 border text-black">около</td></tr>
+              <tr className="bg-gray-50"><td className="p-2 border text-black">կողքին</td><td className="p-2 border text-black">next to</td><td className="p-2 border text-black">рядом</td></tr>
+              <tr><td className="p-2 border text-black">դիմաց</td><td className="p-2 border text-black">in front of</td><td className="p-2 border text-black">перед</td></tr>
+              <tr className="bg-gray-50"><td className="p-2 border text-black">հետևում</td><td className="p-2 border text-black">behind</td><td className="p-2 border text-black">за</td></tr>
+              <tr><td className="p-2 border text-black">առանց</td><td className="p-2 border text-black">without</td><td className="p-2 border text-black">без</td></tr>
+              <tr className="bg-gray-50"><td className="p-2 border text-black">հետ</td><td className="p-2 border text-black">with</td><td className="p-2 border text-black">с</td></tr>
+              <tr><td className="p-2 border text-black">համար</td><td className="p-2 border text-black">for</td><td className="p-2 border text-black">для</td></tr>
             </tbody>
           </table>
           <h3 className="text-xl font-semibold text-blue-700 mt-4">Շաղկապներ</h3>
           <table className="w-full border-collapse text-sm mb-6">
-            <thead><tr className="bg-blue-800 text-white"><th className="p-2 text-left">Հայերեն</th><th className="p-2 text-left">English</th><th className="p-2 text-left">Русский</th></tr></thead>
+            <thead><tr className="bg-blue-800 text-white"><th className="p-2 text-left border">Հայերեն</th><th className="p-2 text-left border">English</th><th className="p-2 text-left border">Русский</th></tr></thead>
             <tbody>
-              <tr className="bg-gray-50"><td className="p-2 border">և</td><td className="p-2 border">and</td><td className="p-2 border">и</td></tr>
-              <tr><td className="p-2 border">կամ</td><td className="p-2 border">or</td><td className="p-2 border">или</td></tr>
-              <tr className="bg-gray-50"><td className="p-2 border">բայց</td><td className="p-2 border">but</td><td className="p-2 border">но</td></tr>
-              <tr><td className="p-2 border">որ</td><td className="p-2 border">that</td><td className="p-2 border">что</td></tr>
-              <tr className="bg-gray-50"><td className="p-2 border">որովհետև</td><td className="p-2 border">because</td><td className="p-2 border">потому что</td></tr>
-              <tr><td className="p-2 border">եթե</td><td className="p-2 border">if</td><td className="p-2 border">если</td></tr>
-              <tr className="bg-gray-50"><td className="p-2 border">երբ</td><td className="p-2 border">when</td><td className="p-2 border">когда</td></tr>
+              <tr className="bg-gray-50"><td className="p-2 border text-black">և</td><td className="p-2 border text-black">and</td><td className="p-2 border text-black">и</td></tr>
+              <tr><td className="p-2 border text-black">կամ</td><td className="p-2 border text-black">or</td><td className="p-2 border text-black">или</td></tr>
+              <tr className="bg-gray-50"><td className="p-2 border text-black">բայց</td><td className="p-2 border text-black">but</td><td className="p-2 border text-black">но</td></tr>
+              <tr><td className="p-2 border text-black">որ</td><td className="p-2 border text-black">that</td><td className="p-2 border text-black">что</td></tr>
+              <tr className="bg-gray-50"><td className="p-2 border text-black">որովհետև</td><td className="p-2 border text-black">because</td><td className="p-2 border text-black">потому что</td></tr>
+              <tr><td className="p-2 border text-black">եթե</td><td className="p-2 border text-black">if</td><td className="p-2 border text-black">если</td></tr>
+              <tr className="bg-gray-50"><td className="p-2 border text-black">երբ</td><td className="p-2 border text-black">when</td><td className="p-2 border text-black">когда</td></tr>
             </tbody>
           </table>
 
@@ -463,219 +439,219 @@ const verbsData = [
 
 const dialoguesData = [
   {
-    html: `
-      <p><strong>Նուրիկ.</strong> Բարև: Ինչպե՞ս ես:<br>
-      <strong>Դուք.</strong> Բարև, լավ եմ: Իսկ դու՞:<br>
-      <strong>Նուրիկ.</strong> Շատ լավ, շնորհակալություն: Իմ անունը Նուրիկ է: Իսկ քոնը՞:<br>
-      <strong>Դուք.</strong> Իմ անունը … է:<br>
-      <strong>Նուրիկ.</strong> Ուրախ եմ ծանոթանալու համար:<br>
-      <strong>Դուք.</strong> Ես էլ:</p>
-      <hr class="my-2">
-      <p><strong>Nurik.</strong> Hello! How are you?<br>
-      <strong>You.</strong> Hello, I'm fine. And you?<br>
-      <strong>Nurik.</strong> Very well, thank you. My name is Nurik. And yours?<br>
-      <strong>You.</strong> My name is …<br>
-      <strong>Nurik.</strong> Nice to meet you.<br>
-      <strong>You.</strong> Me too.</p>
-      <hr class="my-2">
-      <p><strong>Нурик.</strong> Привет! Как дела?<br>
-      <strong>Вы.</strong> Привет, хорошо. А ты?<br>
-      <strong>Нурик.</strong> Очень хорошо, спасибо. Меня зовут Нурик. А тебя?<br>
-      <strong>Вы.</strong> Меня зовут …<br>
-      <strong>Нурик.</strong> Приятно познакомиться.<br>
-      <strong>Вы.</strong> Мне тоже.</p>
-    `
+    lines: [
+      '🇦🇲 Նուրիկ. Բարև: Ինչպե՞ս ես:',
+      '🇦🇲 Դուք. Բարև, լավ եմ: Իսկ դու՞:',
+      '🇦🇲 Նուրիկ. Շատ լավ, շնորհակալություն: Իմ անունը Նուրիկ է: Իսկ քոնը՞:',
+      '🇦🇲 Դուք. Իմ անունը … է:',
+      '🇦🇲 Նուրիկ. Ուրախ եմ ծանոթանալու համար:',
+      '🇦🇲 Դուք. Ես էլ:',
+      '',
+      '🇬🇧 Nurik. Hello! How are you?',
+      '🇬🇧 You. Hello, I\'m fine. And you?',
+      '🇬🇧 Nurik. Very well, thank you. My name is Nurik. And yours?',
+      '🇬🇧 You. My name is …',
+      '🇬🇧 Nurik. Nice to meet you.',
+      '🇬🇧 You. Me too.',
+      '',
+      '🇷🇺 Нурик. Привет! Как дела?',
+      '🇷🇺 Вы. Привет, хорошо. А ты?',
+      '🇷🇺 Нурик. Очень хорошо, спасибо. Меня зовут Нурик. А тебя?',
+      '🇷🇺 Вы. Меня зовут …',
+      '🇷🇺 Нурик. Приятно познакомиться.',
+      '🇷🇺 Вы. Мне тоже.',
+    ]
   },
   {
-    html: `
-      <p><strong>Նուրիկ.</strong> Որտեղի՞ց ես:<br>
-      <strong>Դուք.</strong> Ես Հայաստանից եմ: Իսկ դու՞:<br>
-      <strong>Նուրիկ.</strong> Ես Ռուսաստանից եմ: Ապրում եմ Երևանում:<br>
-      <strong>Դուք.</strong> Երևանը գեղեցիկ քաղաք է:<br>
-      <strong>Նուրիկ.</strong> Այո, շատ գեղեցիկ է:</p>
-      <hr>
-      <p><strong>Nurik.</strong> Where are you from?<br>
-      <strong>You.</strong> I am from Armenia. And you?<br>
-      <strong>Nurik.</strong> I am from Russia. I live in Yerevan.<br>
-      <strong>You.</strong> Yerevan is a beautiful city.<br>
-      <strong>Nurik.</strong> Yes, it is very beautiful.</p>
-      <hr>
-      <p><strong>Нурик.</strong> Откуда ты?<br>
-      <strong>Вы.</strong> Я из Армении. А ты?<br>
-      <strong>Нурик.</strong> Я из России. Я живу в Ереване.<br>
-      <strong>Вы.</strong> Ереван — красивый город.<br>
-      <strong>Нурик.</strong> Да, очень красивый.</p>
-    `
+    lines: [
+      '🇦🇲 Նուրիկ. Որտեղի՞ց ես:',
+      '🇦🇲 Դուք. Ես Հայաստանից եմ: Իսկ դու՞:',
+      '🇦🇲 Նուրիկ. Ես Ռուսաստանից եմ: Ապրում եմ Երևանում:',
+      '🇦🇲 Դուք. Երևանը գեղեցիկ քաղաք է:',
+      '🇦🇲 Նուրիկ. Այո, շատ գեղեցիկ է:',
+      '',
+      '🇬🇧 Nurik. Where are you from?',
+      '🇬🇧 You. I am from Armenia. And you?',
+      '🇬🇧 Nurik. I am from Russia. I live in Yerevan.',
+      '🇬🇧 You. Yerevan is a beautiful city.',
+      '🇬🇧 Nurik. Yes, it is very beautiful.',
+      '',
+      '🇷🇺 Нурик. Откуда ты?',
+      '🇷🇺 Вы. Я из Армении. А ты?',
+      '🇷🇺 Нурик. Я из России. Я живу в Ереване.',
+      '🇷🇺 Вы. Ереван — красивый город.',
+      '🇷🇺 Нурик. Да, очень красивый.',
+    ]
   },
   {
-    html: `
-      <p><strong>Նուրիկ.</strong> Ունե՞ս ընտանիք:<br>
-      <strong>Դուք.</strong> Այո, ունեմ: Ես ունեմ մայր, հայր և եղբայր:<br>
-      <strong>Նուրիկ.</strong> Ի՞նչ է քո մայրը:<br>
-      <strong>Դուք.</strong> Իմ մայրը ուսուցիչ է: Իսկ հայրս բժիշկ է:<br>
-      <strong>Նուրիկ.</strong> Շատ հետաքրքիր է:</p>
-      <hr>
-      <p><strong>Nurik.</strong> Do you have a family?<br>
-      <strong>You.</strong> Yes, I do. I have a mother, father, and a brother.<br>
-      <strong>Nurik.</strong> What is your mother?<br>
-      <strong>You.</strong> My mother is a teacher. And my father is a doctor.<br>
-      <strong>Nurik.</strong> Very interesting.</p>
-      <hr>
-      <p><strong>Нурик.</strong> У тебя есть семья?<br>
-      <strong>Вы.</strong> Да. У меня есть мама, папа и брат.<br>
-      <strong>Нурик.</strong> Кем работает твоя мама?<br>
-      <strong>Вы.</strong> Моя мама — учительница. А папа — врач.<br>
-      <strong>Нурик.</strong> Очень интересно.</p>
-    `
+    lines: [
+      '🇦🇲 Նուրիկ. Ունե՞ս ընտանիք:',
+      '🇦🇲 Դուք. Այո, ունեմ: Ես ունեմ մայր, հայր և եղբայր:',
+      '🇦🇲 Նուրիկ. Ի՞նչ է քո մայրը:',
+      '🇦🇲 Դուք. Իմ մայրը ուսուցիչ է: Իսկ հայրս բժիշկ է:',
+      '🇦🇲 Նուրիկ. Շատ հետաքրքիր է:',
+      '',
+      '🇬🇧 Nurik. Do you have a family?',
+      '🇬🇧 You. Yes, I do. I have a mother, father, and a brother.',
+      '🇬🇧 Nurik. What is your mother?',
+      '🇬🇧 You. My mother is a teacher. And my father is a doctor.',
+      '🇬🇧 Nurik. Very interesting.',
+      '',
+      '🇷🇺 Нурик. У тебя есть семья?',
+      '🇷🇺 Вы. Да. У меня есть мама, папа и брат.',
+      '🇷🇺 Нурик. Кем работает твоя мама?',
+      '🇷🇺 Вы. Моя мама — учительница. А папа — врач.',
+      '🇷🇺 Нурик. Очень интересно.',
+    ]
   },
   {
-    html: `
-      <p><strong>Նուրիկ.</strong> Քաղցած ե՞ս:<br>
-      <strong>Դուք.</strong> Այո, շատ եմ քաղցած:<br>
-      <strong>Նուրիկ.</strong> Ի՞նչ ուզում ես ուտել:<br>
-      <strong>Դուք.</strong> Ուզում եմ հաց և պանիր:<br>
-      <strong>Նուրիկ.</strong> Լավ, գնանք խանութ:<br>
-      <strong>Դուք.</strong> Շնորհակալություն:</p>
-      <hr>
-      <p><strong>Nurik.</strong> Are you hungry?<br>
-      <strong>You.</strong> Yes, I am very hungry.<br>
-      <strong>Nurik.</strong> What do you want to eat?<br>
-      <strong>You.</strong> I want bread and cheese.<br>
-      <strong>Nurik.</strong> OK, let's go to the shop.<br>
-      <strong>You.</strong> Thank you.</p>
-      <hr>
-      <p><strong>Нурик.</strong> Ты голоден?<br>
-      <strong>Вы.</strong> Да, очень голоден.<br>
-      <strong>Нурик.</strong> Что хочешь съесть?<br>
-      <strong>Вы.</strong> Хочу хлеб и сыр.<br>
-      <strong>Нурик.</strong> Хорошо, пошли в магазин.<br>
-      <strong>Вы.</strong> Спасибо.</p>
-    `
+    lines: [
+      '🇦🇲 Նուրիկ. Քաղցած ե՞ս:',
+      '🇦🇲 Դուք. Այո, շատ եմ քաղցած:',
+      '🇦🇲 Նուրիկ. Ի՞նչ ուզում ես ուտել:',
+      '🇦🇲 Դուք. Ուզում եմ հաց և պանիր:',
+      '🇦🇲 Նուրիկ. Լավ, գնանք խանութ:',
+      '🇦🇲 Դուք. Շնորհակալություն:',
+      '',
+      '🇬🇧 Nurik. Are you hungry?',
+      '🇬🇧 You. Yes, I am very hungry.',
+      '🇬🇧 Nurik. What do you want to eat?',
+      '🇬🇧 You. I want bread and cheese.',
+      '🇬🇧 Nurik. OK, let\'s go to the shop.',
+      '🇬🇧 You. Thank you.',
+      '',
+      '🇷🇺 Нурик. Ты голоден?',
+      '🇷🇺 Вы. Да, очень голоден.',
+      '🇷🇺 Нурик. Что хочешь съесть?',
+      '🇷🇺 Вы. Хочу хлеб и сыр.',
+      '🇷🇺 Нурик. Хорошо, пошли в магазин.',
+      '🇷🇺 Вы. Спасибо.',
+    ]
   },
   {
-    html: `
-      <p><strong>Նուրիկ.</strong> Որտե՞ղ է խանութը:<br>
-      <strong>Դուք.</strong> Այստեղից ձախ:<br>
-      <strong>Նուրիկ.</strong> Որքա՞ն արժե այս գիրքը:<br>
-      <strong>Վաճառող.</strong> Երկու հազար դրամ:<br>
-      <strong>Նուրիկ.</strong> Թանկ է: Զեղչ կա՞:<br>
-      <strong>Վաճառող.</strong> Ոչ, զեղչ չկա:</p>
-      <hr>
-      <p><strong>Nurik.</strong> Where is the shop?<br>
-      <strong>You.</strong> To the left from here.<br>
-      <strong>Nurik.</strong> How much is this book?<br>
-      <strong>Seller.</strong> Two thousand dram.<br>
-      <strong>Nurik.</strong> It's expensive. Is there a discount?<br>
-      <strong>Seller.</strong> No, there is no discount.</p>
-      <hr>
-      <p><strong>Нурик.</strong> Где магазин?<br>
-      <strong>Вы.</strong> Налево отсюда.<br>
-      <strong>Нурик.</strong> Сколько стоит эта книга?<br>
-      <strong>Продавец.</strong> Две тысячи драм.<br>
-      <strong>Нурик.</strong> Дорого. Есть скидка?<br>
-      <strong>Продавец.</strong> Нет, скидки нет.</p>
-    `
+    lines: [
+      '🇦🇲 Նուրիկ. Որտե՞ղ է խանութը:',
+      '🇦🇲 Դուք. Այստեղից ձախ:',
+      '🇦🇲 Նուրիկ. Որքա՞ն արժե այս գիրքը:',
+      '🇦🇲 Վաճառող. Երկու հազար դրամ:',
+      '🇦🇲 Նուրիկ. Թանկ է: Զեղչ կա՞:',
+      '🇦🇲 Վաճառող. Ոչ, զեղչ չկա:',
+      '',
+      '🇬🇧 Nurik. Where is the shop?',
+      '🇬🇧 You. To the left from here.',
+      '🇬🇧 Nurik. How much is this book?',
+      '🇬🇧 Seller. Two thousand dram.',
+      '🇬🇧 Nurik. It\'s expensive. Is there a discount?',
+      '🇬🇧 Seller. No, there is no discount.',
+      '',
+      '🇷🇺 Нурик. Где магазин?',
+      '🇷🇺 Вы. Налево отсюда.',
+      '🇷🇺 Нурик. Сколько стоит эта книга?',
+      '🇷🇺 Продавец. Две тысячи драм.',
+      '🇷🇺 Нурик. Дорого. Есть скидка?',
+      '🇷🇺 Продавец. Нет, скидки нет.',
+    ]
   },
   {
-    html: `
-      <p><strong>Նուրիկ.</strong> Ժամը քանի՞սն է:<br>
-      <strong>Դուք.</strong> Ժամը տասն է:<br>
-      <strong>Նուրիկ.</strong> Շուտով ճաշի ժամն է:<br>
-      <strong>Դուք.</strong> Այո, ժամը մեկին ճաշում ենք:<br>
-      <strong>Նուրիկ.</strong> Լավ, գնանք:</p>
-      <hr>
-      <p><strong>Nurik.</strong> What time is it?<br>
-      <strong>You.</strong> It is ten o'clock.<br>
-      <strong>Nurik.</strong> It's almost lunch time.<br>
-      <strong>You.</strong> Yes, we have lunch at one.<br>
-      <strong>Nurik.</strong> OK, let's go.</p>
-      <hr>
-      <p><strong>Нурик.</strong> Который час?<br>
-      <strong>Вы.</strong> Десять часов.<br>
-      <strong>Нурик.</strong> Скоро время обеда.<br>
-      <strong>Вы.</strong> Да, мы обедаем в час.<br>
-      <strong>Нурик.</strong> Хорошо, пошли.</p>
-    `
+    lines: [
+      '🇦🇲 Նուրիկ. Ժամը քանի՞սն է:',
+      '🇦🇲 Դուք. Ժամը տասն է:',
+      '🇦🇲 Նուրիկ. Շուտով ճաշի ժամն է:',
+      '🇦🇲 Դուք. Այո, ժամը մեկին ճաշում ենք:',
+      '🇦🇲 Նուրիկ. Լավ, գնանք:',
+      '',
+      '🇬🇧 Nurik. What time is it?',
+      '🇬🇧 You. It is ten o\'clock.',
+      '🇬🇧 Nurik. It\'s almost lunch time.',
+      '🇬🇧 You. Yes, we have lunch at one.',
+      '🇬🇧 Nurik. OK, let\'s go.',
+      '',
+      '🇷🇺 Нурик. Который час?',
+      '🇷🇺 Вы. Десять часов.',
+      '🇷🇺 Нурик. Скоро время обеда.',
+      '🇷🇺 Вы. Да, мы обедаем в час.',
+      '🇷🇺 Нурик. Хорошо, пошли.',
+    ]
   },
   {
-    html: `
-      <p><strong>Նուրիկ.</strong> Ի՞նչ եղանակ է:<br>
-      <strong>Դուք.</strong> Արևոտ է և տաք:<br>
-      <strong>Նուրիկ.</strong> Գնանք զբոսնելու:<br>
-      <strong>Դուք.</strong> Հիանալի գաղափար է:</p>
-      <hr>
-      <p><strong>Nurik.</strong> What's the weather like?<br>
-      <strong>You.</strong> It's sunny and warm.<br>
-      <strong>Nurik.</strong> Let's go for a walk.<br>
-      <strong>You.</strong> That's a great idea.</p>
-      <hr>
-      <p><strong>Нурик.</strong> Какая погода?<br>
-      <strong>Вы.</strong> Солнечно и тепло.<br>
-      <strong>Нурик.</strong> Пойдём гулять.<br>
-      <strong>Вы.</strong> Отличная идея.</p>
-    `
+    lines: [
+      '🇦🇲 Նուրիկ. Ի՞նչ եղանակ է:',
+      '🇦🇲 Դուք. Արևոտ է և տաք:',
+      '🇦🇲 Նուրիկ. Գնանք զբոսնելու:',
+      '🇦🇲 Դուք. Հիանալի գաղափար է:',
+      '',
+      '🇬🇧 Nurik. What\'s the weather like?',
+      '🇬🇧 You. It\'s sunny and warm.',
+      '🇬🇧 Nurik. Let\'s go for a walk.',
+      '🇬🇧 You. That\'s a great idea.',
+      '',
+      '🇷🇺 Нурик. Какая погода?',
+      '🇷🇺 Вы. Солнечно и тепло.',
+      '🇷🇺 Нурик. Пойдём гулять.',
+      '🇷🇺 Вы. Отличная идея.',
+    ]
   },
   {
-    html: `
-      <p><strong>Նուրիկ.</strong> Ինչով ես զբաղվում:<br>
-      <strong>Դուք.</strong> Ես ծրագրավորող եմ: Իսկ դու՞:<br>
-      <strong>Նուրիկ.</strong> Ես ուսուցիչ եմ:<br>
-      <strong>Դուք.</strong> Հետաքրքիր աշխատանք է:<br>
-      <strong>Նուրիկ.</strong> Շնորհակալություն:</p>
-      <hr>
-      <p><strong>Nurik.</strong> What do you do?<br>
-      <strong>You.</strong> I am a programmer. And you?<br>
-      <strong>Nurik.</strong> I am a teacher.<br>
-      <strong>You.</strong> That's an interesting job.<br>
-      <strong>Nurik.</strong> Thank you.</p>
-      <hr>
-      <p><strong>Нурик.</strong> Кем ты работаешь?<br>
-      <strong>Вы.</strong> Я программист. А ты?<br>
-      <strong>Нурик.</strong> Я учитель.<br>
-      <strong>Вы.</strong> Интересная работа.<br>
-      <strong>Нурик.</strong> Спасибо.</p>
-    `
+    lines: [
+      '🇦🇲 Նուրիկ. Ինչով ես զբաղվում:',
+      '🇦🇲 Դուք. Ես ծրագրավորող եմ: Իսկ դու՞:',
+      '🇦🇲 Նուրիկ. Ես ուսուցիչ եմ:',
+      '🇦🇲 Դուք. Հետաքրքիր աշխատանք է:',
+      '🇦🇲 Նուրիկ. Շնորհակալություն:',
+      '',
+      '🇬🇧 Nurik. What do you do?',
+      '🇬🇧 You. I am a programmer. And you?',
+      '🇬🇧 Nurik. I am a teacher.',
+      '🇬🇧 You. That\'s an interesting job.',
+      '🇬🇧 Nurik. Thank you.',
+      '',
+      '🇷🇺 Нурик. Кем ты работаешь?',
+      '🇷🇺 Вы. Я программист. А ты?',
+      '🇷🇺 Нурик. Я учитель.',
+      '🇷🇺 Вы. Интересная работа.',
+      '🇷🇺 Нурик. Спасибо.',
+    ]
   },
   {
-    html: `
-      <p><strong>Նուրիկ.</strong> Ի՞նչ ես սիրում անել ազատ ժամանակ:<br>
-      <strong>Դուք.</strong> Ես սիրում եմ կարդալ: Իսկ դու՞:<br>
-      <strong>Նուրիկ.</strong> Ես սիրում եմ լուսանկարել:<br>
-      <strong>Դուք.</strong> Հիանալի է: Ցույց տուր քո լուսանկարները:<br>
-      <strong>Նուրիկ.</strong> Լավ, հաճույքով:</p>
-      <hr>
-      <p><strong>Nurik.</strong> What do you like to do in your free time?<br>
-      <strong>You.</strong> I like to read. And you?<br>
-      <strong>Nurik.</strong> I like to take photos.<br>
-      <strong>You.</strong> That's great. Show me your photos.<br>
-      <strong>Nurik.</strong> OK, with pleasure.</p>
-      <hr>
-      <p><strong>Нурик.</strong> Что ты любишь делать в свободное время?<br>
-      <strong>Вы.</strong> Я люблю читать. А ты?<br>
-      <strong>Нурик.</strong> Я люблю фотографировать.<br>
-      <strong>Вы.</strong> Отлично. Покажи свои фотографии.<br>
-      <strong>Нурик.</strong> Хорошо, с удовольствием.</p>
-    `
+    lines: [
+      '🇦🇲 Նուրիկ. Ի՞նչ ես սիրում անել ազատ ժամանակ:',
+      '🇦🇲 Դուք. Ես սիրում եմ կարդալ: Իսկ դու՞:',
+      '🇦🇲 Նուրիկ. Ես սիրում եմ լուսանկարել:',
+      '🇦🇲 Դուք. Հիանալի է: Ցույց տուր քո լուսանկարները:',
+      '🇦🇲 Նուրիկ. Լավ, հաճույքով:',
+      '',
+      '🇬🇧 Nurik. What do you like to do in your free time?',
+      '🇬🇧 You. I like to read. And you?',
+      '🇬🇧 Nurik. I like to take photos.',
+      '🇬🇧 You. That\'s great. Show me your photos.',
+      '🇬🇧 Nurik. OK, with pleasure.',
+      '',
+      '🇷🇺 Нурик. Что ты любишь делать в свободное время?',
+      '🇷🇺 Вы. Я люблю читать. А ты?',
+      '🇷🇺 Нурик. Я люблю фотографировать.',
+      '🇷🇺 Вы. Отлично. Покажи свои фотографии.',
+      '🇷🇺 Нурик. Хорошо, с удовольствием.',
+    ]
   },
   {
-    html: `
-      <p><strong>Նուրիկ.</strong> Սիրում ես ճամփորդել:<br>
-      <strong>Դուք.</strong> Այո, շատ: Ես եղել եմ Ֆրանսիայում և Իտալիայում:<br>
-      <strong>Նուրիկ.</strong> Ես էլ եմ ուզում այցելել Իտալիա:<br>
-      <strong>Դուք.</strong> Պետք է գնաս, շատ գեղեցիկ է:<br>
-      <strong>Նուրիկ.</strong> Երբ կարող եմ:</p>
-      <hr>
-      <p><strong>Nurik.</strong> Do you like to travel?<br>
-      <strong>You.</strong> Yes, very much. I have been to France and Italy.<br>
-      <strong>Nurik.</strong> I also want to visit Italy.<br>
-      <strong>You.</strong> You should go, it's very beautiful.<br>
-      <strong>Nurik.</strong> When I can.</p>
-      <hr>
-      <p><strong>Нурик.</strong> Ты любишь путешествовать?<br>
-      <strong>Вы.</strong> Да, очень. Я был во Франции и Италии.<br>
-      <strong>Нурик.</strong> Я тоже хочу посетить Италию.<br>
-      <strong>Вы.</strong> Тебе нужно поехать, там очень красиво.<br>
-      <strong>Нурик.</strong> Когда смогу.</p>
-    `
+    lines: [
+      '🇦🇲 Նուրիկ. Սիրում ես ճամփորդել:',
+      '🇦🇲 Դուք. Այո, շատ: Ես եղել եմ Ֆրանսիայում և Իտալիայում:',
+      '🇦🇲 Նուրիկ. Ես էլ եմ ուզում այցելել Իտալիա:',
+      '🇦🇲 Դուք. Պետք է գնաս, շատ գեղեցիկ է:',
+      '🇦🇲 Նուրիկ. Երբ կարող եմ:',
+      '',
+      '🇬🇧 Nurik. Do you like to travel?',
+      '🇬🇧 You. Yes, very much. I have been to France and Italy.',
+      '🇬🇧 Nurik. I also want to visit Italy.',
+      '🇬🇧 You. You should go, it\'s very beautiful.',
+      '🇬🇧 Nurik. When I can.',
+      '',
+      '🇷🇺 Нурик. Ты любишь путешествовать?',
+      '🇷🇺 Вы. Да, очень. Я был во Франции и Италии.',
+      '🇷🇺 Нурик. Я тоже хочу посетить Италию.',
+      '🇷🇺 Вы. Тебе нужно поехать, там очень красиво.',
+      '🇷🇺 Нурик. Когда смогу.',
+    ]
   }
 ];

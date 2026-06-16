@@ -107,18 +107,63 @@ function langName(inLang: LangCode, target: LangCode): string {
   return names[inLang][target];
 }
 
-// ─── Disabled: match_pairs and listening (temporarily removed to fix type errors)
-// TODO: re-enable after extending MultiExercise type in multilingual.ts
+// ─── MATCH PAIRS (re‑enabled) ──────────────────────────────────────────────
+
 function buildMatchPairs(
   lesson: ContentLesson, idx: number, source: LangCode, target: LangCode
 ): MultiExercise | null {
-  return null;
+  // Use vocabulary items: pick up to 6 pairs
+  const pairs = lesson.vocabulary.slice(0, 6).map(v => [v[source], v[target]] as [string, string]);
+  if (pairs.length < 2) return null;
+  return {
+    id: `${lesson.id}_mp_${idx}`,
+    type: "match_pairs",
+    prompt: {
+      en: `Match the words:`,
+      hy: `Համապատասխանեցրու բառերը։`,
+      ru: `Соедините слова:`,
+    },
+    targetAnswer: pairs.map(p => p[1]).join("|"), // not used for match_pairs, but required
+    acceptableAnswers: [],
+    pairs: shuffle(pairs),
+    hayqReward: HAYQ.CORRECT * 2,
+  };
 }
 
+// ─── LISTENING (re‑enabled, using first dialogue) ──────────────────────────
+
 function buildListening(
-  ph: PhraseItem, idx: number, lesson: ContentLesson, target: LangCode
+  lesson: ContentLesson, idx: number, target: LangCode
 ): MultiExercise | null {
-  return null;
+  if (!lesson.dialogues.length) return null;
+  const firstDialogue = lesson.dialogues[0];
+  const lastTurn = firstDialogue.turns[firstDialogue.turns.length - 1];
+
+  // Full dialogue text for TTS
+  const ttsText = firstDialogue.turns
+    .map(t => {
+      const speaker = t.speaker === "nurik" ? "Nurik" : "You";
+      return `${speaker}: ${t[target]}`;
+    })
+    .join(" ");
+
+  // Question: what did the last speaker say?
+  const question = `What did ${lastTurn.speaker === "nurik" ? "Nurik" : "the user"} say at the end?`;
+
+  return {
+    id: `${lesson.id}_li_${idx}`,
+    type: "listening",
+    prompt: {
+      en: `🎧 Listen to the dialogue and answer: ${question}`,
+      hy: `🎧 Լսիր երկխոսությունը և պատասխանիր՝ Ի՞նչ ասաց ${lastTurn.speaker === "nurik" ? "Նուրիկը" : "օգտատերը"} վերջում։`,
+      ru: `🎧 Прослушайте диалог и ответьте: Что сказал ${lastTurn.speaker === "nurik" ? "Нурик" : "пользователь"} в конце?`,
+    },
+    ttsText: ttsText,
+    ttsLang: target,
+    targetAnswer: lastTurn[target],
+    acceptableAnswers: [lastTurn[target], lastTurn[target].toLowerCase()],
+    hayqReward: HAYQ.DIALOGUE,
+  };
 }
 
 // ─── Lesson generator ────────────────────────────────────────────────────────
@@ -144,14 +189,13 @@ function generateExercises(
     if (ex) out.push(ex);
   }
 
-  // 4) Match pairs from vocabulary (disabled)
-  // const mp = buildMatchPairs(lesson, 0, source, target);
-  // if (mp) out.push(mp);
+  // 4) Match pairs from vocabulary (up to 1)
+  const mp = buildMatchPairs(lesson, 0, source, target);
+  if (mp) out.push(mp);
 
-  // 5) Listening on a phrase (disabled)
-  // if (lesson.phrases.length > 0) {
-  //   out.push(buildListening(lesson.phrases[0], 0, lesson, target));
-  // }
+  // 5) Listening on the first dialogue
+  const li = buildListening(lesson, 0, target);
+  if (li) out.push(li);
 
   return out;
 }
