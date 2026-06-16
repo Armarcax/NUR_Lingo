@@ -7,6 +7,7 @@ export function useSpeech() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [voicesLoaded, setVoicesLoaded] = useState(false);
+  const [selectedVoice, setSelectedVoice] = useState<string | null>(null);
   const speakingRef = useRef(false);
   const pendingQueue = useRef<Array<{ text: string; lang: string; onEnd?: () => void }>>([]);
 
@@ -25,19 +26,23 @@ export function useSpeech() {
       console.log(`🔊 Loaded ${available.length} voices:`, available.map(v => v.lang).join(", "));
       setVoices(available);
       setVoicesLoaded(true);
-      // Process any pending queued items
+      
+      // Try to set default voice to Russian for Armenian
+      const ruVoice = available.find(v => v.lang.startsWith("ru"));
+      if (ruVoice) {
+        setSelectedVoice(ruVoice.name);
+        console.log(`🔊 Default voice set to: ${ruVoice.name} (${ruVoice.lang})`);
+      }
       processQueue();
     };
 
     if (window.speechSynthesis.onvoiceschanged !== undefined) {
       window.speechSynthesis.onvoiceschanged = loadVoices;
     }
-    // Load immediately if voices are already available
     const currentVoices = window.speechSynthesis.getVoices();
     if (currentVoices.length > 0) {
       loadVoices();
     } else {
-      // Fallback: try loading after a short delay
       setTimeout(loadVoices, 500);
     }
 
@@ -64,7 +69,6 @@ export function useSpeech() {
         return;
       }
 
-      // Cancel any ongoing speech
       if (window.speechSynthesis.speaking) {
         window.speechSynthesis.cancel();
       }
@@ -75,15 +79,26 @@ export function useSpeech() {
       utterance.pitch = 1;
       utterance.volume = 1;
 
-      // Try to find a voice for the language
-      if (voices.length > 0) {
-        const voice = voices.find((v) => v.lang.startsWith(lang));
+      // Voice selection with fallback
+      let voice = null;
+      if (selectedVoice) {
+        voice = voices.find(v => v.name === selectedVoice);
+      }
+      if (!voice && lang === "hy") {
+        // Fallback to Russian for Armenian
+        voice = voices.find(v => v.lang.startsWith("ru"));
         if (voice) {
-          utterance.voice = voice;
-          console.log(`🔊 Using voice: ${voice.name} (${voice.lang})`);
-        } else {
-          console.warn(`🔊 No voice found for language ${lang}, using default`);
+          console.log(`🔊 Using Russian fallback for Armenian: ${voice.name}`);
         }
+      }
+      if (!voice) {
+        voice = voices.find(v => v.lang.startsWith(lang));
+      }
+      if (voice) {
+        utterance.voice = voice;
+        console.log(`🔊 Using voice: ${voice.name} (${voice.lang})`);
+      } else {
+        console.warn(`🔊 No voice found for ${lang}, using default`);
       }
 
       setIsSpeaking(true);
@@ -93,7 +108,6 @@ export function useSpeech() {
         setIsSpeaking(false);
         speakingRef.current = false;
         if (onEnd) onEnd();
-        // Process next in queue
         processQueue();
       };
 
@@ -108,7 +122,7 @@ export function useSpeech() {
       console.log(`🔊 Speaking: "${text}" (${lang})`);
       window.speechSynthesis.speak(utterance);
     },
-    [isSupported, voices, processQueue]
+    [isSupported, voices, selectedVoice, processQueue]
   );
 
   const speak = useCallback(
@@ -124,14 +138,12 @@ export function useSpeech() {
         return;
       }
 
-      // If voices not loaded yet, queue the request
       if (!voicesLoaded) {
         console.log("🔊 Voices not loaded yet, queuing speech request");
         pendingQueue.current.push({ text, lang, onEnd });
         return;
       }
 
-      // If currently speaking, queue this request
       if (speakingRef.current) {
         console.log("🔊 Already speaking, queuing next");
         pendingQueue.current.push({ text, lang, onEnd });
@@ -152,5 +164,5 @@ export function useSpeech() {
     }
   }, []);
 
-  return { speak, cancel, isSpeaking, isSupported, voices, voicesLoaded };
+  return { speak, cancel, isSpeaking, isSupported, voices, voicesLoaded, selectedVoice, setSelectedVoice };
 }
