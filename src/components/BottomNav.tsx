@@ -7,9 +7,12 @@ export default function BottomNav() {
   const pathname = usePathname();
 
   const navItems = [
-    { label: "Learn", href: "/learn" as const, icon: "🍎" },
-    { label: "World", href: "/world" as const, icon: "🌍" },
-    { label: "Garden", href: "/garden" as const, icon: "🌿" },
+    { href: "/level0", label: "📘 Սկիզբ", icon: "📘" },     // <-- ավելացված Level 0
+    { href: "/world", label: "🌍 Աշխարհ", icon: "🌍" },
+    { href: "/garden", label: "🌱 Պարտեզ", icon: "🌱" },
+    { href: "/dialogues", label: "💬 Զրույցներ", icon: "💬" },
+    { href: "/vocab-audio", label: "🔊 Բառարան", icon: "🔊" },
+    { href: "/profile", label: "👤 Էջ", icon: "👤" }
   ];
 
   return (
