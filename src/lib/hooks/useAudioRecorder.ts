@@ -24,7 +24,7 @@ export function useAudioRecorder() {
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         const url = URL.createObjectURL(blob);
         setAudioURL(url);
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach((track) => track.stop());
       };
 
       mediaRecorder.start();
@@ -45,8 +45,8 @@ export function useAudioRecorder() {
   const saveRecording = useCallback((key: string) => {
     if (audioURL) {
       fetch(audioURL)
-        .then(res => res.blob())
-        .then(blob => {
+        .then((res) => res.blob())
+        .then((blob) => {
           const reader = new FileReader();
           reader.onloadend = () => {
             const base64 = reader.result as string;
