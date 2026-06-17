@@ -8,7 +8,15 @@ import { useAudioRecorder } from "@/lib/hooks/useAudioRecorder";
 
 export default function VocabAudioPage() {
   const { speak, isSpeaking, isSupported } = useSpeech();
-  const { isRecording, startRecording, stopRecording, saveRecording, getRecording, playRecording, deleteRecording } = useAudioRecorder();
+  const {
+    isRecording,
+    startRecording,
+    stopRecording,
+    saveRecording,
+    getRecording,
+    playRecording,
+    deleteRecording,
+  } = useAudioRecorder();
   const [vocab, setVocab] = useState<VocabItem[]>([]);
   const [playing, setPlaying] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -19,12 +27,12 @@ export default function VocabAudioPage() {
     for (const lesson of CONTENT_LESSONS) {
       if (lesson.vocabulary) all.push(...lesson.vocabulary);
     }
-    const unique = Array.from(new Map(all.map(v => [v.id, v])).values());
+    const unique = Array.from(new Map(all.map((v) => [v.id, v])).values());
     setVocab(unique);
   }, []);
 
   const filteredVocab = useMemo(() => {
-    return vocab.filter(item => {
+    return vocab.filter((item) => {
       const matchesSearch =
         item.hy.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.en.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -33,19 +41,46 @@ export default function VocabAudioPage() {
     });
   }, [vocab, searchQuery]);
 
+  // 🔊 MP3 նվագարկում՝ fallback-ով դեպի Speech Synthesis
+  const playAudio = (text: string, id: string) => {
+    setPlaying(id);
+
+    // Փորձել նվագարկել MP3 ֆայլը
+    const audio = new Audio(`/audio/hy/${id}.mp3`);
+    audio.play()
+      .then(() => {
+        audio.onended = () => setPlaying(null);
+      })
+      .catch((err) => {
+        // Եթե MP3-ն չկա, օգտագործել Speech Synthesis
+        console.warn(`MP3 not found for ${id}, using Speech Synthesis:`, err.message);
+        if (!isSupported) {
+          alert("Ձեր բրաուզերը չի աջակցում ձայնային արտասանությանը");
+          setPlaying(null);
+          return;
+        }
+        speak(text, "hy", () => setPlaying(null));
+      });
+  };
+
   const handleSpeak = (text: string, id: string) => {
     if (!isSupported) {
       alert("Ձեր բրաուզերը չի աջակցում ձայնային արտասանությանը");
       return;
     }
-    setPlaying(id);
-    speak(text, "hy", () => setPlaying(null));
+    // Եթե արդեն նվագարկվում է, չեղարկել
+    if (playing) {
+      // Չեղարկել Speech Synthesis-ը, եթե այն է աշխատում
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+      setPlaying(null);
+    }
+    playAudio(text, id);
   };
 
   const handleRecord = async (id: string) => {
     if (isRecording && recordingId === id) {
       stopRecording();
-      // After stopping, we need to save the recording
+      // After stopping, save the recording
       setTimeout(() => {
         saveRecording(id);
         setRecordingId(null);
@@ -83,7 +118,7 @@ export default function VocabAudioPage() {
           {filteredVocab.length === 0 ? (
             <div className="text-center py-8 text-gray-500">Բառեր չեն գտնվել</div>
           ) : (
-            filteredVocab.map(item => {
+            filteredVocab.map((item) => {
               const hasRecording = hasUserRecording(item.id);
               return (
                 <div
@@ -98,7 +133,7 @@ export default function VocabAudioPage() {
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {/* Base audio */}
+                      {/* Base audio (MP3 + fallback) */}
                       <button
                         onClick={() => handleSpeak(item.hy, item.id)}
                         disabled={playing === item.id}
