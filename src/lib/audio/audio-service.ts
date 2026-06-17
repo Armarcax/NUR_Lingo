@@ -1,70 +1,125 @@
 // src/lib/audio/audio-service.ts
 
-export interface AudioOptions {
-  rate?: number;
-  pitch?: number;
-  volume?: number;
-  id?: string;               // for MP3 caching (vocabulary id)
-  onStart?: () => void;
-  onEnd?: () => void;
-  onError?: (error: Error) => void;
-}
+import { LanguageCode, AudioOptions, AudioProvider, AudioProviderType } from "./audio-types";
+import { audioCache } from "./audio-cache";
 
-export interface AudioProvider {
-  type: string;
-  speak(text: string, lang: string, options?: AudioOptions): Promise<void>;
-  stop(): void;
-  isSpeaking(): boolean;
-  getVoices?(): Promise<SpeechSynthesisVoice[]>;
+// ─── MP3 Provider ──────────────────────────────────────────────────
+
+class MP3Provider implements AudioProvider {
+  readonly type = AudioProviderType.MP3;
+  private playingId: string | null = null;
+  private audioElement: HTMLAudioElement | null = null;
+
+  async speak(text: string, lang: LanguageCode, options?: AudioOptions): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const audioId = options?.id;
+      if (!audioId) {
+        reject(new Error("MP3 provider requires audioId"));
+        return;
+      }
+
+      // Normalize audioId to 6 digits
+      const paddedId = audioId.padStart(6, "0");
+      const url = `/audio/${lang}/${paddedId}.mp3`;
+
+      audioCache.getOrLoad(url)
+        .then((audio) => {
+          // Clone audio to allow multiple plays
+          const clone = audio.cloneNode() as HTMLAudioElement;
+          this.audioElement = clone;
+          this.playingId = audioId;
+
+          clone.onplay = () => options?.onStart?.();
+          clone.onended = () => {
+            this.playingId = null;
+            this.audioElement = null;
+            options?.onEnd?.();
+            resolve();
+          };
+          clone.onerror = (err) => {
+            this.playingId = null;
+            this.audioElement = null;
+            const error = new Error(`MP3 play error: ${url}`);
+            options?.onError?.(error);
+            reject(error);
+          };
+
+          clone.play().catch((err) => {
+            this.playingId = null;
+            this.audioElement = null;
+            options?.onError?.(err);
+            reject(err);
+          });
+        })
+        .catch((err) => {
+          // MP3 not found or corrupted – reject so fallback can handle
+          options?.onError?.(err);
+          reject(err);
+        });
+    });
+  }
+
+  stop(): void {
+    if (this.audioElement) {
+      this.audioElement.pause();
+      this.audioElement.currentTime = 0;
+      this.audioElement = null;
+      this.playingId = null;
+    }
+  }
+
+  isSpeaking(): boolean {
+    return this.playingId !== null || !!(this.audioElement && !this.audioElement.paused);
+  }
 }
 
 // ─── Browser TTS Provider ──────────────────────────────────────────
 
-export class BrowserTTSProvider implements AudioProvider {
-  type = 'browser';
+class BrowserTTSProvider implements AudioProvider {
+  readonly type = AudioProviderType.BROWSER;
   private speaking = false;
-  private currentUtterance: SpeechSynthesisUtterance | null = null;
+  private utterance: SpeechSynthesisUtterance | null = null;
 
-  async speak(text: string, lang: string, options?: AudioOptions): Promise<void> {
+  async speak(text: string, lang: LanguageCode, options?: AudioOptions): Promise<void> {
     return new Promise((resolve, reject) => {
       if (!window.speechSynthesis) {
-        reject(new Error('SpeechSynthesis not supported'));
+        reject(new Error("SpeechSynthesis not supported"));
         return;
       }
-      // Cancel any ongoing speech
+
       if (window.speechSynthesis.speaking) {
         window.speechSynthesis.cancel();
       }
+
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = lang;
+      const langMap: Record<LanguageCode, string> = { hy: "hy-AM", en: "en-US", ru: "ru-RU" };
+      utterance.lang = langMap[lang] || "en-US";
       utterance.rate = options?.rate ?? 0.9;
       utterance.pitch = options?.pitch ?? 1;
       utterance.volume = options?.volume ?? 1;
 
-      // Try to find a voice for the language
       const voices = window.speechSynthesis.getVoices();
-      const voice = voices.find(v => v.lang.startsWith(lang));
+      const voice = voices.find((v) => v.lang.startsWith(utterance.lang));
       if (voice) utterance.voice = voice;
 
       this.speaking = true;
-      this.currentUtterance = utterance;
+      this.utterance = utterance;
 
-      utterance.onstart = () => {
-        options?.onStart?.();
-      };
+      utterance.onstart = () => options?.onStart?.();
       utterance.onend = () => {
         this.speaking = false;
-        this.currentUtterance = null;
+        this.utterance = null;
         options?.onEnd?.();
         resolve();
       };
       utterance.onerror = (event) => {
         this.speaking = false;
-        this.currentUtterance = null;
-        const error = new Error(`Speech synthesis error: ${event.error}`);
+        this.utterance = null;
+        const error = new Error(`TTS error: ${event.error}`);
         options?.onError?.(error);
         reject(error);
       };
+
       window.speechSynthesis.speak(utterance);
     });
   }
@@ -73,12 +128,12 @@ export class BrowserTTSProvider implements AudioProvider {
     if (window.speechSynthesis) {
       window.speechSynthesis.cancel();
       this.speaking = false;
-      this.currentUtterance = null;
+      this.utterance = null;
     }
   }
 
   isSpeaking(): boolean {
-    return this.speaking || (window.speechSynthesis && window.speechSynthesis.speaking);
+    return this.speaking || !!(window.speechSynthesis && window.speechSynthesis.speaking);
   }
 
   async getVoices(): Promise<SpeechSynthesisVoice[]> {
@@ -92,145 +147,121 @@ export class BrowserTTSProvider implements AudioProvider {
       window.speechSynthesis.onvoiceschanged = () => {
         resolve(window.speechSynthesis.getVoices());
       };
-      // fallback after 1 second
       setTimeout(() => resolve(window.speechSynthesis.getVoices() || []), 1000);
     });
   }
 }
 
-// ─── MP3 Cache Provider ───────────────────────────────────────────
-
-export class MP3Provider implements AudioProvider {
-  type = 'mp3';
-  private audioElement: HTMLAudioElement | null = null;
-  private speaking = false;
-
-  async speak(text: string, lang: string, options?: AudioOptions): Promise<void> {
-    return new Promise((resolve, reject) => {
-      // If we have an id, try to play the cached MP3
-      if (!options?.id) {
-        reject(new Error('No audio id provided for MP3 playback'));
-        return;
-      }
-
-      const audioUrl = `/audio/${lang}/${options.id}.mp3`;
-      const audio = new Audio(audioUrl);
-      this.audioElement = audio;
-      this.speaking = true;
-
-      audio.onplay = () => {
-        options?.onStart?.();
-      };
-      audio.onended = () => {
-        this.speaking = false;
-        this.audioElement = null;
-        options?.onEnd?.();
-        resolve();
-      };
-      audio.onerror = (err) => {
-        this.speaking = false;
-        this.audioElement = null;
-        const error = new Error(`MP3 not found or corrupted: ${audioUrl}`);
-        options?.onError?.(error);
-        reject(error);
-      };
-
-      // Start playing (will error if file missing)
-      audio.play().catch((err) => {
-        this.speaking = false;
-        this.audioElement = null;
-        const error = new Error(`MP3 play error: ${err.message}`);
-        options?.onError?.(error);
-        reject(error);
-      });
-    });
-  }
-
-  stop(): void {
-    if (this.audioElement) {
-      this.audioElement.pause();
-      this.audioElement.currentTime = 0;
-      this.speaking = false;
-      this.audioElement = null;
-    }
-  }
-
-  isSpeaking(): boolean {
-    return this.speaking;
-  }
-}
-
-// ─── AudioService (facade) ────────────────────────────────────────
+// ─── Main AudioService ─────────────────────────────────────────────
 
 export class AudioService {
-  private providers: AudioProvider[] = [];
-  private activeProvider: AudioProvider | null = null;
-  private fallbackChain: string[] = ['mp3', 'browser'];
+  private providers: Map<AudioProviderType, AudioProvider>;
+  private preferredProvider: AudioProviderType = AudioProviderType.MP3;
+  private currentProvider: AudioProvider | null = null;
+  private config = {
+    fallbackChain: [
+      AudioProviderType.MP3,
+      AudioProviderType.BROWSER,
+    ] as AudioProviderType[],
+    logWarnings: true,
+  };
 
   constructor() {
-    // Register providers in order of preference
-    this.providers = [
-      new MP3Provider(),
-      new BrowserTTSProvider(),
-    ];
-    this.activeProvider = this.selectProvider();
+    this.providers = new Map([
+      [AudioProviderType.MP3, new MP3Provider()],
+      [AudioProviderType.BROWSER, new BrowserTTSProvider()],
+    ]);
+    this.currentProvider = this.providers.get(AudioProviderType.MP3) || null;
   }
 
-  private selectProvider(): AudioProvider {
-    // Prefer MP3 if available, otherwise fallback to browser
-    const mp3 = this.providers.find(p => p.type === 'mp3');
-    const browser = this.providers.find(p => p.type === 'browser');
-    // For now, always try MP3 first, if it fails the caller will catch and can retry
-    // but we will handle fallback in speak method.
-    return mp3 || browser || this.providers[0];
-  }
+  async speak(
+    text: string,
+    lang: LanguageCode,
+    options?: AudioOptions
+  ): Promise<void> {
+    const audioId = options?.id;
 
-  async speak(text: string, lang: string, options?: AudioOptions): Promise<void> {
-    const preferred = this.providers.find(p => p.type === 'mp3');
-    const fallback = this.providers.find(p => p.type === 'browser');
+    // Try each provider in fallback chain
+    for (const providerType of this.config.fallbackChain) {
+      const provider = this.providers.get(providerType);
+      if (!provider) continue;
 
-    // Try MP3 if id is provided
-    if (options?.id && preferred) {
+      // Skip MP3 if no audioId
+      if (providerType === AudioProviderType.MP3 && !audioId) {
+        continue;
+      }
+
       try {
-        await preferred.speak(text, lang, options);
+        await provider.speak(text, lang, options);
+        this.currentProvider = provider;
         return;
       } catch (err) {
-        console.warn('MP3 failed, falling back to browser TTS', err);
-        // Fallback to browser
-        if (fallback) {
-          // Remove id option to avoid retrying MP3
-          const { id, ...restOptions } = options;
-          await fallback.speak(text, lang, restOptions);
-          return;
+        if (this.config.logWarnings) {
+          console.warn(`[Audio] ${providerType} failed, trying next:`, err);
         }
+        // Continue to next provider
       }
     }
 
-    // If no id or MP3 failed, use browser TTS
-    if (fallback) {
-      await fallback.speak(text, lang, options);
-      return;
-    }
-
-    throw new Error('No audio provider available');
+    // If all providers fail, throw a graceful error
+    const error = new Error("All audio providers failed");
+    options?.onError?.(error);
+    throw error;
   }
 
   stop(): void {
-    // Stop all providers
-    for (const p of this.providers) {
-      p.stop();
+    for (const provider of this.providers.values()) {
+      provider.stop();
     }
   }
 
   isSpeaking(): boolean {
-    return this.providers.some(p => p.isSpeaking());
+    for (const provider of this.providers.values()) {
+      if (provider.isSpeaking()) return true;
+    }
+    return false;
   }
 
   async getVoices(): Promise<SpeechSynthesisVoice[]> {
-    const browser = this.providers.find(p => p.type === 'browser');
-    if (browser && browser.getVoices) {
-      return await browser.getVoices();
+    const provider = this.providers.get(AudioProviderType.BROWSER);
+    if (provider && provider.getVoices) {
+      return await provider.getVoices();
     }
     return [];
   }
+
+  // ─── Config ──────────────────────────────────────────────────────
+
+  setPreferredProvider(type: AudioProviderType): void {
+    this.preferredProvider = type;
+    // Reorder fallback chain to put preferred first
+    this.config.fallbackChain = [
+      type,
+      ...this.config.fallbackChain.filter((t) => t !== type),
+    ];
+  }
+
+  setLogWarnings(enabled: boolean): void {
+    this.config.logWarnings = enabled;
+  }
+
+  // ─── Convenience methods ────────────────────────────────────────
+
+  playWord(wordId: string, lang: LanguageCode, text: string): Promise<void> {
+    return this.speak(text, lang, { id: wordId });
+  }
+
+  playDialogue(text: string, lang: LanguageCode, dialogueId: string): Promise<void> {
+    return this.speak(text, lang, { id: `d_${dialogueId}` });
+  }
+}
+
+// Singleton instance
+let instance: AudioService | null = null;
+
+export function getAudioService(): AudioService {
+  if (!instance) {
+    instance = new AudioService();
+  }
+  return instance;
 }
