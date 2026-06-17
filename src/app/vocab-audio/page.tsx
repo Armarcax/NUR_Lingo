@@ -1,13 +1,14 @@
+// src/app/vocab-audio/page.tsx
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
 import BottomNav from "@/components/BottomNav";
 import { CONTENT_LESSONS, type VocabItem } from "@/lib/content/database";
-import { useSpeech } from "@/lib/hooks/useSpeech";
+import { useAudio } from "@/lib/hooks/useAudio";
 import { useAudioRecorder } from "@/lib/hooks/useAudioRecorder";
 
 export default function VocabAudioPage() {
-  const { speak, isSpeaking, isSupported } = useSpeech();
+  const { speak, isSpeaking, stop } = useAudio();
   const {
     isRecording,
     startRecording,
@@ -41,53 +42,31 @@ export default function VocabAudioPage() {
     });
   }, [vocab, searchQuery]);
 
-  // 🔊 MP3 նվագարկում՝ fallback-ով դեպի Speech Synthesis
-  const playAudio = (text: string, id: string) => {
-    setPlaying(id);
-
-    // Փորձել նվագարկել MP3 ֆայլը
-    const audio = new Audio(`/audio/hy/${id}.mp3`);
-    audio.play()
-      .then(() => {
-        audio.onended = () => setPlaying(null);
-      })
-      .catch((err) => {
-        // Եթե MP3-ն չկա, օգտագործել Speech Synthesis
-        console.warn(`MP3 not found for ${id}, using Speech Synthesis:`, err.message);
-        if (!isSupported) {
-          alert("Ձեր բրաուզերը չի աջակցում ձայնային արտասանությանը");
-          setPlaying(null);
-          return;
-        }
-        speak(text, "hy", () => setPlaying(null));
-      });
-  };
-
+  // 🔊 Աուդիո նվագարկում AudioService-ով
   const handleSpeak = (text: string, id: string) => {
-    if (!isSupported) {
-      alert("Ձեր բրաուզերը չի աջակցում ձայնային արտասանությանը");
-      return;
+    if (isSpeaking) {
+      stop();
     }
-    // Եթե արդեն նվագարկվում է, չեղարկել
-    if (playing) {
-      // Չեղարկել Speech Synthesis-ը, եթե այն է աշխատում
-      if (window.speechSynthesis) window.speechSynthesis.cancel();
-      setPlaying(null);
-    }
-    playAudio(text, id);
+    setPlaying(id);
+    speak(text, "hy", {
+      id, // MP3-ի համար
+      onEnd: () => setPlaying(null),
+      onError: () => {
+        // եթե MP3 չկա, fallback-ն արդեն աշխատում է
+        setPlaying(null);
+      },
+    });
   };
 
   const handleRecord = async (id: string) => {
     if (isRecording && recordingId === id) {
       stopRecording();
-      // After stopping, save the recording
       setTimeout(() => {
         saveRecording(id);
         setRecordingId(null);
       }, 500);
       return;
     }
-    // Start recording for this word
     setRecordingId(id);
     await startRecording();
   };
@@ -174,7 +153,6 @@ export default function VocabAudioPage() {
                           onClick={() => {
                             if (confirm("Ջնջե՞լ ձեր ձայնագրությունը:")) {
                               deleteRecording(item.id);
-                              // force re-render
                               setVocab([...vocab]);
                             }
                           }}

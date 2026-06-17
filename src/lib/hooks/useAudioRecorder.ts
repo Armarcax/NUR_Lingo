@@ -1,3 +1,4 @@
+// src/lib/hooks/useAudioRecorder.ts
 "use client";
 
 import { useState, useRef, useCallback } from "react";
@@ -23,7 +24,6 @@ export function useAudioRecorder() {
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         const url = URL.createObjectURL(blob);
         setAudioURL(url);
-        // Close the stream to release microphone
         stream.getTracks().forEach(track => track.stop());
       };
 
@@ -44,14 +44,12 @@ export function useAudioRecorder() {
 
   const saveRecording = useCallback((key: string) => {
     if (audioURL) {
-      // Convert audioURL to base64 for storage
       fetch(audioURL)
         .then(res => res.blob())
         .then(blob => {
           const reader = new FileReader();
           reader.onloadend = () => {
             const base64 = reader.result as string;
-            // Save to localStorage
             const recordings = JSON.parse(localStorage.getItem("userAudioRecordings") || "{}");
             recordings[key] = base64;
             localStorage.setItem("userAudioRecordings", JSON.stringify(recordings));
