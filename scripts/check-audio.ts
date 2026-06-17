@@ -1,7 +1,7 @@
 // scripts/check-audio.ts
 import fs from "fs";
 import path from "path";
-import { CONTENT_LESSONS } from "../src/lib/content/database";
+import { CONTENT_LESSONS, type VocabItem } from "../src/lib/content/database";
 
 const AUDIO_ROOT = path.join(__dirname, "../public/audio");
 const LANGUAGES = ["hy", "en", "ru"];
@@ -20,7 +20,7 @@ function checkAudio(): Report {
   };
 
   // Collect all vocabulary items
-  const vocabItems: { id: string; hy: string; en: string; ru: string }[] = [];
+  const vocabItems: VocabItem[] = [];
   for (const lesson of CONTENT_LESSONS) {
     if (lesson.vocabulary) {
       for (const item of lesson.vocabulary) {
@@ -32,6 +32,7 @@ function checkAudio(): Report {
   report.total = vocabItems.length;
 
   for (const item of vocabItems) {
+    // Use audioId if present, otherwise fallback to item.id
     const audioId = item.audioId || item.id;
     const paddedId = audioId.padStart(6, "0");
 
