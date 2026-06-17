@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import BottomNav from "@/components/BottomNav";
-import { CONTENT_LESSONS, type VocabItem } from "@/lib/content/database";
+import { CONTENT_LESSONS, type VocabItem, getAudioId } from "@/lib/content/database";
 import { useAudio } from "@/lib/hooks/useAudio";
 import { useAudioRecorder } from "@/lib/hooks/useAudioRecorder";
 
@@ -28,6 +28,7 @@ export default function VocabAudioPage() {
     for (const lesson of CONTENT_LESSONS) {
       if (lesson.vocabulary) all.push(...lesson.vocabulary);
     }
+    // Եզակիացնել ըստ id-ի
     const unique = Array.from(new Map(all.map((v) => [v.id, v])).values());
     setVocab(unique);
   }, []);
@@ -42,17 +43,17 @@ export default function VocabAudioPage() {
     });
   }, [vocab, searchQuery]);
 
-  // 🔊 Աուդիո նվագարկում AudioService-ով
-  const handleSpeak = (text: string, id: string) => {
+  // 🔊 Աուդիո նվագարկում AudioService-ով (օգտագործում է getAudioId)
+  const handleSpeak = (text: string, item: VocabItem) => {
     if (isSpeaking) {
       stop();
     }
-    setPlaying(id);
+    const audioId = getAudioId(item); // 6-նիշանի ID
+    setPlaying(audioId);
     speak(text, "hy", {
-      id, // MP3-ի համար
+      id: audioId, // MP3-ի համար `/audio/hy/{audioId}.mp3`
       onEnd: () => setPlaying(null),
       onError: () => {
-        // եթե MP3 չկա, fallback-ն արդեն աշխատում է
         setPlaying(null);
       },
     });
@@ -98,6 +99,7 @@ export default function VocabAudioPage() {
             <div className="text-center py-8 text-gray-500">Բառեր չեն գտնվել</div>
           ) : (
             filteredVocab.map((item) => {
+              const audioId = getAudioId(item);
               const hasRecording = hasUserRecording(item.id);
               return (
                 <div
@@ -110,19 +112,20 @@ export default function VocabAudioPage() {
                       <div className="text-sm text-gray-400">
                         {item.en} / {item.ru}
                       </div>
+                      <div className="text-xs text-gray-500">ID: {audioId}</div>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {/* Base audio (MP3 + fallback) */}
                       <button
-                        onClick={() => handleSpeak(item.hy, item.id)}
-                        disabled={playing === item.id}
+                        onClick={() => handleSpeak(item.hy, item)}
+                        disabled={playing === audioId}
                         className={`px-3 py-1 rounded-full text-sm font-bold transition ${
-                          playing === item.id
+                          playing === audioId
                             ? "bg-green-600 text-white cursor-wait"
                             : "bg-blue-600 hover:bg-blue-700 text-white"
                         }`}
                       >
-                        {playing === item.id ? "🔊 ..." : "🔊"}
+                        {playing === audioId ? "🔊 ..." : "🔊"}
                       </button>
 
                       {/* Record / Stop */}

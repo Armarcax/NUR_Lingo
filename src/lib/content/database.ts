@@ -13,6 +13,7 @@ export interface VocabItem {
   hy: string;
   en: string;
   ru: string;
+  audioId?: string;   // 6-նիշանի կայուն ID, օրինակ "000001"
   notes?: string;
 }
 
@@ -58,15 +59,6 @@ export interface World {
   colorFrom: string;
   colorTo: string;
   lessons: string[];   // lesson ids
-}
-
-export interface VocabItem {
-  id: string;
-  hy: string;
-  en: string;
-  ru: string;
-  audioFile?: string; // Օրինակ՝ "greet_hello.mp3"
-  notes?: string;
 }
 
 // ─── Helpers (compact builders) ──────────────────────────────────────────────
@@ -2582,7 +2574,7 @@ function makeAdvancedLesson(id: string, slug: string, enT: string, hyT: string, 
   };
 }
 
-// ===== WORLD 6–10 BUILDER FUNCTIONS (add before qL helper) =====
+// ===== WORLD 6–10 BUILDER FUNCTIONS =====
 
 function buildWorld6(): QuickLesson[] {
   const topics = [
@@ -2963,7 +2955,8 @@ function makeArtLesson(id: string, slug: string, enT: string, hyT: string, ruT: 
     vocab: commonVocab, phrases, dialogues
   };
 }
-// ─── qL helper (used by world 2) ─────────────────────────────────────────────
+
+// ─── qL helper ──────────────────────────────────────────────────────────────
 
 function qL(
   id: string, worldId: string, slug: string, enT: string, hyT: string, ruT: string,
@@ -2980,9 +2973,23 @@ function qL(
   };
 }
 
-// ─── Append expanded QuickLessons to CONTENT_LESSONS ─────────────────────────
+// ─── Append expanded QuickLessons ──────────────────────────────────────────
 
 CONTENT_LESSONS.push(...QUICK_LESSONS.map(expand));
+
+// ─── Audio ID mapping (stable numeric IDs) ─────────────────────────────────
+
+const audioIdMap: Record<string, string> = {};
+let audioCounter = 1;
+
+export function getAudioId(item: VocabItem): string {
+  if (item.audioId) return item.audioId.padStart(6, "0");
+  if (audioIdMap[item.id]) return audioIdMap[item.id];
+  const padded = String(audioCounter).padStart(6, "0");
+  audioIdMap[item.id] = padded;
+  audioCounter++;
+  return padded;
+}
 
 // ─── Lookup helpers ──────────────────────────────────────────────────────────
 
