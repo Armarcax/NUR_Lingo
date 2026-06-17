@@ -60,6 +60,15 @@ export interface World {
   lessons: string[];   // lesson ids
 }
 
+export interface VocabItem {
+  id: string;
+  hy: string;
+  en: string;
+  ru: string;
+  audioFile?: string; // Օրինակ՝ "greet_hello.mp3"
+  notes?: string;
+}
+
 // ─── Helpers (compact builders) ──────────────────────────────────────────────
 
 const v = (id: string, hy: string, en: string, ru: string): VocabItem => ({ id, hy, en, ru });
