@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AudioService, AudioOptions } from "@/lib/audio";  // <--- փոխել այստեղ
+import { AudioService, AudioOptions } from "@/lib/audio";
 
 let audioServiceInstance: AudioService | null = null;
 
