@@ -1,19 +1,11 @@
 // src/lib/audio/audio-types.ts
-
 export type LanguageCode = "hy" | "en" | "ru";
-
-export interface AudioEntry {
-  id: string;          // dictionary word id
-  audioId: string;     // numeric audio id (e.g., "000001")
-  hy: string;
-  en: string;
-  ru: string;
-}
 
 export interface AudioOptions {
   rate?: number;
   pitch?: number;
   volume?: number;
+  id?: string;          // աուդիո ID (MP3-ի համար)
   onStart?: () => void;
   onEnd?: () => void;
   onError?: (error: Error) => void;

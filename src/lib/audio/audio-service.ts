@@ -1,5 +1,4 @@
 // src/lib/audio/audio-service.ts
-
 import { LanguageCode, AudioOptions, AudioProvider, AudioProviderType } from "./audio-types";
 import { audioCache } from "./audio-cache";
 
@@ -18,13 +17,11 @@ class MP3Provider implements AudioProvider {
         return;
       }
 
-      // Normalize audioId to 6 digits
       const paddedId = audioId.padStart(6, "0");
       const url = `/audio/${lang}/${paddedId}.mp3`;
 
       audioCache.getOrLoad(url)
         .then((audio) => {
-          // Clone audio to allow multiple plays
           const clone = audio.cloneNode() as HTMLAudioElement;
           this.audioElement = clone;
           this.playingId = audioId;
@@ -36,14 +33,13 @@ class MP3Provider implements AudioProvider {
             options?.onEnd?.();
             resolve();
           };
-          clone.onerror = (err) => {
+          clone.onerror = () => {
             this.playingId = null;
             this.audioElement = null;
             const error = new Error(`MP3 play error: ${url}`);
             options?.onError?.(error);
             reject(error);
           };
-
           clone.play().catch((err) => {
             this.playingId = null;
             this.audioElement = null;
@@ -52,7 +48,6 @@ class MP3Provider implements AudioProvider {
           });
         })
         .catch((err) => {
-          // MP3 not found or corrupted – reject so fallback can handle
           options?.onError?.(err);
           reject(err);
         });
@@ -86,7 +81,6 @@ class BrowserTTSProvider implements AudioProvider {
         reject(new Error("SpeechSynthesis not supported"));
         return;
       }
-
       if (window.speechSynthesis.speaking) {
         window.speechSynthesis.cancel();
       }
@@ -119,7 +113,6 @@ class BrowserTTSProvider implements AudioProvider {
         options?.onError?.(error);
         reject(error);
       };
-
       window.speechSynthesis.speak(utterance);
     });
   }
@@ -152,17 +145,12 @@ class BrowserTTSProvider implements AudioProvider {
   }
 }
 
-// ─── Main AudioService ─────────────────────────────────────────────
+// ─── AudioService ──────────────────────────────────────────────────
 
 export class AudioService {
   private providers: Map<AudioProviderType, AudioProvider>;
-  private preferredProvider: AudioProviderType = AudioProviderType.MP3;
-  private currentProvider: AudioProvider | null = null;
   private config = {
-    fallbackChain: [
-      AudioProviderType.MP3,
-      AudioProviderType.BROWSER,
-    ] as AudioProviderType[],
+    fallbackChain: [AudioProviderType.MP3, AudioProviderType.BROWSER] as AudioProviderType[],
     logWarnings: true,
   };
 
@@ -171,39 +159,22 @@ export class AudioService {
       [AudioProviderType.MP3, new MP3Provider()],
       [AudioProviderType.BROWSER, new BrowserTTSProvider()],
     ]);
-    this.currentProvider = this.providers.get(AudioProviderType.MP3) || null;
   }
 
-  async speak(
-    text: string,
-    lang: LanguageCode,
-    options?: AudioOptions
-  ): Promise<void> {
-    const audioId = options?.id;
-
-    // Try each provider in fallback chain
-    for (const providerType of this.config.fallbackChain) {
-      const provider = this.providers.get(providerType);
+  async speak(text: string, lang: LanguageCode, options?: AudioOptions): Promise<void> {
+    for (const type of this.config.fallbackChain) {
+      const provider = this.providers.get(type);
       if (!provider) continue;
-
-      // Skip MP3 if no audioId
-      if (providerType === AudioProviderType.MP3 && !audioId) {
-        continue;
-      }
-
+      if (type === AudioProviderType.MP3 && !options?.id) continue;
       try {
         await provider.speak(text, lang, options);
-        this.currentProvider = provider;
         return;
       } catch (err) {
         if (this.config.logWarnings) {
-          console.warn(`[Audio] ${providerType} failed, trying next:`, err);
+          console.warn(`[Audio] ${type} failed, trying next:`, err);
         }
-        // Continue to next provider
       }
     }
-
-    // If all providers fail, throw a graceful error
     const error = new Error("All audio providers failed");
     options?.onError?.(error);
     throw error;
@@ -229,39 +200,6 @@ export class AudioService {
     }
     return [];
   }
-
-  // ─── Config ──────────────────────────────────────────────────────
-
-  setPreferredProvider(type: AudioProviderType): void {
-    this.preferredProvider = type;
-    // Reorder fallback chain to put preferred first
-    this.config.fallbackChain = [
-      type,
-      ...this.config.fallbackChain.filter((t) => t !== type),
-    ];
-  }
-
-  setLogWarnings(enabled: boolean): void {
-    this.config.logWarnings = enabled;
-  }
-
-  // ─── Convenience methods ────────────────────────────────────────
-
-  playWord(wordId: string, lang: LanguageCode, text: string): Promise<void> {
-    return this.speak(text, lang, { id: wordId });
-  }
-
-  playDialogue(text: string, lang: LanguageCode, dialogueId: string): Promise<void> {
-    return this.speak(text, lang, { id: `d_${dialogueId}` });
-  }
 }
 
-// Singleton instance
-let instance: AudioService | null = null;
-
-export function getAudioService(): AudioService {
-  if (!instance) {
-    instance = new AudioService();
-  }
-  return instance;
-}
+export const audioService = new AudioService();

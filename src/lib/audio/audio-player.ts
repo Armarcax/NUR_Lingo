@@ -2,8 +2,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getAudioService } from "./audio-service";
-import { LanguageCode } from "./audio-types";
+import { audioService } from "./audio-service";
+import { LanguageCode, AudioOptions } from "./audio-types";
 
 interface AudioPlayerProps {
   text: string;
@@ -15,22 +15,21 @@ interface AudioPlayerProps {
 
 export function AudioPlayer({ text, lang, audioId, className = "", size = "md" }: AudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
-  const service = getAudioService();
 
   useEffect(() => {
-    return () => service.stop();
-  }, [service]);
+    return () => audioService.stop();
+  }, []);
 
   const handlePlay = async () => {
     if (isPlaying) {
-      service.stop();
+      audioService.stop();
       setIsPlaying(false);
       return;
     }
 
     setIsPlaying(true);
     try {
-      await service.speak(text, lang, { id: audioId });
+      await audioService.speak(text, lang, { id: audioId });
     } catch {
       // Silently handle – fallback already works
     } finally {
