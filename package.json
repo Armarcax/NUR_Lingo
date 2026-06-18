@@ -30,6 +30,7 @@
     "@types/react-dom": "^18",
     "@vitejs/plugin-react": "^4.0.0",
     "autoprefixer": "^10",
+    "edge-tts": "^1.0.1",
     "eslint": "^8",
     "eslint-config-next": "^14",
     "postcss": "^8",

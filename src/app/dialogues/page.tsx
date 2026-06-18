@@ -1,3 +1,4 @@
+// src/app/dialogues/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -6,7 +7,7 @@ import BottomNav from "@/components/BottomNav";
 import InteractiveDialogue from "@/components/InteractiveDialogue";
 import { CONTENT_LESSONS, type DialogueTurn } from "@/lib/content/database";
 import { loadLangConfig, type LangCode } from "@/lib/i18n/index";
-import { useSpeech } from "@/lib/hooks/useSpeech";
+import { useAudio } from "@/lib/hooks/useAudio";
 
 interface DialogueWithMeta {
   id: string;
@@ -20,7 +21,7 @@ interface DialogueWithMeta {
 
 export default function DialoguesPage() {
   const router = useRouter();
-  const { speak, isSpeaking, isSupported } = useSpeech();
+  const { speak, stop, isSpeaking } = useAudio();
   const [dialogues, setDialogues] = useState<DialogueWithMeta[]>([]);
   const [nativeLang, setNativeLang] = useState<LangCode>("hy");
   const [expandedDialogue, setExpandedDialogue] = useState<string | null>(null);
@@ -52,14 +53,23 @@ export default function DialoguesPage() {
     setDialogues(allDialogues);
   }, []);
 
+  // 🔊 Աուդիո նվագարկում AudioService-ով
   const handleSpeak = (text: string, id: string) => {
-    if (!isSupported) {
-      alert("Ձեր բրաուզերը չի աջակցում ձայնային արտասանությանը");
-      return;
+    if (isSpeaking) {
+      stop();
+      if (speakingId === id) {
+        setSpeakingId(null);
+        return;
+      }
     }
     setSpeakingId(id);
-    speak(text, "hy", () => {
-      setSpeakingId(null);
+    speak(text, "hy", {
+      id: `dialogue_${id}`, // Փորձում է նվագարկել /audio/hy/dialogue_{id}.mp3
+      onEnd: () => setSpeakingId(null),
+      onError: () => {
+        // Fallback-ն արդեն աշխատում է AudioService-ում
+        setSpeakingId(null);
+      },
     });
   };
 
@@ -70,23 +80,30 @@ export default function DialoguesPage() {
 
   const toggleLine = (dialogueId: string, turnIdx: number) => {
     const key = `${dialogueId}-${turnIdx}`;
-    setRevealedLines(prev => ({ ...prev, [key]: !prev[key] }));
+    setRevealedLines((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   const toggleInteractiveMode = (id: string) => {
-    setInteractiveMode(prev => ({ ...prev, [id]: !prev[id] }));
+    setInteractiveMode((prev) => ({ ...prev, [id]: !prev[id] }));
     setRevealedLines({});
   };
 
   const getSpeakerName = (speaker: "nurik" | "user", lang: LangCode) => {
     if (speaker === "nurik") return "🐿️ Նուրիկ";
-    return lang === "hy" ? "🧑‍🎓 Դուք" : lang === "en" ? "🧑‍🎓 You" : "🧑‍🎓 Вы";
+    return lang === "hy"
+      ? "🧑‍🎓 Դուք"
+      : lang === "en"
+      ? "🧑‍🎓 You"
+      : "🧑‍🎓 Вы";
   };
 
-  const filteredDialogues = dialogues.filter(dlg =>
-    dlg.dialogueTitle[nativeLang]?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    dlg.dialogueTitle.en.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    dlg.lessonTitle.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredDialogues = dialogues.filter(
+    (dlg) =>
+      dlg.dialogueTitle[nativeLang]
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      dlg.dialogueTitle.en.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      dlg.lessonTitle.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const renderStandardMode = (dlg: DialogueWithMeta) => (
@@ -94,12 +111,14 @@ export default function DialoguesPage() {
       {dlg.turns.map((turn, idx) => {
         const key = `${dlg.id}-${idx}`;
         const isRevealed = revealedLines[key];
-        const audioId = `${dlg.id}-${idx}`;
+        const audioId = `${dlg.id}_${idx}`;
         const isSpeakingNow = isSpeaking && speakingId === audioId;
         return (
           <div
             key={key}
-            className={`flex ${turn.speaker === "nurik" ? "justify-start" : "justify-end"} relative group`}
+            className={`flex ${
+              turn.speaker === "nurik" ? "justify-start" : "justify-end"
+            } relative group`}
           >
             <div
               className={`max-w-[85%] rounded-2xl px-4 py-2 cursor-pointer transition-colors ${
@@ -120,7 +139,9 @@ export default function DialoguesPage() {
                 </div>
               )}
               {!isRevealed && (
-                <div className="text-xs opacity-50 mt-2">👆 հպեք՝ թարգմանությունը տեսնելու համար</div>
+                <div className="text-xs opacity-50 mt-2">
+                  👆 հպեք՝ թարգմանությունը տեսնելու համար
+                </div>
               )}
             </div>
             <button
@@ -140,7 +161,9 @@ export default function DialoguesPage() {
       })}
       <div className="text-center pt-2 flex flex-wrap justify-center gap-3">
         <button
-          onClick={() => router.push(`/learn?lesson=${dlg.lessonId}&pair=hy-en`)}
+          onClick={() =>
+            router.push(`/learn?lesson=${dlg.lessonId}&pair=hy-en`)
+          }
           className="text-sm text-orange-400 hover:underline"
         >
           → Գնալ այս դասին
@@ -149,7 +172,9 @@ export default function DialoguesPage() {
           onClick={() => toggleInteractiveMode(dlg.id)}
           className="text-sm text-blue-400 hover:underline"
         >
-          {interactiveMode[dlg.id] ? "🔁 Տեսնել սովորական" : "📝 Փորձել ինտերակտիվ"}
+          {interactiveMode[dlg.id]
+            ? "🔁 Տեսնել սովորական"
+            : "📝 Փորձել ինտերակտիվ"}
         </button>
       </div>
     </div>
@@ -221,11 +246,10 @@ export default function DialoguesPage() {
                   </div>
                 </button>
 
-                {expandedDialogue === dlg.id && (
-                  interactiveMode[dlg.id]
+                {expandedDialogue === dlg.id &&
+                  (interactiveMode[dlg.id]
                     ? renderInteractiveMode(dlg)
-                    : renderStandardMode(dlg)
-                )}
+                    : renderStandardMode(dlg))}
               </div>
             ))}
           </div>
