@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AudioService, AudioOptions } from "@/lib/audio";
+import { AudioService, AudioOptions, LanguageCode } from "@/lib/audio";
 
 let audioServiceInstance: AudioService | null = null;
 
@@ -23,7 +23,7 @@ export function useAudio() {
     };
   }, []);
 
-  const speak = async (text: string, lang: string, options?: AudioOptions) => {
+  const speak = async (text: string, lang: LanguageCode, options?: AudioOptions) => {
     setIsSpeaking(true);
     try {
       await service.current.speak(text, lang, options);
