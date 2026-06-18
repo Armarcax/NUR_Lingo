@@ -155,7 +155,7 @@ export class AudioService {
   };
 
   constructor() {
-    this.providers = new Map([
+    this.providers = new Map<AudioProviderType, AudioProvider>([
       [AudioProviderType.MP3, new MP3Provider()],
       [AudioProviderType.BROWSER, new BrowserTTSProvider()],
     ]);
